@@ -1,0 +1,16 @@
+# NauticalFlow - Maritime Navigation Dashboard
+# Frontend Dependencies
+
+# Live Server for Development
+live-server==1.2.2
+
+# Note: This project uses CDN for Bootstrap and Bootstrap Icons
+# No additional npm packages required for the frontend
+
+# Optional: If you want to install Bootstrap locally instead of using CDN
+# bootstrap==5.3.0
+# bootstrap-icons==1.10.0
+
+# Development Tools (Optional)
+# http-server==14.1.1
+# python3-http-server (built-in with Python 3) 

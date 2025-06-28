@@ -1,0 +1,360 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-leaf text-success me-2"></i>
+        Environmental Impact Analysis
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-download me-1"></i>Export Report
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-share me-1"></i>Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Route Selection -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Select Route for Environmental Analysis</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="route-select" class="form-label">Choose Route</label>
+                        <select class="form-select" id="route-select">
+                            <option value="">Select a route...</option>
+                            <option value="route1">Port Klang → Singapore (Current)</option>
+                            <option value="route2">Singapore → Hong Kong</option>
+                            <option value="route3">Hong Kong → Tokyo</option>
+                            <option value="route4">Tokyo → Los Angeles</option>
+                            <option value="route5">Rotterdam → New York</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="vessel-type" class="form-label">Vessel Type</label>
+                        <select class="form-select" id="vessel-type">
+                            <option value="container">Container Ship (8,000 TEU)</option>
+                            <option value="bulk">Bulk Carrier (Panamax)</option>
+                            <option value="tanker">Oil Tanker (VLCC)</option>
+                            <option value="passenger">Passenger Ship (Cruise)</option>
+                            <option value="lng">LNG Carrier</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cargo-weight" class="form-label">Cargo Weight (tons)</label>
+                        <input type="number" class="form-control" id="cargo-weight" placeholder="Enter cargo weight" value="15000">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Environmental Impact Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Fuel Consumption</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">2,450 L</div>
+                        <div class="text-xs text-muted">Heavy Fuel Oil (HFO)</div>
+                        <div class="text-xs text-success">↓ 12% vs standard route</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-fuel-pump fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            CO₂ Emissions</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">6.8 tons</div>
+                        <div class="text-xs text-muted">Carbon footprint</div>
+                        <div class="text-xs text-danger">↓ 8% vs standard route</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cloud fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Energy Efficiency</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">87%</div>
+                        <div class="text-xs text-muted">EEDI Rating</div>
+                        <div class="text-xs text-info">↑ 5% vs fleet average</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-award fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Time Savings</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">2.5 hrs</div>
+                        <div class="text-xs text-muted">vs. standard route</div>
+                        <div class="text-xs text-warning">Additional fuel savings</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Environmental Metrics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            NOx Emissions</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">45.2 kg</div>
+                        <div class="text-xs text-muted">Nitrogen oxides</div>
+                        <div class="text-xs text-primary">↓ 15% vs standard</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-wind fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-secondary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                            SOx Emissions</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">12.8 kg</div>
+                        <div class="text-xs text-muted">Sulfur oxides</div>
+                        <div class="text-xs text-secondary">↓ 20% vs standard</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-droplet fa-2x text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-dark shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                            PM Emissions</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">3.2 kg</div>
+                        <div class="text-xs text-muted">Particulate matter</div>
+                        <div class="text-xs text-dark">↓ 18% vs standard</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-circle fa-2x text-dark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Carbon Intensity</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">0.85</div>
+                        <div class="text-xs text-muted">gCO₂/ton-nm</div>
+                        <div class="text-xs text-success">↓ 10% vs standard</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-down fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analysis -->
+<div class="row">
+    <!-- Environmental Impact Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Environmental Impact Comparison</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area" style="height: 300px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                    <div class="text-center">
+                        <i class="bi bi-graph-up" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Environmental Impact Chart</p>
+                        <small>CO₂ emissions, fuel efficiency, and eco-rating visualization</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optimization Suggestions -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Optimization Suggestions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-check-circle text-success me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Speed Optimization</h6>
+                            <small class="text-muted">Reduce speed by 2 knots to save 15% fuel</small>
+                            <div class="mt-1">
+                                <span class="badge bg-success">High Impact</span>
+                                <span class="badge bg-info">Easy to implement</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-check-circle text-success me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Route Adjustment</h6>
+                            <small class="text-muted">Use favorable currents to reduce emissions</small>
+                            <div class="mt-1">
+                                <span class="badge bg-warning">Medium Impact</span>
+                                <span class="badge bg-secondary">Requires planning</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-check-circle text-success me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Weather Routing</h6>
+                            <small class="text-muted">Avoid headwinds to improve efficiency</small>
+                            <div class="mt-1">
+                                <span class="badge bg-primary">Real-time</span>
+                                <span class="badge bg-success">High Impact</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-info-circle text-info me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Maintenance Alert</h6>
+                            <small class="text-muted">Engine maintenance due for 5% efficiency gain</small>
+                            <div class="mt-1">
+                                <span class="badge bg-warning">Scheduled</span>
+                                <span class="badge bg-info">Preventive</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-star text-warning me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Alternative Fuels</h6>
+                            <small class="text-muted">Consider LNG or biofuels for next voyage</small>
+                            <div class="mt-1">
+                                <span class="badge bg-danger">Long-term</span>
+                                <span class="badge bg-primary">High Impact</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Environmental Compliance -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-shield-check me-2"></i>
+                    Environmental Compliance Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6>IMO 2020</h6>
+                            <small class="text-success">Compliant</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6>EEDI</h6>
+                            <small class="text-success">Phase 2 Compliant</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6>CII</h6>
+                            <small class="text-warning">B Rating</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <h6>SEEMP</h6>
+                            <small class="text-success">Updated</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

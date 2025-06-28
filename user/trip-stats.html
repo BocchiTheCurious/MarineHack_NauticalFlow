@@ -1,0 +1,293 @@
+<!-- Trip Stats Content -->
+<div id="trip-stats-content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Trip Statistics</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export Report</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Distance</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">67.5 nm</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-flag fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Fuel Used</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">245 L</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-fuel-pump fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Time Elapsed</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">4h 30m</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Avg Speed</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">15.0 knots</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-speedometer2 fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics -->
+    <div class="row">
+        <!-- Fuel Consumption Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Fuel Consumption Over Time</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                        <div class="text-center">
+                            <i class="bi bi-graph-up" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Fuel Consumption Chart</p>
+                            <small>Interactive chart would be displayed here</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fuel Efficiency -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Fuel Efficiency</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Current Efficiency</span>
+                            <span class="text-success">Good</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted">Fuel Rate</small>
+                            <p class="mb-0 fw-bold">54.4 L/h</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Efficiency</small>
+                            <p class="mb-0 fw-bold">0.81 L/nm</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Remaining Fuel</h6>
+                        <div class="d-flex justify-content-between">
+                            <span>Available</span>
+                            <span>1,255 L</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Estimated Range</span>
+                            <span>1,550 nm</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Time to Empty</span>
+                            <span>23h 10m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row">
+        <!-- Speed Analysis -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Speed Analysis</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted">Max Speed</small>
+                            <p class="mb-0 fw-bold text-success">18.5 knots</p>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Avg Speed</small>
+                            <p class="mb-0 fw-bold text-primary">15.0 knots</p>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Min Speed</small>
+                            <p class="mb-0 fw-bold text-warning">8.2 knots</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Speed Consistency</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Tip:</strong> Maintaining consistent speed improves fuel efficiency
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route Performance -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Route Performance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Route Efficiency</small>
+                            <p class="mb-0 fw-bold text-success">92%</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Time Accuracy</small>
+                            <p class="mb-0 fw-bold text-info">+5 min</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Distance to Go</span>
+                            <span>32.5 nm</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Estimated Time</span>
+                            <span>2h 10m</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Fuel Required</span>
+                            <span>26.3 L</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>On Track:</strong> Current performance exceeds expectations
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Comparison -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Comparison with Previous Trips</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Current Trip</th>
+                                    <th>Previous Trip</th>
+                                    <th>Difference</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Fuel Efficiency</td>
+                                    <td>0.81 L/nm</td>
+                                    <td>0.85 L/nm</td>
+                                    <td class="text-success">-4.7%</td>
+                                    <td><span class="badge bg-success">Better</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Average Speed</td>
+                                    <td>15.0 knots</td>
+                                    <td>14.8 knots</td>
+                                    <td class="text-success">+1.4%</td>
+                                    <td><span class="badge bg-success">Better</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Route Efficiency</td>
+                                    <td>92%</td>
+                                    <td>89%</td>
+                                    <td class="text-success">+3.4%</td>
+                                    <td><span class="badge bg-success">Better</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Time Accuracy</td>
+                                    <td>+5 min</td>
+                                    <td>+12 min</td>
+                                    <td class="text-success">+7 min</td>
+                                    <td><span class="badge bg-success">Better</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

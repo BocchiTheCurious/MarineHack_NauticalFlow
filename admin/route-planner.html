@@ -1,0 +1,206 @@
+<!-- Route Planner Content -->
+<div id="route-planner-content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Route Planner</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-primary">Save Route</button>
+                <button type="button" class="btn btn-sm btn-outline-success">Optimize</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Route Planning Form -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Route Details</h6>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="departure" class="form-label">Departure Port</label>
+                            <input type="text" class="form-control" id="departure" placeholder="Enter departure port">
+                        </div>
+                        <div class="mb-3">
+                            <label for="destination" class="form-label">Destination Port</label>
+                            <input type="text" class="form-control" id="destination" placeholder="Enter destination port">
+                        </div>
+                        <div class="mb-3">
+                            <label for="vessel-type" class="form-label">Vessel Type</label>
+                            <select class="form-select" id="vessel-type">
+                                <option selected>Select vessel type</option>
+                                <option value="cargo">Cargo Ship</option>
+                                <option value="tanker">Tanker</option>
+                                <option value="passenger">Passenger Ship</option>
+                                <option value="fishing">Fishing Vessel</option>
+                                <option value="yacht">Yacht</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="speed" class="form-label">Average Speed (knots)</label>
+                            <input type="number" class="form-control" id="speed" placeholder="12.5">
+                        </div>
+                        <div class="mb-3">
+                            <label for="departure-date" class="form-label">Departure Date</label>
+                            <input type="datetime-local" class="form-control" id="departure-date">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="avoid-storms">
+                                <label class="form-check-label" for="avoid-storms">
+                                    Avoid storm areas
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="eco-route">
+                                <label class="form-check-label" for="eco-route">
+                                    Eco-friendly route
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="regulations">
+                                <label class="form-check-label" for="regulations">
+                                    Consider regulations
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Calculate Route</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Route Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Route Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h5 class="text-primary">Distance</h5>
+                            <p class="mb-0">1,247 nm</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h5 class="text-success">Duration</h5>
+                            <p class="mb-0">4.2 days</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h5 class="text-info">ETA</h5>
+                            <p class="mb-0">Dec 15, 14:30</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h5 class="text-warning">Fuel Cost</h5>
+                            <p class="mb-0">$12,450</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route Map -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Route Visualization</h6>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary">Satellite</button>
+                        <button type="button" class="btn btn-outline-secondary">Marine</button>
+                        <button type="button" class="btn btn-outline-secondary">Weather</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                        <div class="text-center">
+                            <i class="bi bi-map" style="font-size: 4rem;"></i>
+                            <p class="mt-3">Interactive Route Map</p>
+                            <small>Map integration with route plotting would go here</small>
+                            <div class="mt-3">
+                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2 me-2">
+                                    <i class="bi bi-geo-alt me-1"></i>Start Point
+                                </div>
+                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2 me-2">
+                                    <i class="bi bi-flag me-1"></i>End Point
+                                </div>
+                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2">
+                                    <i class="bi bi-arrow-right me-1"></i>Route Line
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waypoints and Alerts -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Waypoints</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-geo-alt text-primary me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">New York Harbor</h6>
+                                        <small class="text-muted">Departure - Dec 11, 08:00</small>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-geo-alt text-info me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">Bermuda Triangle</h6>
+                                        <small class="text-muted">Waypoint - Dec 12, 14:30</small>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-geo-alt text-success me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">Miami Port</h6>
+                                        <small class="text-muted">Destination - Dec 15, 14:30</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Route Alerts</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-exclamation-triangle text-warning me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">Storm Warning</h6>
+                                        <small class="text-muted">Area: Bermuda Triangle</small>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-shield-check text-info me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">Marine Protected Area</h6>
+                                        <small class="text-muted">Regulations apply</small>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex align-items-center">
+                                    <i class="bi bi-info-circle text-success me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">Optimal Route</h6>
+                                        <small class="text-muted">Fuel efficient path</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

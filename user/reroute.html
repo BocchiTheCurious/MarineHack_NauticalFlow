@@ -1,0 +1,253 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-arrow-clockwise text-primary me-2"></i>
+        Route Optimization & Rerouting
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-lightning me-1"></i>Quick Reroute
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-gear me-1"></i>Advanced Options
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Current Route Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Current Route Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-primary">Port Klang → Singapore</h6>
+                            <p class="text-muted small mb-0">Current Route</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-success">32.5 nm</h6>
+                            <p class="text-muted small mb-0">Distance Remaining</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-info">14:30</h6>
+                            <p class="text-muted small mb-0">Current ETA</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-warning">85%</h6>
+                            <p class="text-muted small mb-0">Fuel Level</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Route Optimization Options -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Optimization Criteria
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Primary Objective</label>
+                    <select class="form-select">
+                        <option value="fuel">Fuel Efficiency</option>
+                        <option value="time">Time Optimization</option>
+                        <option value="weather">Weather Avoidance</option>
+                        <option value="environmental">Environmental Impact</option>
+                        <option value="safety">Safety First</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Speed Preference</label>
+                    <select class="form-select">
+                        <option value="optimal">Optimal Speed</option>
+                        <option value="slow">Slow Steaming</option>
+                        <option value="fast">Fast Transit</option>
+                        <option value="custom">Custom Speed</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Weather Tolerance</label>
+                    <select class="form-select">
+                        <option value="low">Low (Avoid Rough Seas)</option>
+                        <option value="medium">Medium (Standard)</option>
+                        <option value="high">High (Accept Rough Conditions)</option>
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="avoid-restricted">
+                    <label class="form-check-label" for="avoid-restricted">
+                        Avoid Restricted Areas
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="use-currents">
+                    <label class="form-check-label" for="use-currents">
+                        Use Favorable Currents
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Route Comparison
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Route Option</th>
+                                <th>Distance</th>
+                                <th>ETA</th>
+                                <th>Fuel</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-secondary">
+                                <td><strong>Current Route</strong></td>
+                                <td>100 nm</td>
+                                <td>14:30</td>
+                                <td>2,450 L</td>
+                                <td><span class="badge bg-secondary">Active</span></td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><strong>Optimized Route 1</strong></td>
+                                <td>95 nm</td>
+                                <td>13:45</td>
+                                <td>2,180 L</td>
+                                <td><button class="btn btn-success btn-sm">Apply</button></td>
+                            </tr>
+                            <tr class="table-info">
+                                <td><strong>Weather Route</strong></td>
+                                <td>102 nm</td>
+                                <td>14:15</td>
+                                <td>2,320 L</td>
+                                <td><button class="btn btn-info btn-sm">Apply</button></td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><strong>Eco Route</strong></td>
+                                <td>98 nm</td>
+                                <td>15:00</td>
+                                <td>2,050 L</td>
+                                <td><button class="btn btn-warning btn-sm">Apply</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Route Map and Details -->
+<div class="row">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Route Visualization</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area" style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                    <div class="text-center">
+                        <i class="bi bi-map" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Interactive Route Map</p>
+                        <small>Current route (blue) vs optimized routes (green/orange)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Optimization Benefits</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-check-circle text-success me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Fuel Savings</h6>
+                            <small class="text-muted">Save up to 270L (11% reduction)</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-clock text-info me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Time Savings</h6>
+                            <small class="text-muted">Arrive 45 minutes earlier</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-shield-check text-warning me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Safety Improvement</h6>
+                            <small class="text-muted">Avoid storm system ahead</small>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-start">
+                        <i class="bi bi-leaf text-success me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-1">Environmental Impact</h6>
+                            <small class="text-muted">Reduce CO₂ by 0.75 tons</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Apply Optimized Route
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Keep Current Route
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather and Conditions Alert -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning" role="alert">
+            <h6><i class="bi bi-exclamation-triangle me-2"></i>Weather Alert</h6>
+            <p class="mb-2">Storm system detected 50nm ahead on current route. Consider weather routing option for safer passage.</p>
+            <button class="btn btn-warning btn-sm">
+                <i class="bi bi-eye me-1"></i>View Weather Details
+            </button>
+        </div>
+    </div>
+</div> 
