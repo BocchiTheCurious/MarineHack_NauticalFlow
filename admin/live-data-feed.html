@@ -12,8 +12,8 @@
     </div>
 
     <!-- Real-time Status -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
+    <div class="row mb-4 justify-content-center">
+        <div class="col-md-5 mb-4">
             <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -30,7 +30,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-md-5 mb-4">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -46,46 +46,11 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Active Sensors</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">24/25</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-cpu fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Data Rate</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">1.2 MB/s</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-arrow-up-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Live Data Streams -->
     <div class="row">
-        <!-- Navigation Data -->
-        <div class="col-lg-6">
+        <div class="col-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Navigation Data</h6>
@@ -118,47 +83,6 @@
                                 <h6 class="text-muted">Speed</h6>
                                 <h4 class="text-success">12.5 knots</h4>
                                 <small class="text-success">+0.2</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Engine Data -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Engine Data</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">RPM</h6>
-                                <h4 class="text-warning">1,250</h4>
-                                <small class="text-success">Optimal</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Temperature</h6>
-                                <h4 class="text-info">85°C</h4>
-                                <small class="text-success">Normal</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Oil Pressure</h6>
-                                <h4 class="text-success">3.2 bar</h4>
-                                <small class="text-success">Good</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Fuel Flow</h6>
-                                <h4 class="text-primary">45 L/h</h4>
-                                <small class="text-warning">-2 L/h</small>
                             </div>
                         </div>
                     </div>
@@ -228,150 +152,6 @@
                             <small class="text-muted d-block">Wave Height</small>
                             <strong>1.2 m</strong>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sensor Status -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Sensor Status</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>GPS</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>Compass</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>Depth Sounder</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-warning me-2"></i>
-                                <div>
-                                    <strong>Wind Sensor</strong>
-                                    <small class="d-block text-muted">Calibrating</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>Engine Monitor</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>Fuel Gauge</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>Weather Station</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-circle-fill text-success me-2"></i>
-                                <div>
-                                    <strong>AIS</strong>
-                                    <small class="d-block text-muted">Connected</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Data Log -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Data Log</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Sensor</th>
-                                    <th>Value</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>14:30:15</td>
-                                    <td>GPS</td>
-                                    <td>40° 42' 51" N, 74° 00' 21" W</td>
-                                    <td><span class="badge bg-success">OK</span></td>
-                                </tr>
-                                <tr>
-                                    <td>14:30:14</td>
-                                    <td>Engine</td>
-                                    <td>RPM: 1,250</td>
-                                    <td><span class="badge bg-success">OK</span></td>
-                                </tr>
-                                <tr>
-                                    <td>14:30:13</td>
-                                    <td>Weather</td>
-                                    <td>Temp: 22°C, Wind: 15 knots</td>
-                                    <td><span class="badge bg-success">OK</span></td>
-                                </tr>
-                                <tr>
-                                    <td>14:30:12</td>
-                                    <td>Fuel</td>
-                                    <td>Flow: 45 L/h</td>
-                                    <td><span class="badge bg-warning">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td>14:30:11</td>
-                                    <td>Depth</td>
-                                    <td>25.3 meters</td>
-                                    <td><span class="badge bg-success">OK</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
