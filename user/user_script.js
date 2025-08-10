@@ -1,8 +1,8 @@
 // NauticalFlow User Dashboard JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is logged in
-    if (localStorage.getItem('nauticalflow-logged-in') !== 'true') {
+    // Check if user is logged in - USE THE SAME KEYS AS login.js
+    if (!localStorage.getItem('nauticalflow-token')) {
         window.location.href = '../index.html';
         return;
     }
@@ -78,10 +78,15 @@ function setupEventListeners() {
     }
 }
 
-// Handle logout
+// Handle logout - CLEAR THE SAME KEYS AS login.js USES
 function handleLogout() {
-    localStorage.removeItem('nauticalflow-logged-in');
-    localStorage.removeItem('nauticalflow-username');
+    // Clear authentication data - use same keys as login.js
+    localStorage.removeItem('nauticalflow-token');
+    localStorage.removeItem('nauticalflow-user-type');
+    // Optionally keep the remembered username
+    // localStorage.removeItem('nauticalflow-username');
+    
+    // Redirect to login
     window.location.href = '../index.html';
 }
 
