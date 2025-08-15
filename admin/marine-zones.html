@@ -1,308 +1,332 @@
-<!-- Marine Zones & Regulations Content -->
-<div id="marine-zones-content">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Marine Zones & Regulations</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-primary">Update Zones</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-            </div>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marine Zones - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold" href="homepage.html">
+                <i class="bi bi-water me-2"></i>NauticalFlow
+            </a>
 
-    <!-- Zone Overview -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Current Zone</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">EEZ</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-geo-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+            <!-- Right side navigation items -->
+            <div class="navbar-nav ms-auto">
+                <!-- User Profile -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span>Admin</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="../index.html" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
+    </nav>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Compliance Status</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">100%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-shield-check fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+    <!-- Sidebar and Main Content -->
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" id="sidebar">
+            <div class="position-sticky pt-5">
+                <ul class="nav flex-column">
+                    <!-- Main Features -->
+                    <li class="nav-item">
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                            <span>Main Features</span>
+                        </h6>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="homepage.html">
+                            <i class="bi bi-house me-2"></i>
+                            Dashboard Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="optimized-route-planner.html">
+                            <i class="bi bi-gear me-2"></i>
+                            Optimized Route Planner
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="live-data-feed.html">
+                            <i class="bi bi-activity me-2"></i>
+                            Live Data Feed
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="marine-zones.html">
+                            <i class="bi bi-map me-2"></i>
+                            Marine Zones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="vessel-data.html">
+                            <i class="bi bi-database me-2"></i>
+                            Vessel Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="port-data.html">
+                            <i class="bi bi-building me-2"></i>
+                            Port Data
+                        </a>
+                    </li>
+                </ul>
             </div>
-        </div>
+        </nav>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Speed Limit</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">15 knots</div>
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <!-- Marine Zones Content -->
+            <div id="marine-zones-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Marine Zones Management</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary">Add Zone</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Export Data</button>
                         </div>
-                        <div class="col-auto">
-                            <i class="bi bi-speedometer2 fa-2x text-gray-300"></i>
-                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success">Update Zones</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Restrictions</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">2 Active</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Zone Map and Information -->
-    <div class="row">
-        <!-- Zone Map -->
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Marine Zones Map</h6>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary">Territorial</button>
-                        <button type="button" class="btn btn-outline-secondary">EEZ</button>
-                        <button type="button" class="btn btn-outline-secondary">Protected</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-area" style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
-                        <div class="text-center">
-                            <i class="bi bi-map" style="font-size: 3rem;"></i>
-                            <p class="mt-2">Marine Zones Interactive Map</p>
-                            <small>Zone boundaries and regulations overlay would go here</small>
-                            <div class="mt-3">
-                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2 me-2">
-                                    <i class="bi bi-circle-fill me-1"></i>Territorial Waters
+                <!-- Marine Zones Statistics -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Zones</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">247</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-geo-alt fa-2x text-gray-300"></i>
+                                    </div>
                                 </div>
-                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2 me-2">
-                                    <i class="bi bi-circle-fill me-1"></i>EEZ
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Active Zones</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">234</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                                    </div>
                                 </div>
-                                <div class="d-inline-block bg-white bg-opacity-25 rounded p-2">
-                                    <i class="bi bi-circle-fill me-1"></i>Protected Areas
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Restricted Areas</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">13</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Protected Areas</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">28</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-shield-check fa-2x text-gray-300"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Current Zone Details -->
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Current Zone: EEZ</h6>
+                <!-- Marine Zones Map -->
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Marine Zones Map</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="marine-zones-map" style="height: 400px; background-color: #f8f9fa; border-radius: 0.35rem;">
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <div class="text-center">
+                                            <i class="bi bi-geo-alt display-1 text-muted"></i>
+                                            <p class="text-muted mt-3">Interactive marine zones map</p>
+                                            <p class="text-muted">Showing all active marine zones and restrictions</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Zone Categories</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-circle-fill text-success me-2"></i>
+                                            <strong>Navigation Zones</strong>
+                                        </div>
+                                        <span class="badge bg-success rounded-pill">156</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-circle-fill text-warning me-2"></i>
+                                            <strong>Restricted Areas</strong>
+                                        </div>
+                                        <span class="badge bg-warning rounded-pill">13</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-circle-fill text-info me-2"></i>
+                                            <strong>Protected Areas</strong>
+                                        </div>
+                                        <span class="badge bg-info rounded-pill">28</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-circle-fill text-danger me-2"></i>
+                                            <strong>Exclusion Zones</strong>
+                                        </div>
+                                        <span class="badge bg-danger rounded-pill">8</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-circle-fill text-primary me-2"></i>
+                                            <strong>Fishing Zones</strong>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">42</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h6 class="text-primary">Exclusive Economic Zone</h6>
-                        <p class="text-muted small">200 nautical miles from baseline</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h6>Regulations:</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="bi bi-check-circle text-success me-2"></i>Freedom of navigation</li>
-                            <li><i class="bi bi-check-circle text-success me-2"></i>Fishing restrictions apply</li>
-                            <li><i class="bi bi-check-circle text-success me-2"></i>Environmental protection</li>
-                            <li><i class="bi bi-exclamation-triangle text-warning me-2"></i>Speed limits in certain areas</li>
-                        </ul>
-                    </div>
 
-                    <div class="mb-3">
-                        <h6>Required Actions:</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="bi bi-info-circle text-info me-2"></i>Maintain AIS transmission</li>
-                            <li><i class="bi bi-info-circle text-info me-2"></i>Follow traffic separation schemes</li>
-                            <li><i class="bi bi-info-circle text-info me-2"></i>Report to authorities if required</li>
-                        </ul>
+                <!-- Marine Zones Table -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Marine Zones Database</h6>
                     </div>
-
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Note:</strong> You are currently in compliance with all applicable regulations.
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="marine-zones-table" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Zone ID</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Coordinates</th>
+                                        <th>Area (sq km)</th>
+                                        <th>Status</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Z001</td>
+                                        <td>North Atlantic Shipping Lane</td>
+                                        <td>Navigation Zone</td>
+                                        <td>40°N, 60°W to 45°N, 50°W</td>
+                                        <td>125,000</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td>2024-01-15</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Edit</button>
+                                            <button class="btn btn-sm btn-info">View</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Z002</td>
+                                        <td>Mediterranean Protected Area</td>
+                                        <td>Protected Area</td>
+                                        <td>35°N, 15°E to 40°N, 25°E</td>
+                                        <td>45,000</td>
+                                        <td><span class="badge bg-info">Protected</span></td>
+                                        <td>2024-01-10</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Edit</button>
+                                            <button class="btn btn-sm btn-info">View</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Z003</td>
+                                        <td>Pacific Military Zone</td>
+                                        <td>Restricted Area</td>
+                                        <td>20°N, 160°E to 25°N, 170°E</td>
+                                        <td>75,000</td>
+                                        <td><span class="badge bg-warning">Restricted</span></td>
+                                        <td>2024-01-08</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Edit</button>
+                                            <button class="btn btn-sm btn-info">View</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Z004</td>
+                                        <td>Arctic Exclusion Zone</td>
+                                        <td>Exclusion Zone</td>
+                                        <td>70°N, 0°E to 80°N, 30°E</td>
+                                        <td>200,000</td>
+                                        <td><span class="badge bg-danger">Excluded</span></td>
+                                        <td>2024-01-05</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">Edit</button>
+                                            <button class="btn btn-sm btn-info">View</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Regulatory Information -->
-    <div class="row">
-        <!-- International Regulations -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">International Regulations</h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">SOLAS Convention</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Safety of Life at Sea</p>
-                            <small class="text-muted">All safety equipment verified</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">MARPOL Convention</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Marine Pollution Prevention</p>
-                            <small class="text-muted">Environmental standards met</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">COLREGS</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Collision Regulations</p>
-                            <small class="text-muted">Navigation rules followed</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">STCW Convention</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Crew Training Standards</p>
-                            <small class="text-muted">Certifications valid</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Local Regulations -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Local Regulations</h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">US Coast Guard</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Vessel documentation</p>
-                            <small class="text-muted">Registration up to date</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Port State Control</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Inspection requirements</p>
-                            <small class="text-muted">Last inspection: 3 months ago</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Environmental Protection</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">Emission standards</p>
-                            <small class="text-muted">Tier II compliant engines</small>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Security Requirements</h6>
-                                <small class="text-success">Compliant</small>
-                            </div>
-                            <p class="mb-1">ISPS Code</p>
-                            <small class="text-muted">Security plan implemented</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Protected Areas -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Protected Marine Areas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Area Name</th>
-                                    <th>Type</th>
-                                    <th>Distance</th>
-                                    <th>Restrictions</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Florida Keys National Marine Sanctuary</td>
-                                    <td>Marine Sanctuary</td>
-                                    <td>45 nm</td>
-                                    <td>No anchoring, speed limits</td>
-                                    <td><span class="badge bg-success">Clear</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Gray's Reef National Marine Sanctuary</td>
-                                    <td>Marine Sanctuary</td>
-                                    <td>120 nm</td>
-                                    <td>Fishing restrictions</td>
-                                    <td><span class="badge bg-success">Clear</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Stellwagen Bank National Marine Sanctuary</td>
-                                    <td>Marine Sanctuary</td>
-                                    <td>280 nm</td>
-                                    <td>Whale watching regulations</td>
-                                    <td><span class="badge bg-success">Clear</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Monterey Bay National Marine Sanctuary</td>
-                                    <td>Marine Sanctuary</td>
-                                    <td>450 nm</td>
-                                    <td>Vessel traffic management</td>
-                                    <td><span class="badge bg-success">Clear</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>

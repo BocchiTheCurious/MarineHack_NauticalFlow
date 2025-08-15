@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NauticalFlow - Maritime Navigation Dashboard</title>
+    <title>NauticalFlow - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../styles.css" rel="stylesheet">
@@ -13,42 +13,12 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="navbar-brand fw-bold" href="#">
+            <a class="navbar-brand fw-bold" href="homepage.html">
                 <i class="bi bi-water me-2"></i>NauticalFlow
             </a>
 
             <!-- Right side navigation items -->
             <div class="navbar-nav ms-auto">
-                <!-- Current Location -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-geo-alt me-1"></i>
-                        <span id="current-location">Loading location...</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-geo-alt me-2"></i>Update Location</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-map me-2"></i>View on Map</a></li>
-                    </ul>
-                </div>
-
-                <!-- Notifications -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">Notifications</h6></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Weather alert: Storm approaching</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-info-circle me-2 text-info"></i>Route optimization available</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-check-circle me-2 text-success"></i>Vessel data updated</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
-                    </ul>
-                </div>
-
                 <!-- User Profile -->
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -56,8 +26,7 @@
                         <span>Admin</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="../index.html" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
@@ -79,58 +48,39 @@
                         </h6>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="#dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i>
+                        <a class="nav-link active" href="homepage.html">
+                            <i class="bi bi-house me-2"></i>
                             Dashboard Overview
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#route-planner">
-                            <i class="bi bi-map me-2"></i>
-                            Route Planner
+                        <a class="nav-link" href="optimized-route-planner.html">
+                            <i class="bi bi-gear me-2"></i>
+                            Optimized Route Planner
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#route-analytics">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Route Analytics
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#live-feed">
-                            <i class="bi bi-broadcast me-2"></i>
+                        <a class="nav-link" href="live-data-feed.html">
+                            <i class="bi bi-activity me-2"></i>
                             Live Data Feed
                         </a>
                     </li>
-
-                    <!-- Support Features -->
                     <li class="nav-item">
-                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                            <span>Support Features</span>
-                        </h6>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#environmental-impact">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Environmental Impact Analysis
+                        <a class="nav-link" href="marine-zones.html">
+                            <i class="bi bi-map me-2"></i>
+                            Marine Zones
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#marine-zones">
-                            <i class="bi bi-shield-check me-2"></i>
-                            Marine Zones & Regulations
+                        <a class="nav-link" href="vessel-data.html">
+                            <i class="bi bi-database me-2"></i>
+                            Vessel Data
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#route-history">
-                            <i class="bi bi-clock-history me-2"></i>
-                            Route History / Past Voyages
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#vessel-data">
-                            <i class="bi bi-upload me-2"></i>
-                            Upload Vessel Data
+                        <a class="nav-link" href="port-data.html">
+                            <i class="bi bi-building me-2"></i>
+                            Port Data
                         </a>
                     </li>
                 </ul>
@@ -138,204 +88,209 @@
         </nav>
 
         <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="pt-5">
-                <!-- Content will be loaded dynamically here -->
-                <div id="main-content">
-                    <!-- Dashboard Overview Content -->
-                    <div id="dashboard-content">
-                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                            <h1 class="h2">Dashboard Overview</h1>
-                            <div class="btn-toolbar mb-2 mb-md-0">
-                                <div class="btn-group me-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <!-- Optimization Results Content -->
+            <div id="optimization-results-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard Overview</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Export Report</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                <span class="visually-hidden">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">PDF Report</a></li>
+                                <li><a class="dropdown-item" href="#">Excel Data</a></li>
+                                <li><a class="dropdown-item" href="#">CSV Export</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Print Report</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optimization Metrics Summary -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <h5><i class="bi bi-info-circle me-2"></i>Optimization Summary</h5>
+                            <p class="mb-0">Showing optimization results for the selected routes. All metrics are compared against baseline performance.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optimization Results Charts -->
+                <div class="row">
+                    <!-- CO2 Emissions Chart -->
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">CO2 Emissions Optimization</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="co2DropdownMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="co2DropdownMenu">
+                                        <div class="dropdown-header">Chart Options:</div>
+                                        <a class="dropdown-item" href="#">View Details</a>
+                                        <a class="dropdown-item" href="#">Export Data</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Reset View</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-area">
+                                    <canvas id="co2OptimizationChart"></canvas>
+                                </div>
+                                <div class="mt-3 text-center small">
+                                    <span class="text-success"><i class="bi bi-arrow-down"></i> 15% reduction achieved</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Stats Cards -->
-                        <div class="row mb-4">
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card border-left-primary shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                    Current Speed</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">12.5 knots</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-speedometer2 fa-2x text-gray-300"></i>
-                                            </div>
-                                        </div>
+                    <!-- Fuel Consumption Chart -->
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Fuel Consumption Optimization</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="fuelDropdownMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="fuelDropdownMenu">
+                                        <div class="dropdown-header">Chart Options:</div>
+                                        <a class="dropdown-item" href="#">View Details</a>
+                                        <a class="dropdown-item" href="#">Export Data</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Reset View</a>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card border-left-success shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                    Distance to Destination</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">45.2 nm</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-flag fa-2x text-gray-300"></i>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="card-body">
+                                <div class="chart-area">
+                                    <canvas id="fuelOptimizationChart"></canvas>
                                 </div>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card border-left-info shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                    ETA</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">14:30</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-clock fa-2x text-gray-300"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card border-left-warning shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                    Fuel Level</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">78%</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-fuel-pump fa-2x text-gray-300"></i>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="mt-3 text-center small">
+                                    <span class="text-success"><i class="bi bi-arrow-down"></i> 12% reduction achieved</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Charts and Maps Row -->
-                        <div class="row">
-                            <!-- Map -->
-                            <div class="col-xl-8 col-lg-7">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                        <h6 class="m-0 font-weight-bold text-primary">Current Position & Route</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-area" style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
-                                            <div class="text-center">
-                                                <i class="bi bi-map" style="font-size: 3rem;"></i>
-                                                <p class="mt-2">Interactive Map Placeholder</p>
-                                                <small>Map integration would go here</small>
-                                            </div>
-                                        </div>
+                <div class="row">
+                    <!-- Safety Score Chart -->
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Safety Score Optimization</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="safetyDropdownMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="safetyDropdownMenu">
+                                        <div class="dropdown-header">Chart Options:</div>
+                                        <a class="dropdown-item" href="#">View Details</a>
+                                        <a class="dropdown-item" href="#">Export Data</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Reset View</a>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Weather Widget -->
-                            <div class="col-xl-4 col-lg-5">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Weather Conditions</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="text-center">
-                                            <i class="bi bi-cloud-sun" style="font-size: 3rem; color: #f39c12;"></i>
-                                            <h4 class="mt-2">22°C</h4>
-                                            <p>Partly Cloudy</p>
-                                            <div class="row text-center">
-                                                <div class="col-6">
-                                                    <small class="text-muted">Wind</small>
-                                                    <p class="mb-0">15 knots</p>
-                                                </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">Visibility</small>
-                                                    <p class="mb-0">10 nm</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="card-body">
+                                <div class="chart-area">
+                                    <canvas id="safetyOptimizationChart"></canvas>
+                                </div>
+                                <div class="mt-3 text-center small">
+                                    <span class="text-success"><i class="bi bi-arrow-up"></i> 8% improvement achieved</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Recent Activity -->
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Recent Alerts</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="list-group list-group-flush">
-                                            <div class="list-group-item d-flex align-items-center">
-                                                <i class="bi bi-exclamation-triangle text-warning me-3"></i>
-                                                <div>
-                                                    <h6 class="mb-1">Weather Warning</h6>
-                                                    <small class="text-muted">Storm approaching in 2 hours</small>
-                                                </div>
-                                            </div>
-                                            <div class="list-group-item d-flex align-items-center">
-                                                <i class="bi bi-info-circle text-info me-3"></i>
-                                                <div>
-                                                    <h6 class="mb-1">Route Update</h6>
-                                                    <small class="text-muted">Optimal route available</small>
-                                                </div>
-                                            </div>
-                                            <div class="list-group-item d-flex align-items-center">
-                                                <i class="bi bi-check-circle text-success me-3"></i>
-                                                <div>
-                                                    <h6 class="mb-1">System Check</h6>
-                                                    <small class="text-muted">All systems operational</small>
-                                                </div>
-                                            </div>
-                                        </div>
+                    <!-- Cost Optimization Chart -->
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Cost Optimization</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="costDropdownMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="costDropdownMenu">
+                                        <div class="dropdown-header">Chart Options:</div>
+                                        <a class="dropdown-item" href="#">View Details</a>
+                                        <a class="dropdown-item" href="#">Export Data</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Reset View</a>
                                     </div>
                                 </div>
                             </div>
+                            <div class="card-body">
+                                <div class="chart-area">
+                                    <canvas id="costOptimizationChart"></canvas>
+                                </div>
+                                <div class="mt-3 text-center small">
+                                    <span class="text-success"><i class="bi bi-arrow-down"></i> 18% cost reduction achieved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <div class="col-lg-6">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-6 mb-3">
-                                                <button class="btn btn-primary w-100">
-                                                    <i class="bi bi-map me-2"></i>Plan Route
-                                                </button>
-                                            </div>
-                                            <div class="col-6 mb-3">
-                                                <button class="btn btn-success w-100">
-                                                    <i class="bi bi-upload me-2"></i>Upload Data
-                                                </button>
-                                            </div>
-                                            <div class="col-6 mb-3">
-                                                <button class="btn btn-info w-100">
-                                                    <i class="bi bi-graph-up me-2"></i>Analytics
-                                                </button>
-                                            </div>
-                                            <div class="col-6 mb-3">
-                                                <button class="btn btn-warning w-100">
-                                                    <i class="bi bi-gear me-2"></i>Settings
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                <!-- Optimization Summary Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Optimization Results Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th>Baseline</th>
+                                                <th>Optimized</th>
+                                                <th>Improvement</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>CO2 Emissions (tons)</td>
+                                                <td>1,200</td>
+                                                <td>1,020</td>
+                                                <td class="text-success">-15%</td>
+                                                <td><span class="badge bg-success">Achieved</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Fuel Consumption (liters)</td>
+                                                <td>45,000</td>
+                                                <td>39,600</td>
+                                                <td class="text-success">-12%</td>
+                                                <td><span class="badge bg-success">Achieved</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Safety Score</td>
+                                                <td>85</td>
+                                                <td>92</td>
+                                                <td class="text-success">+8%</td>
+                                                <td><span class="badge bg-success">Achieved</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Cost ($)</td>
+                                                <td>125,000</td>
+                                                <td>102,500</td>
+                                                <td class="text-success">-18%</td>
+                                                <td><span class="badge bg-success">Achieved</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -345,7 +300,11 @@
         </main>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
     <script src="script.js"></script>
 </body>
-</html> 
+</html>
