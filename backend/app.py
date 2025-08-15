@@ -6,6 +6,7 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import os
 from functools import wraps
+import re # Imported for password validation
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -76,6 +77,15 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
+# --- Password Validation Helper ---
+def is_strong_password(password):
+    """Checks if a password meets strength requirements."""
+    if len(password) < 8: return False
+    if not re.search("[a-z]", password): return False
+    if not re.search("[A-Z]", password): return False
+    if not re.search("[0-9]", password): return False
+    if not re.search("[!@#$%^&*(),.?\":{}|<>]", password): return False
+    return True
 
 # --- User Management Endpoints ---
 
@@ -223,7 +233,7 @@ def update_profile(current_user):
 @app.route('/api/profile/password', methods=['PUT'])
 @token_required
 def change_password(current_user):
-    """Changes the current user's password."""
+    """Changes the current user's password with strength validation."""
     data = request.get_json()
     current_password = data.get('currentPassword')
     new_password = data.get('newPassword')
@@ -233,8 +243,14 @@ def change_password(current_user):
     
     # Verify the current password
     if not bcrypt.checkpw(current_password.encode('utf-8'), current_user.password.encode('utf-8')):
-        return jsonify({'error': 'Current password is incorrect'}), 401
+        return jsonify({'error': 'Current password is incorrect'}), 403
     
+    # Server-side validation for the new password strength
+    if not is_strong_password(new_password):
+        return jsonify({
+            'error': 'New password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, a number, and a special character.'
+        }), 400
+
     # Hash and save the new password
     hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     current_user.password = hashed_password

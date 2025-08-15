@@ -1,11 +1,10 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
-import { getUserProfile, getProfileStats, updateUserProfile, changeUserPassword } from './modules/api.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { getUserProfile, updateUserProfile, changeUserPassword } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
-
     await loadLayout();
 
     setupLogout();
@@ -21,32 +20,55 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function initializeProfilePage() {
     try {
-        // Fetch profile and stats data concurrently
-        const [profile, stats] = await Promise.all([
-            getUserProfile(),
-            getProfileStats()
-        ]);
+        const profile = await getUserProfile();
         populateProfileHeader(profile);
-        populateProfileStats(stats);
     } catch (error) {
-        showAlert('Could not load profile data.', 'danger');
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Could not load your profile data. Please try again later.',
+        });
     }
 
-    // Set up form submission listeners
     document.getElementById('personal-info-form').addEventListener('submit', handleUpdateInfo);
     document.getElementById('password-form').addEventListener('submit', handleChangePassword);
-
+    
     // Set up password strength checker
     const newPasswordInput = document.getElementById('new-password');
     newPasswordInput.addEventListener('input', () => {
         const strength = checkPasswordStrength(newPasswordInput.value);
         updatePasswordStrengthIndicator(strength);
     });
+
+    // **NEW:** Set up all three password visibility toggles
+    setupPasswordToggle('toggle-current-password', 'current-password');
+    setupPasswordToggle('toggle-new-password', 'new-password');
+    setupPasswordToggle('toggle-confirm-password', 'confirm-new-password');
+}
+
+/**
+ * **NEW:** A reusable function to add show/hide functionality to a password field.
+ * @param {string} toggleId The ID of the button element.
+ * @param {string} inputId The ID of the input[type=password] element.
+ */
+function setupPasswordToggle(toggleId, inputId) {
+    const toggleButton = document.getElementById(toggleId);
+    const passwordInput = document.getElementById(inputId);
+
+    if (toggleButton && passwordInput) {
+        toggleButton.addEventListener('click', () => {
+            // Check the current type of the input
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            
+            // Set the new type and icon
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            toggleButton.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+        });
+    }
 }
 
 /**
  * Fills the page header with the user's profile data and initials.
- * @param {Object} profile - The user data object from the API.
  */
 function populateProfileHeader(profile) {
     document.getElementById('profile-display-name').textContent = profile.displayName;
@@ -54,21 +76,9 @@ function populateProfileHeader(profile) {
     document.getElementById('display-name').value = profile.displayName;
     document.getElementById('username').value = profile.username;
 
-    // Create and display initials in the avatar
     const avatar = document.querySelector('.profile-avatar');
     const initials = profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
     avatar.innerHTML = `<span>${initials}</span>`;
-}
-
-/**
- * Fills the statistics cards with data.
- * @param {Object} stats - The stats object from the API.
- */
-function populateProfileStats(stats) {
-    document.querySelector('.profile-stats:nth-child(1) h5').textContent = stats.routesPlanned;
-    document.querySelector('.profile-stats:nth-child(2) h5').textContent = stats.routesOptimized;
-    document.querySelector('.profile-stats:nth-child(3) h5').textContent = stats.vesselsManaged;
-    document.querySelector('.profile-stats:nth-child(4) h5').textContent = stats.daysActive;
 }
 
 /**
@@ -78,7 +88,6 @@ async function handleUpdateInfo(event) {
     event.preventDefault();
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
-
     const displayName = document.getElementById('display-name').value.trim();
     const username = document.getElementById('username').value.trim();
 
@@ -87,14 +96,19 @@ async function handleUpdateInfo(event) {
 
     try {
         await updateUserProfile({ displayName, username });
-        showAlert('Profile updated successfully!', 'success');
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Your profile has been updated.',
+            timer: 2000,
+            showConfirmButton: false
+        });
         
-        // Refresh header and navbar with new name
         populateProfileHeader({ displayName, username });
         localStorage.setItem('nauticalflow-display-name', displayName);
         updateUserDisplayName();
     } catch (error) {
-        showAlert(error.message, 'danger');
+        Swal.fire({ icon: 'error', title: 'Update Failed', text: error.message });
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
@@ -102,7 +116,7 @@ async function handleUpdateInfo(event) {
 }
 
 /**
- * Handles the submission of the change password form.
+ * Handles the submission of the change password form with SweetAlerts.
  */
 async function handleChangePassword(event) {
     event.preventDefault();
@@ -112,19 +126,42 @@ async function handleChangePassword(event) {
 
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
-    
-    // Add validation...
+    const confirmPassword = document.getElementById('confirm-new-password').value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        Swal.fire('Incomplete', 'Please fill in all password fields.', 'warning');
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        Swal.fire('Mismatch', 'The new passwords do not match.', 'error');
+        return;
+    }
+    if (!isStrongPassword(newPassword)) {
+        Swal.fire('Weak Password', 'Your new password is not strong enough. Please follow the requirements below the input field.', 'warning');
+        return;
+    }
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Changing...';
 
     try {
         await changeUserPassword({ currentPassword, newPassword });
-        showAlert('Password changed successfully!', 'success');
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Password Changed!',
+            text: 'Your password has been updated successfully.'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'homepage.html';
+            }
+        });
+        
         form.reset();
         updatePasswordStrengthIndicator('');
+
     } catch (error) {
-        showAlert(error.message, 'danger');
+        Swal.fire({ icon: 'error', title: 'Change Failed', text: error.message });
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
@@ -132,6 +169,15 @@ async function handleChangePassword(event) {
 }
 
 // --- Password Strength Helper Functions ---
+function isStrongPassword(password) {
+    if (password.length < 8) return false;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+}
+
 function checkPasswordStrength(password) {
     let score = 0;
     if (password.length >= 8) score++;

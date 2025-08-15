@@ -30,7 +30,7 @@ async function fetchWithAuth(endpoint, options = {}) {
             window.location.href = '../index.html';
         }
         const errorData = await response.json();
-        throw new Error(errorData.message || 'An API error occurred');
+        throw new Error(errorData.error || 'An API error occurred');
     }
 
     if (response.status === 204 || response.headers.get("content-length") === "0") {
