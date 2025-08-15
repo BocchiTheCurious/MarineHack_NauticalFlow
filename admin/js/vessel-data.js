@@ -5,6 +5,7 @@ import { loadLayout } from './modules/layout.js';
 
 // Store the full list of vessels for fast client-side searching
 let allVessels = [];
+let vesselModal; // Variable to hold the modal instance
 
 // Map vessel type values to human-readable names
 const vesselTypeMap = {
@@ -16,9 +17,9 @@ const vesselTypeMap = {
     cargo: 'General Cargo'
 };
 
-document.addEventListener('DOMContentLoaded', async () => { 
+document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
-        
+
     await loadLayout();
 
     // Standard initializations
@@ -35,6 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Main function to set up the vessel data page.
  */
 async function initializeVesselDataPage() {
+    // Initialize the Bootstrap modal
+    vesselModal = new bootstrap.Modal(document.getElementById('vesselModal'));
+    
     try {
         allVessels = await getVessels();
         renderVesselsTable(allVessels);
@@ -43,8 +47,8 @@ async function initializeVesselDataPage() {
     }
 
     // Set up event listeners
-    document.getElementById('vesselUploadForm').addEventListener('submit', handleAddVessel);
-    document.querySelector('.form-control[placeholder="Search vessels..."]').addEventListener('input', handleSearch);
+    document.getElementById('vesselForm').addEventListener('submit', handleAddVessel);
+    document.getElementById('vessel-search-input').addEventListener('input', handleSearch);
 }
 
 /**
@@ -56,7 +60,7 @@ function renderVesselsTable(vessels) {
     tableBody.innerHTML = ''; // Clear previous content
 
     if (vessels.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No vessels found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No vessels found. Click "Add Vessel" to begin.</td></tr>';
         return;
     }
 
@@ -64,7 +68,7 @@ function renderVesselsTable(vessels) {
         const row = document.createElement('tr');
         row.dataset.vesselId = vessel.id;
         row.innerHTML = `
-            <td>${vessel.id}</td>
+            <td>V${String(vessel.id).padStart(3, '0')}</td>
             <td>${vessel.name}</td>
             <td>${vesselTypeMap[vessel.type] || 'Unknown'}</td>
             <td>${vessel.maxSpeed}</td>
@@ -83,12 +87,12 @@ function renderVesselsTable(vessels) {
 }
 
 /**
- * Handles form submission for adding a new vessel.
+ * Handles form submission for adding a new vessel from the modal.
  */
 async function handleAddVessel(event) {
     event.preventDefault();
     const form = event.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitBtn = document.querySelector('#vesselModal .modal-footer button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
 
     const newVessel = {
@@ -98,19 +102,19 @@ async function handleAddVessel(event) {
         fuelConsumption: parseFloat(document.getElementById('fuelConsumption').value)
     };
 
-    // Validation
     if (!newVessel.name || !newVessel.type || isNaN(newVessel.maxSpeed) || isNaN(newVessel.fuelConsumption)) {
         showAlert('Please fill in all fields with valid data.', 'warning');
         return;
     }
     
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
     try {
         allVessels = await addVessel(newVessel);
         renderVesselsTable(allVessels);
         showAlert('Vessel added successfully!', 'success');
+        vesselModal.hide(); // Hide the modal on success
         form.reset();
     } catch (error) {
         showAlert('Failed to add vessel.', 'danger');

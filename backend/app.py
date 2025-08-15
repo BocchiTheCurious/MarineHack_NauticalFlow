@@ -187,6 +187,74 @@ def delete_vessel(current_user, vessel_id):
     db.session.commit()
     return jsonify({'message': 'Vessel deleted successfully'})
 
+# --- Profile Management Endpoints ---
+
+@app.route('/api/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    """Returns the current logged-in user's profile information."""
+    return jsonify({
+        'displayName': current_user.display_name,
+        'username': current_user.username
+    })
+
+@app.route('/api/profile', methods=['PUT'])
+@token_required
+def update_profile(current_user):
+    """Updates the current user's display name and username."""
+    data = request.get_json()
+    new_display_name = data.get('displayName')
+    new_username = data.get('username')
+
+    # Basic validation
+    if not new_display_name or not new_username:
+        return jsonify({'error': 'Display name and username are required'}), 400
+
+    # Check if the new username is already taken by another user
+    if new_username != current_user.username and User.query.filter_by(username=new_username).first():
+        return jsonify({'error': 'Username already exists'}), 409
+    
+    current_user.display_name = new_display_name
+    current_user.username = new_username
+    db.session.commit()
+
+    return jsonify({'message': 'Profile updated successfully'})
+
+@app.route('/api/profile/password', methods=['PUT'])
+@token_required
+def change_password(current_user):
+    """Changes the current user's password."""
+    data = request.get_json()
+    current_password = data.get('currentPassword')
+    new_password = data.get('newPassword')
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'All password fields are required'}), 400
+    
+    # Verify the current password
+    if not bcrypt.checkpw(current_password.encode('utf-8'), current_user.password.encode('utf-8')):
+        return jsonify({'error': 'Current password is incorrect'}), 401
+    
+    # Hash and save the new password
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    current_user.password = hashed_password
+    db.session.commit()
+
+    return jsonify({'message': 'Password changed successfully'})
+
+
+@app.route('/api/profile/stats', methods=['GET'])
+@token_required
+def get_profile_stats(current_user):
+    """Returns mock statistics for the profile page."""
+    # In a real app, you would calculate these values from the database
+    stats = {
+        'routesPlanned': Port.query.count() * 5, # Example calculation
+        'routesOptimized': Vessel.query.count() * 2, # Example calculation
+        'vesselsManaged': Vessel.query.count(),
+        'daysActive': (datetime.utcnow().date() - datetime(2025, 7, 15).date()).days
+    }
+    return jsonify(stats)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

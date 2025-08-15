@@ -25,60 +25,20 @@
                     </h1>
                 </div>
 
-                <!-- Port Upload Section -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="card shadow">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="bi bi-cloud-upload me-2"></i>Port Upload
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <form id="portUploadForm">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="portName" class="form-label">Port Name</label>
-                                            <input type="text" class="form-control" id="portName" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="country" class="form-label">Country</label>
-                                            <input type="text" class="form-control" id="country" required>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="latitude" class="form-label">Latitude</label>
-                                            <input type="number" class="form-control" id="latitude" step="0.000001" placeholder="e.g., 3.139003" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="longitude" class="form-label">Longitude</label>
-                                            <input type="number" class="form-control" id="longitude" step="0.000001" placeholder="e.g., 101.686855" required>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-upload me-1"></i>Upload Port
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Port Data Table -->
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
                         <div class="d-flex gap-2">
-                            <input type="text" class="form-control form-control-sm" placeholder="Search ports..." style="width: 200px;">
-                            <button class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-search"></i>
+                            <input type="text" id="port-search-input" class="form-control form-control-sm" placeholder="Search ports..." style="width: 200px;">
+                            <button class="btn btn-sm btn-outline-primary" id="add-port-btn" data-bs-toggle="modal" data-bs-target="#portModal">
+                                <i class="bi bi-plus-circle me-1"></i>Add Port
                             </button>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered" id="port-data-table" width="100%" cellspacing="0">
+                            <table class="table table-hover" id="port-data-table" width="100%" cellspacing="0">
                                 <thead>
                                     <tr>
                                         <th>Port ID</th>
@@ -89,85 +49,47 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
+                                <!-- This tbody will be populated by JavaScript -->
                                 <tbody>
-                                    <tr>
-                                        <td>P001</td>
-                                        <td>Port Klang</td>
-                                        <td>Malaysia</td>
-                                        <td>3.139003</td>
-                                        <td>101.686855</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>P002</td>
-                                        <td>Port of Singapore</td>
-                                        <td>Singapore</td>
-                                        <td>1.290270</td>
-                                        <td>103.851959</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>P003</td>
-                                        <td>Port of Bangkok</td>
-                                        <td>Thailand</td>
-                                        <td>13.756331</td>
-                                        <td>100.501765</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>P004</td>
-                                        <td>Port of Jakarta</td>
-                                        <td>Indonesia</td>
-                                        <td>-6.208763</td>
-                                        <td>106.845599</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
+                                    <!-- Static data removed -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Upload Port Modal -->
-                <div class="modal fade" id="uploadPortModal" tabindex="-1" aria-labelledby="uploadPortModalLabel" aria-hidden="true">
+                <!-- Add/Edit Port Modal -->
+                <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="uploadPortModalLabel">Upload New Port</h5>
+                                <h5 class="modal-title" id="portModalLabel">Add New Port</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <form id="modalPortForm">
+                                <form id="portForm">
                                     <div class="mb-3">
-                                        <label for="modalPortName" class="form-label">Port Name</label>
-                                        <input type="text" class="form-control" id="modalPortName" required>
+                                        <label for="portName" class="form-label">Port Name</label>
+                                        <input type="text" class="form-control" id="portName" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="modalCountry" class="form-label">Country</label>
-                                        <input type="text" class="form-control" id="modalCountry" required>
+                                        <label for="country" class="form-label">Country</label>
+                                        <input type="text" class="form-control" id="country" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="modalLatitude" class="form-label">Latitude</label>
-                                        <input type="number" class="form-control" id="modalLatitude" step="0.000001" placeholder="e.g., 3.139003" required>
+                                        <label for="latitude" class="form-label">Latitude</label>
+                                        <input type="number" class="form-control" id="latitude" step="0.000001" placeholder="e.g., 5.9804" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="modalLongitude" class="form-label">Longitude</label>
-                                        <input type="number" class="form-control" id="modalLongitude" step="0.000001" placeholder="e.g., 101.686855" required>
+                                        <label for="longitude" class="form-label">Longitude</label>
+                                        <input type="number" class="form-control" id="longitude" step="0.000001" placeholder="e.g., 116.0735" required>
                                     </div>
                                 </form>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" form="modalPortForm" class="btn btn-primary">
-                                    <i class="bi bi-upload me-1"></i>Upload Port
+                                <button type="submit" form="portForm" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>Save Port
                                 </button>
                             </div>
                         </div>

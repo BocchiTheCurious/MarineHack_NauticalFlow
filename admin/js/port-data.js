@@ -3,12 +3,13 @@ import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAl
 import { getPorts, addPort, deletePort } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
-// Store the full list of ports to enable fast client-side searching
+// Store the full list of ports for fast client-side searching
 let allPorts = [];
+let portModal; // Variable to hold the modal instance
 
-document.addEventListener('DOMContentLoaded', async () => { 
+document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
-         
+
     await loadLayout();
 
     // Standard initializations
@@ -25,7 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Main function to set up the port data page.
  */
 async function initializePortDataPage() {
-    // Fetch initial data and render the table
+    // Initialize the Bootstrap modal
+    portModal = new bootstrap.Modal(document.getElementById('portModal'));
+    
     try {
         allPorts = await getPorts();
         renderPortsTable(allPorts);
@@ -34,8 +37,8 @@ async function initializePortDataPage() {
     }
 
     // Set up event listeners
-    document.getElementById('portUploadForm').addEventListener('submit', handleAddPort);
-    document.querySelector('.form-control[placeholder="Search ports..."]').addEventListener('input', handleSearch);
+    document.getElementById('portForm').addEventListener('submit', handleAddPort);
+    document.getElementById('port-search-input').addEventListener('input', handleSearch);
 }
 
 /**
@@ -47,7 +50,7 @@ function renderPortsTable(ports) {
     tableBody.innerHTML = ''; // Clear previous content
 
     if (ports.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No ports found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No ports found. Click "Add Port" to begin.</td></tr>';
         return;
     }
 
@@ -55,11 +58,11 @@ function renderPortsTable(ports) {
         const row = document.createElement('tr');
         row.dataset.portId = port.id; // Store ID for easy access
         row.innerHTML = `
-            <td>${port.id}</td>
+            <td>P${String(port.id).padStart(3, '0')}</td>
             <td>${port.name}</td>
             <td>${port.country}</td>
-            <td>${port.latitude}</td>
-            <td>${port.longitude}</td>
+            <td>${port.latitude.toFixed(4)}</td>
+            <td>${port.longitude.toFixed(4)}</td>
             <td>
                 <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port">
                     <i class="bi bi-trash"></i>
@@ -74,12 +77,12 @@ function renderPortsTable(ports) {
 }
 
 /**
- * Handles form submission for adding a new port.
+ * Handles form submission for adding a new port from the modal.
  */
 async function handleAddPort(event) {
     event.preventDefault();
     const form = event.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitBtn = document.querySelector('#portModal .modal-footer button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
 
     const newPort = {
@@ -89,20 +92,20 @@ async function handleAddPort(event) {
         longitude: parseFloat(document.getElementById('longitude').value)
     };
 
-    // Basic Validation
     if (!newPort.name || !newPort.country || isNaN(newPort.latitude) || isNaN(newPort.longitude)) {
         showAlert('Please fill in all fields with valid data.', 'warning');
         return;
     }
     
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
     try {
         allPorts = await addPort(newPort);
         renderPortsTable(allPorts);
         showAlert('Port added successfully!', 'success');
-        form.reset(); // Clear the form
+        portModal.hide(); // Hide the modal on success
+        form.reset();
     } catch (error) {
         showAlert('Failed to add port.', 'danger');
     } finally {

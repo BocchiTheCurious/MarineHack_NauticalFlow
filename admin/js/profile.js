@@ -1,22 +1,18 @@
-// js/profile.js
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
-import { getUserProfile, updateUserProfile, changeUserPassword } from './modules/api.js';
+import { getUserProfile, getProfileStats, updateUserProfile, changeUserPassword } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
-document.addEventListener('DOMContentLoaded', async () => { 
+document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
-         
+
     await loadLayout();
 
-
-    // Initialize common UI components from utils
     setupLogout();
     initializeTooltips();
     highlightCurrentPage();
     updateUserDisplayName();
 
-    // Run the specific logic for the profile page
     initializeProfilePage();
 });
 
@@ -24,20 +20,21 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Sets up all functionality for the profile page.
  */
 async function initializeProfilePage() {
-    // Fetch and display user data
     try {
-        const profile = await getUserProfile();
-        populateProfileData(profile);
+        // Fetch profile and stats data concurrently
+        const [profile, stats] = await Promise.all([
+            getUserProfile(),
+            getProfileStats()
+        ]);
+        populateProfileHeader(profile);
+        populateProfileStats(stats);
     } catch (error) {
         showAlert('Could not load profile data.', 'danger');
     }
 
     // Set up form submission listeners
-    const personalInfoForm = document.getElementById('personal-info-form');
-    personalInfoForm.addEventListener('submit', handleUpdateInfo);
-
-    const passwordForm = document.getElementById('password-form');
-    passwordForm.addEventListener('submit', handleChangePassword);
+    document.getElementById('personal-info-form').addEventListener('submit', handleUpdateInfo);
+    document.getElementById('password-form').addEventListener('submit', handleChangePassword);
 
     // Set up password strength checker
     const newPasswordInput = document.getElementById('new-password');
@@ -48,14 +45,30 @@ async function initializeProfilePage() {
 }
 
 /**
- * Fills the page with the user's profile data.
+ * Fills the page header with the user's profile data and initials.
  * @param {Object} profile - The user data object from the API.
  */
-function populateProfileData(profile) {
+function populateProfileHeader(profile) {
     document.getElementById('profile-display-name').textContent = profile.displayName;
     document.getElementById('profile-username').textContent = `@${profile.username}`;
     document.getElementById('display-name').value = profile.displayName;
     document.getElementById('username').value = profile.username;
+
+    // Create and display initials in the avatar
+    const avatar = document.querySelector('.profile-avatar');
+    const initials = profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+    avatar.innerHTML = `<span>${initials}</span>`;
+}
+
+/**
+ * Fills the statistics cards with data.
+ * @param {Object} stats - The stats object from the API.
+ */
+function populateProfileStats(stats) {
+    document.querySelector('.profile-stats:nth-child(1) h5').textContent = stats.routesPlanned;
+    document.querySelector('.profile-stats:nth-child(2) h5').textContent = stats.routesOptimized;
+    document.querySelector('.profile-stats:nth-child(3) h5').textContent = stats.vesselsManaged;
+    document.querySelector('.profile-stats:nth-child(4) h5').textContent = stats.daysActive;
 }
 
 /**
@@ -69,20 +82,17 @@ async function handleUpdateInfo(event) {
     const displayName = document.getElementById('display-name').value.trim();
     const username = document.getElementById('username').value.trim();
 
-    // Basic validation
-    if (displayName.length < 2 || username.length < 3) {
-        showAlert('Display name and username must be valid.', 'warning');
-        return;
-    }
-
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
 
     try {
-        const updatedProfile = await updateUserProfile({ displayName, username });
-        populateProfileData(updatedProfile); // Refresh UI with new data
-        updateUserDisplayName(); // Update navbar as well
+        await updateUserProfile({ displayName, username });
         showAlert('Profile updated successfully!', 'success');
+        
+        // Refresh header and navbar with new name
+        populateProfileHeader({ displayName, username });
+        localStorage.setItem('nauticalflow-display-name', displayName);
+        updateUserDisplayName();
     } catch (error) {
         showAlert(error.message, 'danger');
     } finally {
@@ -96,27 +106,23 @@ async function handleUpdateInfo(event) {
  */
 async function handleChangePassword(event) {
     event.preventDefault();
-    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
 
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-new-password').value;
-
-    // Validation
-    if (!currentPassword || newPassword.length < 8 || newPassword !== confirmPassword) {
-        showAlert('Please fill all fields correctly. New password must be at least 8 characters and match the confirmation.', 'warning');
-        return;
-    }
+    
+    // Add validation...
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Changing...';
 
     try {
-        await changeUserPassword(currentPassword, newPassword);
+        await changeUserPassword({ currentPassword, newPassword });
         showAlert('Password changed successfully!', 'success');
-        event.target.reset(); // Clear the form
-        updatePasswordStrengthIndicator(''); // Reset strength bar
+        form.reset();
+        updatePasswordStrengthIndicator('');
     } catch (error) {
         showAlert(error.message, 'danger');
     } finally {
@@ -125,9 +131,7 @@ async function handleChangePassword(event) {
     }
 }
 
-
 // --- Password Strength Helper Functions ---
-
 function checkPasswordStrength(password) {
     let score = 0;
     if (password.length >= 8) score++;
@@ -143,7 +147,7 @@ function checkPasswordStrength(password) {
 
 function updatePasswordStrengthIndicator(strength) {
     const strengthBar = document.getElementById('password-strength');
-    strengthBar.className = 'password-strength'; // Reset classes
+    strengthBar.className = 'password-strength';
     if (strength) {
         strengthBar.classList.add(`strength-${strength}`);
     }
