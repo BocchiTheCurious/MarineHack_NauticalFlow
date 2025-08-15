@@ -1,6 +1,12 @@
 // js/modules/utils.js
+
+/**
+ * Displays a dismissible alert message at the top of the main content area.
+ * @param {string} message - The message to display.
+ * @param {string} type - The alert type ('success', 'warning', 'danger', 'info').
+ */
 export function showAlert(message, type = 'info') {
-    const container = document.querySelector('main'); // Target the main content area
+    const container = document.querySelector('main');
     if (!container) return;
 
     const alertWrapper = document.createElement('div');
@@ -21,6 +27,20 @@ export function showAlert(message, type = 'info') {
     }, 5000);
 }
 
+/**
+ * Formats an ISO date string into a more readable local format.
+ * @param {string} dateString - The ISO date string.
+ * @returns {string} - The formatted date and time.
+ */
+export function formatDate(dateString) { // <-- THIS IS THE MISSING FUNCTION
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Initializes all Bootstrap tooltips on the page.
+ */
 export function initializeTooltips() {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -28,6 +48,9 @@ export function initializeTooltips() {
     });
 }
 
+/**
+ * Highlights the active page in the sidebar navigation.
+ */
 export function highlightCurrentPage() {
     const currentPage = window.location.pathname.split('/').pop();
     document.querySelectorAll('.sidebar .nav-link').forEach(link => {
@@ -38,7 +61,9 @@ export function highlightCurrentPage() {
     });
 }
 
-// New function to update the navbar display name
+/**
+ * Updates the user's display name in the navbar.
+ */
 export function updateUserDisplayName() {
     const displayNameElement = document.getElementById('user-display-name');
     const storedName = localStorage.getItem('nauticalflow-display-name');

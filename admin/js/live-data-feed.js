@@ -1,11 +1,14 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { loadLayout } from './modules/layout.js';
 
 // A variable to hold our interval, so we can stop it when the user leaves the page
 let liveFeedInterval;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+
+    await loadLayout();
 
     // Initialize common UI components
     setupLogout();

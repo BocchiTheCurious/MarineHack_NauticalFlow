@@ -1,9 +1,12 @@
 // js/dashboard.js
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { loadLayout } from './modules/layout.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+
+    await loadLayout();
 
     // Initialize common UI components
     setupLogout();

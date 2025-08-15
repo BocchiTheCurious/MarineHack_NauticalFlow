@@ -2,9 +2,13 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
 import { getUserProfile, updateUserProfile, changeUserPassword } from './modules/api.js';
+import { loadLayout } from './modules/layout.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+         
+    await loadLayout();
+
 
     // Initialize common UI components from utils
     setupLogout();

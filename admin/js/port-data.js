@@ -1,12 +1,15 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
 import { getPorts, addPort, deletePort } from './modules/api.js';
+import { loadLayout } from './modules/layout.js';
 
 // Store the full list of ports to enable fast client-side searching
 let allPorts = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+         
+    await loadLayout();
 
     // Standard initializations
     setupLogout();

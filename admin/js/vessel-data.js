@@ -1,6 +1,7 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
 import { getVessels, addVessel, deleteVessel } from './modules/api.js';
+import { loadLayout } from './modules/layout.js';
 
 // Store the full list of vessels for fast client-side searching
 let allVessels = [];
@@ -15,8 +16,10 @@ const vesselTypeMap = {
     cargo: 'General Cargo'
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+        
+    await loadLayout();
 
     // Standard initializations
     setupLogout();

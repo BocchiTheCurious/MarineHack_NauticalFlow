@@ -1,13 +1,16 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate } from './modules/utils.js';
 import { runOptimization, getSavedOptimizations, saveOptimizationResult, deleteOptimizationResult } from './modules/api.js';
+import { loadLayout } from './modules/layout.js';
 
 // Module-level variables to hold map and layer instances
 let map;
 const routeLayers = {};
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { 
     if (!checkAuth()) return;
+
+     await loadLayout();
 
     // Standard initializations
     setupLogout();
