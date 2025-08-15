@@ -119,11 +119,11 @@
                                 <div class="row text-center">
                                     <div class="col-6">
                                         <h6 class="text-muted">Temperature</h6>
-                                        <p class="mb-0">28°C</p>
+                                        <p class="mb-0" id="weather-temp">28°C</p>
                                     </div>
                                     <div class="col-6">
                                         <h6 class="text-muted">Wind Speed</h6>
-                                        <p class="mb-0">15 knots</p>
+                                        <p class="mb-0" id="wind-speed">15 knots</p>
                                     </div>
                                 </div>
                                 <div class="row text-center mt-3">
@@ -162,11 +162,11 @@
                                 <div class="row text-center">
                                     <div class="col-6">
                                         <h6 class="text-muted">Significant Wave Height</h6>
-                                        <p class="mb-0 text-primary">1.2m</p>
+                                        <p class="mb-0 text-primary" id="wave-height">1.2m</p>
                                     </div>
                                     <div class="col-6">
                                         <h6 class="text-muted">Wave Period</h6>
-                                        <p class="mb-0 text-info">8.5s</p>
+                                        <p class="mb-0 text-info" id="wave-period">8.5s</p>
                                     </div>
                                 </div>
                                 <div class="row text-center mt-3">
@@ -205,11 +205,11 @@
                                 <div class="row text-center">
                                     <div class="col-6">
                                         <h6 class="text-muted">Current Speed</h6>
-                                        <p class="mb-0 text-primary">1.2 knots</p>
+                                        <p class="mb-0 text-primary" id="current-speed">1.2 knots</p>
                                     </div>
                                     <div class="col-6">
                                         <h6 class="text-muted">Direction</h6>
-                                        <p class="mb-0 text-info">SE</p>
+                                        <p class="mb-0 text-info" id="current-direction">SE</p>
                                     </div>
                                 </div>
                                 <div class="row text-center mt-3">
@@ -326,6 +326,6 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="script.js"></script>
+    <script type="module" src="js/live-data-feed.js"></script>
 </body>
 </html>
