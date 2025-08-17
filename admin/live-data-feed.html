@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Port Weather - NauticalFlow</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -104,3 +105,331 @@
     <script type="module" src="js/live-data-feed.js"></script>
 </body>
 </html>
+=======
+    <title>Live Data Feed - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold" href="homepage.html">
+                <i class="bi bi-water me-2"></i>NauticalFlow
+            </a>
+
+            <!-- Right side navigation items -->
+            <div class="navbar-nav ms-auto">
+                <!-- User Profile -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span>Admin</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="../index.html" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar and Main Content -->
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" id="sidebar">
+            <div class="position-sticky pt-5">
+                <ul class="nav flex-column">
+                    <!-- Main Features -->
+                    <li class="nav-item">
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                            <span>Main Features</span>
+                        </h6>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="homepage.html">
+                            <i class="bi bi-house me-2"></i>
+                            Dashboard Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="optimized-route-planner.html">
+                            <i class="bi bi-gear me-2"></i>
+                            Optimized Route Planner
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="live-data-feed.html">
+                            <i class="bi bi-activity me-2"></i>
+                            Live Data Feed
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="marine-zones.html">
+                            <i class="bi bi-map me-2"></i>
+                            Marine Zones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="vessel-data.html">
+                            <i class="bi bi-database me-2"></i>
+                            Vessel Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="port-data.html">
+                            <i class="bi bi-building me-2"></i>
+                            Port Data
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <!-- Live Data Feed Content -->
+            <div id="live-data-feed-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Live Data Feed</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Export Report</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Conditions -->
+                <div class="row">
+                    <!-- Current Weather -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="bi bi-cloud-sun me-2"></i>Current Weather
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <i class="bi bi-cloud-sun display-4 text-warning"></i>
+                                    <h4 class="mt-2">Partly Cloudy</h4>
+                                    <p class="text-muted">Malaysian Waters</p>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Temperature</h6>
+                                        <p class="mb-0">28°C</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Wind Speed</h6>
+                                        <p class="mb-0">15 knots</p>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Visibility</h6>
+                                        <p class="mb-0">10 km</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Humidity</h6>
+                                        <p class="mb-0">75%</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="alert alert-info alert-sm">
+                                        <small><i class="bi bi-info-circle me-1"></i>Light winds, good visibility</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wave Height Data -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="bi bi-water me-2"></i>Wave Height Data
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <i class="bi bi-water display-4 text-info"></i>
+                                    <h4 class="mt-2">Wave Conditions</h4>
+                                    <p class="text-muted">Current Readings</p>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Significant Wave Height</h6>
+                                        <p class="mb-0 text-primary">1.2m</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Wave Period</h6>
+                                        <p class="mb-0 text-info">8.5s</p>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Wave Direction</h6>
+                                        <p class="mb-0 text-success">NE</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Wave Energy</h6>
+                                        <p class="mb-0 text-warning">Low</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="alert alert-success alert-sm">
+                                        <small><i class="bi bi-check-circle me-1"></i>Calm sea conditions</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sea Currents -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Sea Currents
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <i class="bi bi-arrow-repeat display-4 text-success"></i>
+                                    <h4 class="mt-2">Current Patterns</h4>
+                                    <p class="text-muted">Surface Currents</p>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Current Speed</h6>
+                                        <p class="mb-0 text-primary">1.2 knots</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Direction</h6>
+                                        <p class="mb-0 text-info">SE</p>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Depth</h6>
+                                        <p class="mb-0 text-success">Surface</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6 class="text-muted">Temperature</h6>
+                                        <p class="mb-0 text-warning">26°C</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="alert alert-info alert-sm">
+                                        <small><i class="bi bi-info-circle me-1"></i>Moderate current flow</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typhoon Alerts -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Typhoon Alerts & Warnings
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="alert alert-warning">
+                                            <h6><i class="bi bi-exclamation-triangle me-2"></i>Tropical Storm Warning</h6>
+                                            <p class="mb-1"><strong>Location:</strong> South China Sea, 200nm NE of Malaysia</p>
+                                            <p class="mb-1"><strong>Wind Speed:</strong> 45 knots</p>
+                                            <p class="mb-1"><strong>Direction:</strong> Moving NW at 12 knots</p>
+                                            <p class="mb-0"><strong>Expected Impact:</strong> High waves, strong winds within 48 hours</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <h6><i class="bi bi-info-circle me-2"></i>Weather Advisory</h6>
+                                            <p class="mb-1"><strong>Area:</strong> Malaysian Waters</p>
+                                            <p class="mb-1"><strong>Valid Until:</strong> 24 hours from now</p>
+                                            <p class="mb-1"><strong>Conditions:</strong> Increasing wave heights, gusty winds</p>
+                                            <p class="mb-0"><strong>Recommendation:</strong> Exercise caution, monitor updates</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="alert alert-success">
+                                            <h6><i class="bi bi-check-circle me-2"></i>Current Status</h6>
+                                            <p class="mb-0">No immediate typhoon threats to Malaysian waters. Monitoring tropical disturbances in the region.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Forecast -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="bi bi-calendar3 me-2"></i>48-Hour Weather Forecast
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 text-center">
+                                        <h6 class="text-muted">Today</h6>
+                                        <i class="bi bi-cloud-sun display-6 text-warning"></i>
+                                        <p class="mb-1"><strong>28°C</strong></p>
+                                        <p class="mb-1">Wind: 15 knots</p>
+                                        <p class="mb-0">Waves: 1.2m</p>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <h6 class="text-muted">Tonight</h6>
+                                        <i class="bi bi-cloud-moon display-6 text-secondary"></i>
+                                        <p class="mb-1"><strong>25°C</strong></p>
+                                        <p class="mb-1">Wind: 12 knots</p>
+                                        <p class="mb-0">Waves: 1.0m</p>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <h6 class="text-muted">Tomorrow</h6>
+                                        <i class="bi bi-cloud-rain display-6 text-info"></i>
+                                        <p class="mb-1"><strong>26°C</strong></p>
+                                        <p class="mb-1">Wind: 18 knots</p>
+                                        <p class="mb-0">Waves: 1.5m</p>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <h6 class="text-muted">Tomorrow Night</h6>
+                                        <i class="bi bi-cloud display-6 text-muted"></i>
+                                        <p class="mb-1"><strong>24°C</strong></p>
+                                        <p class="mb-1">Wind: 20 knots</p>
+                                        <p class="mb-0">Waves: 1.8m</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
+>>>>>>> 9d715c893e97bd00cc88f5d3bec7f474e89ecb62
