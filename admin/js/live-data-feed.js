@@ -230,7 +230,7 @@ function getWeatherInfoFromCode(code) {
         45: { icon: "bi-cloud-fog2-fill", color: "text-muted", description: "Fog" },
         61: { icon: "bi-cloud-rain-fill", color: "text-primary", description: "Light rain" },
         63: { icon: "bi-cloud-rain-heavy-fill", color: "text-primary", description: "Moderate rain" },
-        80: { icon: "bi-cloud-showers-heavy-fill", color: "text-info", description: "Rain showers" },
+        80: { icon: "bi-cloud-drizzle-fill", color: "text-info", description: "Rain showers" },
         95: { icon: "bi-cloud-lightning-rain-fill", color: "text-danger", description: "Thunderstorm" }
     };
     return weatherMap[code] || { icon: "bi-question-circle", color: "", description: "Unknown" };
