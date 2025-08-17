@@ -1,160 +1,106 @@
-<!-- Live Data Feed Content -->
-<div id="live-feed-content">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Live Data Feed</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-primary">Refresh</button>
-                <button type="button" class="btn btn-sm btn-outline-success">Auto-refresh</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Weather - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+    <div id="sidebar-placeholder"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div id="live-data-feed-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="bi bi-brightness-high-fill me-2"></i>Port Weather</h1>
+                </div>
+
+              <div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <label for="port-selector" class="form-label fw-bold">Select Port:</label>
+            </div>
+            <div class="col-md-5">
+                <select id="port-selector" class="form-select">
+                    <option>Loading ports...</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" id="refresh-weather-btn">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="col-md-3 text-md-end">
+               <small class="text-muted">
+                Weather data from 
+                <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> & 
+                <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank">Marine API</a>
+            </small>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Real-time Status -->
-    <div class="row mb-4 justify-content-center">
-        <div class="col-md-5 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                System Status</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">Online</div>
+                <div id="loading-overlay" class="d-none justify-content-center align-items-center my-5">
+                    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+                    <strong class="ms-3">Fetching live weather data...</strong>
+                </div>
+
+                <div id="weather-data-row" class="row d-none">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-thermometer-half me-2"></i>Current Weather</h6></div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <i id="weather-icon" class="display-4"></i> 
+                                    <h4 id="weather-description" class="mt-2">---</h4> 
+                                    <p id="location-name" class="text-muted">---</p>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-6"><h6 class="text-muted">Temperature</h6><p class="mb-0 h5" id="weather-temp">-- °C</p></div>
+                                    <div class="col-6"><h6 class="text-muted">Wind Speed</h6><p class="mb-0 h5" id="wind-speed">-- km/h</p></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <i class="bi bi-wifi fa-2x text-success"></i>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-tsunami me-2"></i>Wave Data</h6></div>
+                            <div class="card-body">
+                                <div class="text-center mb-3"><i class="bi bi-water display-4 text-info"></i><h4 class="mt-2">Wave Conditions</h4></div>
+                                <div class="row text-center">
+                                    <div class="col-6"><h6 class="text-muted">Wave Height</h6><p class="mb-0 h5" id="wave-height">-- m</p></div>
+                                    <div class="col-6"><h6 class="text-muted">Wave Period</h6><p class="mb-0 h5" id="wave-period">-- s</p></div>
+                                </div>
+                                <div class="row text-center mt-3">
+                                    <div class="col-12"><h6 class="text-muted">Wave Direction</h6><p class="mb-0 h5" id="wave-direction">-- °</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                   
+                </div>
+
+                <div id="forecast-row" class="row d-none">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-calendar3 me-2"></i>48-Hour Weather Forecast</h6></div>
+                            <div class="card-body"><div id="forecast-container" class="row"></div></div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-5 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Last Update</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">2 sec ago</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Live Data Streams -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Navigation Data</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Latitude</h6>
-                                <h4 class="text-primary">40° 42' 51" N</h4>
-                                <small class="text-success">+0.001'</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Longitude</h6>
-                                <h4 class="text-primary">74° 00' 21" W</h4>
-                                <small class="text-success">+0.002'</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Heading</h6>
-                                <h4 class="text-info">185°</h4>
-                                <small class="text-info">Magnetic</small>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted">Speed</h6>
-                                <h4 class="text-success">12.5 knots</h4>
-                                <small class="text-success">+0.2</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Environmental Data -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Environmental Monitoring</h6>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary">Temperature</button>
-                        <button type="button" class="btn btn-outline-secondary">Humidity</button>
-                        <button type="button" class="btn btn-outline-secondary">Pressure</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-area" style="height: 300px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); display: flex; align-items: center; justify-content: center; color: white;">
-                        <div class="text-center">
-                            <i class="bi bi-thermometer-half" style="font-size: 3rem;"></i>
-                            <p class="mt-2">Environmental Data Chart</p>
-                            <small>Real-time environmental monitoring would go here</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Weather Conditions -->
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Weather Conditions</h6>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <i class="bi bi-cloud-sun" style="font-size: 3rem; color: #f39c12;"></i>
-                        <h4 class="mt-2">22°C</h4>
-                        <p class="mb-0">Partly Cloudy</p>
-                    </div>
-                    <div class="row text-center">
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Wind Speed</small>
-                            <strong>15 knots</strong>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Wind Direction</small>
-                            <strong>SE</strong>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Humidity</small>
-                            <strong>65%</strong>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Pressure</small>
-                            <strong>1013 hPa</strong>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Visibility</small>
-                            <strong>10 nm</strong>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <small class="text-muted d-block">Wave Height</small>
-                            <strong>1.2 m</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="js/live-data-feed.js"></script>
+</body>
+</html>

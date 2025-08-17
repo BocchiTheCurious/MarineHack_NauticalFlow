@@ -1,350 +1,198 @@
-<!-- Upload Vessel Data Content -->
-<div id="vessel-data-content">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Upload Vessel Data</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-primary">Validate Data</button>
-                <button type="button" class="btn btn-sm btn-outline-success">Process All</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cruise Ship Data - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet"> 
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+        <div id="sidebar-placeholder"></div>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="bi bi-send me-2"></i>Cruise Ship Management</h1>
             </div>
+
+            <div class="card bg-light border-info shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title text-info">
+            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>Guidance: How to Add & Manage Ship Profiles
+        </h5>
+        <p class="card-text">
+            This guide explains how to manage your fleet's performance profiles. An accurate profile, especially the <strong>Fuel Consumption Curve</strong>, is the most critical input for our route optimization algorithm.
+        </p>
+
+        <div class="mt-4">
+            <h6><i class="bi bi-bullseye me-2" aria-hidden="true"></i>Why This Data is So Important</h6>
+            <p>
+                A ship's fuel consumption increases exponentially with its speed—a small increase can cause a massive jump in fuel burn. This relationship is unique to each ship. The algorithm uses your specific curve to analyze thousands of route variations, finding the perfect balance between speed, fuel cost, and CO₂ emissions for the entire voyage.
+            </p>
+        </div>
+
+        <div class="mt-4">
+            <h6><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Choosing Your Data Entry Method</h6>
+            <p>
+                The "Add/Edit Ship" modal offers three methods for entering performance data.
+            </p>
+            <ul class="list-unstyled">
+                <li class="mt-3">
+                    <strong>Tier 1: Use a Template (Recommended Start)</strong>
+                    <p class="small text-muted mb-0">
+                        This is the easiest method. Select a pre-defined ship archetype (e.g., "Large LNG Cruise Ship") to instantly load a complete, realistic fuel curve based on industry-average data. You can then fine-tune the numbers.
+                    </p>
+                </li>
+                <li class="mt-3">
+                    <strong>Tier 2: Manual Entry</strong>
+                    <p class="small text-muted mb-0">
+                        Use this if you have specific data from a <strong>sea trial report</strong> or an onboard <strong>Ship Performance Monitoring (SPM) system</strong>. Be sure to enter the constant <strong>Hotel Load</strong> (fuel burn at zero speed) separately from the propulsion fuel.
+                    </p>
+                </li>
+                <li class="mt-3">
+                    <strong>Tier 3: Generate Curve</strong>
+                    <p class="small text-muted mb-0">
+                        A powerful tool if you don't have a curve. Enter the ship's basic specifications (Gross Tonnage, Power, Design Speed), and the system will use a physics-based model (the <strong>Propeller Law</strong>, where Power ∝ Speed³) to generate an approximate curve.
+                    </p>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="alert alert-primary mt-4 mb-0">
+            <strong><i class="bi bi-link-45deg me-2" aria-hidden="true"></i>Useful Resources</strong>
+            <p class="mb-1 mt-2">For finding cruise ship specifications needed for Tier 3, you can consult public databases:</p>
+            <ul>
+                <li><a href="https://en.wikipedia.org/wiki/List_of_largest_cruise_ships" target="_blank">Wikipedia's List of Largest Cruise Ships</a></li>
+                <li>Cruise Line Fleet Pages (e.g., <a href="https://www.royalcaribbeanpresscenter.com/fact-sheet/" target="_blank">Royal Caribbean</a>, <a href="https://www.ncl.com/cruise-ship" target="_blank">Norwegian Cruise Line</a>)</li>
+            </ul>
         </div>
     </div>
+</div>
 
-    <!-- Upload Status -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Files Uploaded</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">24</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-cloud-upload fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Processed</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">22</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pending</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">2</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Errors</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- File Upload Area -->
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Upload Vessel Data Files</h6>
-                </div>
-                <div class="card-body">
-                    <!-- Drag & Drop Upload Area -->
-                    <div class="upload-area border-2 border-dashed border-secondary rounded p-5 text-center mb-4" style="background-color: #f8f9fa;">
-                        <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #6c757d;"></i>
-                        <h5 class="mt-3">Drag & Drop Files Here</h5>
-                        <p class="text-muted">or click to browse files</p>
-                        <input type="file" class="form-control" id="fileUpload" multiple style="display: none;">
-                        <button class="btn btn-primary" onclick="document.getElementById('fileUpload').click()">
-                            <i class="bi bi-folder-plus me-2"></i>Choose Files
-                        </button>
-                    </div>
-
-                    <!-- Supported File Types -->
-                    <div class="mb-4">
-                        <h6 class="text-primary">Supported File Types:</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-file-earmark-text text-primary me-2"></i>CSV files (.csv)</li>
-                                    <li><i class="bi bi-file-earmark-excel text-success me-2"></i>Excel files (.xlsx, .xls)</li>
-                                    <li><i class="bi bi-file-earmark-text text-info me-2"></i>JSON files (.json)</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-file-earmark-text text-warning me-2"></i>XML files (.xml)</li>
-                                    <li><i class="bi bi-file-earmark-text text-secondary me-2"></i>Text files (.txt)</li>
-                                    <li><i class="bi bi-file-earmark-zip text-danger me-2"></i>ZIP archives (.zip)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Upload Progress -->
-                    <div class="mb-4">
-                        <h6 class="text-primary">Upload Progress:</h6>
-                        <div class="progress mb-3">
-                            <div class="progress-bar bg-primary" style="width: 75%"></div>
-                        </div>
-                        <small class="text-muted">3 of 4 files uploaded (75%)</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- File List -->
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Uploaded Files</h6>
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Cruise Ship Database</h6>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#shipModal">
+                        <i class="bi bi-plus-circle me-1"></i>Add Cruise Ship
+                    </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="vessel-data-table">
                             <thead>
                                 <tr>
-                                    <th>File Name</th>
-                                    <th>Type</th>
-                                    <th>Size</th>
-                                    <th>Upload Date</th>
-                                    <th>Status</th>
-                                    <th>Validation</th>
+                                    <th>Ship Name</th>
+                                    <th>Fuel Name</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>vessel_specs_2024.csv</td>
-                                    <td>CSV</td>
-                                    <td>2.4 MB</td>
-                                    <td>Dec 15, 14:30</td>
-                                    <td><span class="badge bg-success">Processed</span></td>
-                                    <td><span class="badge bg-success">Valid</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">View</button>
-                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>navigation_logs.xlsx</td>
-                                    <td>Excel</td>
-                                    <td>1.8 MB</td>
-                                    <td>Dec 15, 14:25</td>
-                                    <td><span class="badge bg-success">Processed</span></td>
-                                    <td><span class="badge bg-success">Valid</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">View</button>
-                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>engine_data.json</td>
-                                    <td>JSON</td>
-                                    <td>3.1 MB</td>
-                                    <td>Dec 15, 14:20</td>
-                                    <td><span class="badge bg-warning">Pending</span></td>
-                                    <td><span class="badge bg-warning">Review</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">View</button>
-                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>crew_manifest.xml</td>
-                                    <td>XML</td>
-                                    <td>0.9 MB</td>
-                                    <td>Dec 15, 14:15</td>
-                                    <td><span class="badge bg-warning">Pending</span></td>
-                                    <td><span class="badge bg-warning">Review</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">View</button>
-                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>safety_equipment.csv</td>
-                                    <td>CSV</td>
-                                    <td>1.2 MB</td>
-                                    <td>Dec 15, 14:10</td>
-                                    <td><span class="badge bg-success">Processed</span></td>
-                                    <td><span class="badge bg-success">Valid</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary">View</button>
-                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </td>
-                                </tr>
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Vessel Information -->
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Vessel Information</h6>
-                </div>
-                <div class="card-body">
-                    <form>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="vesselName" class="form-label">Vessel Name</label>
-                                <input type="text" class="form-control" id="vesselName" value="Ocean Explorer">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="vesselType" class="form-label">Vessel Type</label>
-                                <select class="form-select" id="vesselType">
-                                    <option selected>Cargo Ship</option>
-                                    <option>Tanker</option>
-                                    <option>Passenger Ship</option>
-                                    <option>Fishing Vessel</option>
-                                    <option>Yacht</option>
-                                </select>
-                            </div>
+            <div class="modal fade" id="shipModal" tabindex="-1" aria-labelledby="shipModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl"> <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="shipModalLabel">Add New Cruise Ship</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="imoNumber" class="form-label">IMO Number</label>
-                                <input type="text" class="form-control" id="imoNumber" value="IMO1234567">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="callSign" class="form-label">Call Sign</label>
-                                <input type="text" class="form-control" id="callSign" value="WXYZ1234">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="length" class="form-label">Length (m)</label>
-                                <input type="number" class="form-control" id="length" value="150">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="beam" class="form-label">Beam (m)</label>
-                                <input type="number" class="form-control" id="beam" value="25">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="draft" class="form-label">Draft (m)</label>
-                                <input type="number" class="form-control" id="draft" value="8.5">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="grossTonnage" class="form-label">Gross Tonnage</label>
-                                <input type="number" class="form-control" id="grossTonnage" value="8500">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Vessel Info</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+                        <div class="modal-body">
+                            <form id="shipForm" novalidate>
+                                <input type="hidden" id="shipId">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="shipName" class="form-label">Ship Name</label>
+                                        <input type="text" class="form-control" id="shipName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="fuelType" class="form-label">Fuel Name</label>
+                                        <select class="form-select" id="fuelType" required></select>
+                                    </div>
+                                </div>
+                                <hr class="my-4">
 
-    <!-- Data Export -->
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Export Processed Data</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Export Options:</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="export1" checked>
-                                <label class="form-check-label" for="export1">
-                                    Vessel specifications
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="export2" checked>
-                                <label class="form-check-label" for="export2">
-                                    Navigation logs
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="export3">
-                                <label class="form-check-label" for="export3">
-                                    Engine data (pending validation)
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="export4">
-                                <label class="form-check-label" for="export4">
-                                    Crew manifest (pending validation)
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="export5" checked>
-                                <label class="form-check-label" for="export5">
-                                    Safety equipment
-                                </label>
-                            </div>
+                                <ul class="nav nav-tabs" id="curveTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="template-tab" data-bs-toggle="tab" data-bs-target="#template-pane" type="button" role="tab">Tier 1: Use a Template</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button" role="tab">Tier 2: Manual Entry</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-pane" type="button" role="tab">Tier 3: Generate Curve</button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content pt-3" id="curveTabsContent">
+                                    <div class="tab-pane fade show active" id="template-pane" role="tabpanel">
+                                        <p class="text-muted">Select a standard ship archetype to load a credible, pre-populated fuel curve. You can fine-tune the data in the "Manual Entry" tab after loading.</p>
+                                        <select class="form-select" id="shipArchetype">
+                                            <option value="" selected>-- Choose a ship archetype --</option>
+                                            </select>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="manual-pane" role="tabpanel">
+                                        <div class="p-3 bg-light rounded border">
+                                            <div class="mb-3">
+                                                <label for="hotelLoad" class="form-label"><strong>Average Hotel Load (tons/hr)</strong></label>
+                                                <input type="number" class="form-control" id="hotelLoad" step="0.1" min="0" placeholder="e.g., 2.5">
+                                                <div class="form-text">Enter the ship's constant fuel consumption at zero speed (in port or at anchor).</div>
+                                            </div>
+                                            <hr>
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-sm"><label for="curveSpeed" class="form-label">Speed (knots)</label><input type="number" class="form-control" id="curveSpeed" step="0.1" min="0"></div>
+                                                <div class="col-sm"><label for="curveConsumption" class="form-label">Propulsion Fuel (tons/hr)</label><input type="number" class="form-control" id="curveConsumption" step="0.01" min="0"></div>
+                                                <div class="col-sm-auto"><button type="button" class="btn btn-outline-primary w-100" id="add-curve-point-btn"><i class="bi bi-plus-circle"></i> Add Point</button></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="generate-pane" role="tabpanel">
+                                        <p class="text-muted">If you don't have a curve, provide the ship's basic specs to generate a scientifically plausible approximation using the Propeller Law.</p>
+                                        <div class="row">
+                                            <div class="col-md-4"><label for="genGrossTonnage" class="form-label">Gross Tonnage (GT)</label><input type="number" class="form-control" id="genGrossTonnage"></div>
+                                            <div class="col-md-4"><label for="genTotalPower" class="form-label">Total Power (kW)</label><input type="number" class="form-control" id="genTotalPower"></div>
+                                            <div class="col-md-4"><label for="genDesignSpeed" class="form-label">Design Speed (knots)</label><input type="number" class="form-control" id="genDesignSpeed"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-secondary mt-3" id="generate-curve-btn"><i class="bi bi-calculator me-2"></i>Generate Approximate Curve</button>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="bi bi-table me-2"></i>Curve Data Points</h6>
+                                        <div class="table-responsive" style="max-height: 250px;">
+                                            <table class="table table-sm table-striped">
+                                                <thead><tr><th>Speed (knots)</th><th>Total Consumption (tons/hr)</th><th>Action</th></tr></thead>
+                                                <tbody id="fuel-curve-tbody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="bi bi-graph-up me-2"></i>Live Visualization</h6>
+                                        <canvas id="curve-chart"></canvas>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Export Format:</h6>
-                            <div class="mb-3">
-                                <select class="form-select">
-                                    <option selected>CSV</option>
-                                    <option>Excel (.xlsx)</option>
-                                    <option>JSON</option>
-                                    <option>XML</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-success w-100">
-                                <i class="bi bi-download me-2"></i>Export Data
-                            </button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="shipForm" class="btn btn-primary">Save Cruise Ship</button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
-</div> 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="js/vessel-data.js"></script>
+</body>
+</html>

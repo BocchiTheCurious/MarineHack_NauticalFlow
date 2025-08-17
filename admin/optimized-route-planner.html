@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimized Route Planner - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        .map-container {
+            height: 600px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .route-controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .route-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .priority-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .weather-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 1000;
+        }
+        
+        .alert-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            z-index: 1001;
+        }
+        
+        .environmental-gauge {
+            width: 100%;
+            height: 200px;
+            position: relative;
+        }
+        
+        .route-segment {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .route-segment:hover {
+            stroke-width: 4px;
+            opacity: 0.8;
+        }
+        
+        .route-fuel { stroke: #ff6b6b; }
+        .route-emissions { stroke: #4ecdc4; }
+        .route-time { stroke: #45b7d1; }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Table styling for better visibility */
+        .comparison-table {
+            background-color: white;
+            color: #212529;
+        }
+        
+        .comparison-table th {
+            background-color: #343a40 !important;
+            color: white !important;
+            border: 2px solid #000 !important;
+            font-weight: bold;
+        }
+        
+        .comparison-table td {
+            background-color: white !important;
+            color: #212529 !important;
+            border: 1px solid #000 !important;
+            padding: 12px 8px;
+        }
+        
+        .comparison-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .comparison-table .text-success {
+            color: #198754 !important;
+            font-weight: bold;
+        }
+        
+        .comparison-table .badge {
+            font-size: 0.875em;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+    <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-gear-wide-connected me-2"></i>
+                    Optimized Route Planner
+                </h1>
+            </div>
+
+            <!-- Optimization Control Panel -->
+            <div class="route-controls">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Departure Port</label>
+                        <select class="form-select" id="departure-port">
+                            <option value="port-klang">Port Klang, Malaysia</option>
+                            <option value="penang">Penang, Malaysia</option>
+                            <option value="johor">Johor, Malaysia</option>
+                            <option value="kuching">Kuching, Malaysia</option>
+                            <option value="kota-kinabalu">Kota Kinabalu, Malaysia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Arrival Port</label>
+                        <select class="form-select" id="arrival-port">
+                            <option value="singapore">Singapore</option>
+                            <option value="langkawi">Langkawi, Malaysia</option>
+                            <option value="batam">Batam, Indonesia</option>
+                            <option value="miri">Miri, Malaysia</option>
+                            <option value="labuan">Labuan, Malaysia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Vessel Name</label>
+                        <select class="form-select" id="vessel-name">
+                            <option value="mv-ocean-star">MV Ocean Star</option>
+                            <option value="mv-pacific-glory">MV Pacific Glory</option>
+                            <option value="mv-atlantic-queen">MV Atlantic Queen</option>
+                            <option value="mv-mediterranean">MV Mediterranean</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Priority Sliders -->
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Fuel Priority</label>
+                        <input type="range" class="form-range priority-slider" id="fuel-priority" min="0" max="100" value="33">
+                        <div class="d-flex justify-content-between">
+                            <small>Low</small>
+                            <small id="fuel-value">33%</small>
+                            <small>High</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Time Priority</label>
+                        <input type="range" class="form-range priority-slider" id="time-priority" min="0" max="100" value="33">
+                        <div class="d-flex justify-content-between">
+                            <small>Low</small>
+                            <small id="time-value">33%</small>
+                            <small>High</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Emissions Priority</label>
+                        <input type="range" class="form-range priority-slider" id="emissions-priority" min="0" max="100" value="34">
+                        <div class="d-flex justify-content-between">
+                            <small>Low</small>
+                            <small id="emissions-value">34%</small>
+                            <small>High</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <button type="button" class="btn btn-primary btn-lg" id="run-optimization">
+                            <i class="bi bi-play-circle me-2"></i>
+                            Run Optimization
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Interactive Nautical Map -->
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-map me-2"></i>Interactive Nautical Map
+                            </h6>
+                            <div class="weather-overlay">
+                                <h6 class="mb-2"><i class="bi bi-cloud-sun me-1"></i>Weather Overlay</h6>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="wind-overlay" checked>
+                                    <label class="form-check-label" for="wind-overlay">Wind</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="waves-overlay" checked>
+                                    <label class="form-check-label" for="waves-overlay">Waves</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="currents-overlay">
+                                    <label class="form-check-label" for="currents-overlay">Currents</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="nautical-map" class="map-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environmental Impact Visualization -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-leaf me-2"></i>Route Comparison Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped border comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Original Route</th>
+                                            <th>Optimized Route</th>
+                                            <th>Improvement</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><i class="bi bi-fuel-pump me-2"></i>Fuel Consumption</td>
+                                            <td>2,880 L</td>
+                                            <td class="text-success">2,450 L</td>
+                                            <td><span class="badge bg-success">-15%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-cloud me-2"></i>CO₂ Emissions</td>
+                                            <td>7.1 tons</td>
+                                            <td class="text-success">6.2 tons</td>
+                                            <td><span class="badge bg-success">-12.7%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-clock me-2"></i>Travel Time</td>
+                                            <td>20h 45m</td>
+                                            <td class="text-success">18h 30m</td>
+                                            <td><span class="badge bg-success">+2h 15m saved</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-speedometer2 me-2"></i>Average Speed</td>
+                                            <td>12.5 knots</td>
+                                            <td class="text-success">14.2 knots</td>
+                                            <td><span class="badge bg-success">+13.6%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-currency-dollar me-2"></i>Fuel Cost</td>
+                                            <td>$3,456</td>
+                                            <td class="text-success">$2,940</td>
+                                            <td><span class="badge bg-success">-$516 saved</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-exclamation-triangle me-2"></i>Weather Risk</td>
+                                            <td>Medium</td>
+                                            <td class="text-success">Low</td>
+                                            <td><span class="badge bg-success">Reduced</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-geo-alt me-2"></i>Distance</td>
+                                            <td>258 nm</td>
+                                            <td class="text-success">245 nm</td>
+                                            <td><span class="badge bg-success">-5%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><i class="bi bi-star me-2"></i>Environmental Score</td>
+                                            <td>6.8/10</td>
+                                            <td class="text-success">8.7/10</td>
+                                            <td><span class="badge bg-success">+28%</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saved Optimization Results -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-save me-2"></i>Saved Optimization Results
+                            </h6>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-saved-results">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped border comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date & Time</th>
+                                            <th>Route</th>
+                                            <th>Vessel Type</th>
+                                            <th>Fuel Saved</th>
+                                            <th>CO₂ Reduced</th>
+                                            <th>Time Saved</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="saved-results-body">
+                                        <tr>
+                                            <td>2024-01-15 14:30</td>
+                                            <td>Port Klang → Singapore</td>
+                                            <td>Container Ship</td>
+                                            <td><span class="badge bg-success">-18%</span></td>
+                                            <td><span class="badge bg-info">-14%</span></td>
+                                            <td><span class="badge bg-warning">+3h 20m</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-14 09:15</td>
+                                            <td>Penang → Langkawi</td>
+                                            <td>Bulk Carrier</td>
+                                            <td><span class="badge bg-success">-12%</span></td>
+                                            <td><span class="badge bg-info">-10%</span></td>
+                                            <td><span class="badge bg-warning">+1h 45m</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-13 16:45</td>
+                                            <td>Johor → Batam</td>
+                                            <td>Oil Tanker</td>
+                                            <td><span class="badge bg-success">-22%</span></td>
+                                            <td><span class="badge bg-info">-19%</span></td>
+                                            <td><span class="badge bg-warning">+4h 10m</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-12 11:20</td>
+                                            <td>Kuching → Miri</td>
+                                            <td>Passenger Ship</td>
+                                            <td><span class="badge bg-success">-8%</span></td>
+                                            <td><span class="badge bg-info">-7%</span></td>
+                                            <td><span class="badge bg-warning">+1h 15m</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-11 13:55</td>
+                                            <td>Kota Kinabalu → Labuan</td>
+                                            <td>Fishing Vessel</td>
+                                            <td><span class="badge bg-success">-15%</span></td>
+                                            <td><span class="badge bg-info">-13%</span></td>
+                                            <td><span class="badge bg-warning">+2h 30m</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export & Sharing Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-download me-2"></i>Export & Sharing
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button class="btn export-btn w-100 mb-2" id="export-pdf">
+                                        <i class="bi bi-file-pdf me-2"></i>Export PDF Report
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn export-btn w-100 mb-2" id="export-csv">
+                                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script type="module" src="js/optimized-route-planner.js"></script>
+    
+</body>
+</html>
