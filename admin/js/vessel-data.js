@@ -298,7 +298,7 @@ function renderShipsTable(ships) {
 }
 function populateFuelTypeDropdown(fuelTypes) {
     const select = document.getElementById('fuelType');
-    select.innerHTML = '<option value="" disabled selected>Select a Fuel Type</option>';
+    select.innerHTML = '<option value="" disabled selected>Select a Fuel Name</option>';
     fuelTypes.forEach(ft => {
         const option = document.createElement('option');
         option.value = ft.id;

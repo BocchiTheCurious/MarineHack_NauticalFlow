@@ -181,8 +181,8 @@ def get_ports(current_user):
         'id': p.id,
         'name': p.name,
         'country': p.country,
-        'latitude': p.latitude,
-        'longitude': p.longitude,
+        'latitude': f"{p.latitude:.4f}",
+        'longitude': f"{p.longitude:.4f}",
         'portCongestionIndex': str(p.port_congestion_index) # Add new field
     } for p in ports])
 

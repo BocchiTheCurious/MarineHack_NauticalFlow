@@ -189,6 +189,77 @@ export function getExchangeRate(date) {
     return fetchWithAuth(`/exchange-rate?date=${date}`);
 }
 
+// --- Live Data Feed ---
+
+/**
+ * Fetches current and hourly marine weather data from the Open-Meteo API.
+ * @param {number} latitude - The latitude for the weather forecast.
+ * @param {number} longitude - The longitude for the weather forecast.
+ * @returns {Promise<Object>} The weather data from the API.
+ */
+export async function getWeatherData(latitude, longitude) {
+    // 1. Define parameters for both APIs
+    const weatherParams = "temperature_2m,weather_code,wind_speed_10m";
+    const marineParams = "wave_height,wave_direction,wave_period";
+    
+    // Define the two different API endpoints
+    const weatherURL = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=${weatherParams},weather_code&hourly=${weatherParams}&timezone=auto&forecast_days=2`;
+    const marineURL = `https://marine-api.open-meteo.com/v1/marine?latitude=${latitude}&longitude=${longitude}&current=${marineParams}&hourly=wave_height&timezone=auto&forecast_days=2`;
+
+    try {
+        // 2. Fetch from both APIs in parallel
+        const [weatherResponse, marineResponse] = await Promise.all([
+            fetch(weatherURL),
+            fetch(marineURL)
+        ]);
+
+        // 3. Check both responses for errors
+        if (!weatherResponse.ok || !marineResponse.ok) {
+            console.error("Weather API Error:", await weatherResponse.text());
+            console.error("Marine API Error:", await marineResponse.text());
+            throw new Error(`Failed to fetch data from one or more weather APIs.`);
+        }
+
+        const weatherData = await weatherResponse.json();
+        const marineData = await marineResponse.json();
+
+        // 4. Manually and precisely merge the two results
+        const combinedData = {
+            latitude: weatherData.latitude,
+            longitude: weatherData.longitude,
+            generationtime_ms: weatherData.generationtime_ms,
+            utc_offset_seconds: weatherData.utc_offset_seconds,
+            timezone: weatherData.timezone,
+            timezone_abbreviation: weatherData.timezone_abbreviation,
+            elevation: weatherData.elevation,
+            current_units: { ...weatherData.current_units, ...marineData.current_units },
+            hourly_units: { ...weatherData.hourly_units, ...marineData.hourly_units },
+            current: {
+                ...weatherData.current,
+                ...marineData.current
+            },
+            hourly: {
+                // Use the 'time' array from the main weather API as the source of truth
+                time: weatherData.hourly.time,
+                // Add all other arrays from both responses
+                temperature_2m: weatherData.hourly.temperature_2m,
+                weather_code: weatherData.hourly.weather_code,
+                wind_speed_10m: weatherData.hourly.wind_speed_10m,
+                wave_height: marineData.hourly.wave_height
+            }
+        };
+
+        // 5. Return the final, correctly combined object
+        return combinedData;
+
+    } catch (error) {
+        console.error("Failed to fetch and combine weather data:", error);
+        // Re-throw the error so the UI can show an alert
+        throw error;
+    }
+}
+
+
 
 // =========================================================================
 // --- MOCK APIs (The functions below are simulated for development) ---
