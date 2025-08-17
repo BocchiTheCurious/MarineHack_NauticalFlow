@@ -6,92 +6,143 @@
     <title>Port Data - NauticalFlow</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../styles.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet"> 
 </head>
 <body>
     
+    <!-- Placeholder for a navigation bar -->
     <div id="navbar-placeholder"></div>
+
     <div class="d-flex">
-    <div id="sidebar-placeholder"></div>
+        <!-- Placeholder for a sidebar -->
+        <div id="sidebar-placeholder"></div>
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
-            <!-- Port Data Content -->
-            <div id="port-data-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="bi bi-geo me-2"></i>
-                        Port Data Management
-                    </h1>
-                </div>
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-geo me-2"></i>
+                    Port Data Management
+                </h1>
+            </div>
 
-                <!-- Port Data Table -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
-                        <div class="d-flex gap-2">
-                            <input type="text" id="port-search-input" class="form-control form-control-sm" placeholder="Search ports..." style="width: 200px;">
-                            <button class="btn btn-sm btn-outline-primary" id="add-port-btn" data-bs-toggle="modal" data-bs-target="#portModal">
-                                <i class="bi bi-plus-circle me-1"></i>Add Port
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="port-data-table" width="100%" cellspacing="0">
-                                <thead>
-                                    <tr>
-                                        <th>Port ID</th>
-                                        <th>Port Name</th>
-                                        <th>Country</th>
-                                        <th>Latitude</th>
-                                        <th>Longitude</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <!-- This tbody will be populated by JavaScript -->
-                                <tbody>
-                                    <!-- Static data removed -->
-                                </tbody>
-                            </table>
-                        </div>
+            <!-- Informational card about port data -->
+            <div class="card bg-light border-info shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="bi bi-info-circle-fill me-2"></i>Guidance: Understanding Port Data</h5>
+                    <p class="card-text">Accurate port data is the foundation of every route calculation. This information determines the start, end, and intermediate points of every voyage, and a realistic estimate of potential delays.</p>
+                    <hr>
+                    <h6><i class="bi bi-bullseye me-2"></i>Why This Data is Critical for the Algorithm</h6>
+                    <ul>
+                        <li><strong>Latitude & Longitude:</strong> These are the exact geographic coordinates of a port. The algorithm uses them as the core waypoints to calculate distances, plot routes on the map, and determine the most efficient path. Without them, distance and fuel calculations are impossible.</li>
+                        <li><strong>Congestion Index:</strong> This acts as a "delay penalty" for the algorithm. A high index tells the system that a port is frequently busy, adding a calculated waiting time to the total voyage duration. This allows the algorithm to make smarter decisions, like choosing a slightly longer route to a faster port, which may save time and money overall.</li>
+                    </ul>
+                    <h6><i class="bi bi-clipboard-data me-2"></i>How to Find Accurate Data</h6>
+                    <ul>
+                        <li>
+                            <strong>For Latitude & Longitude (Official Source):</strong>
+                            <br>The industry standard for location data is the **UN/LOCODE** list maintained by the United Nations. This provides a unique code and coordinates for thousands of transport locations worldwide.
+                                <ul>
+                                    <li><strong>Source:</strong> <a href="https://unece.org/trade/cefact/unlocode-code-list-country-and-territory" target="_blank">UN/LOCODE Code List</a></li>
+                                    <li><strong>How-to:</strong> Search for your port on the official list. The coordinates are provided in the "Coordinates" column.</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>For Congestion Index (Live Data Source):</strong>
+                                <br>Congestion is dynamic. While internal company data is valuable, specialized maritime analytics tools provide the best near-real-time data by analyzing global vessel traffic.
+                                <ul>
+                                    <li><strong>Source:</strong> <a href="https://seadex.ai/en/free-tools/port-congestion-tool" target="_blank">SeaDex.ai Port Congestion Tool</a></li>
+                                    <li><strong>How-to:</strong> Use this free tool to view the current and historical congestion levels for major ports. Use this data to enter a realistic index (e.g., a percentage or a 1-100 score).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    <hr>
+                    <div class="alert alert-primary mb-0">
+                        <strong><i class="bi bi-star-fill me-2"></i>Pro-Tip for Operators:</strong> For the most precise voyage calculations, use the Latitude and Longitude of the port's <strong>main channel entrance buoy</strong> (also called the "sea buoy" or "fairway buoy"). This represents the true start and end point of the open-ocean segment of a voyage.
                     </div>
                 </div>
+            </div>
 
-                <!-- Add/Edit Port Modal -->
-                <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="portModalLabel">Add New Port</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="portForm">
-                                    <div class="mb-3">
-                                        <label for="portName" class="form-label">Port Name</label>
-                                        <input type="text" class="form-control" id="portName" required>
+            <!-- Port Data Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="port-search-input" class="form-control form-control-sm" placeholder="Search ports..." style="width: 200px;">
+                        <button class="btn btn-sm btn-outline-primary" id="add-port-btn" data-bs-toggle="modal" data-bs-target="#portModal">
+                            <i class="bi bi-plus-circle me-1"></i>Add Port
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="port-data-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Port ID</th>
+                                    <th>Port Name</th>
+                                    <th>Country</th>
+                                    <th>Latitude</th>
+                                    <th>Longitude</th>
+                                    <th>Congestion Index</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <!-- This tbody will be populated by JavaScript -->
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Port Modal -->
+            <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="portModalLabel">Add New Port</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="portForm">
+                                <input type="hidden" id="portId">
+                                <div class="mb-3">
+                                    <label for="portName" class="form-label">Port Name</label>
+                                    <input type="text" class="form-control" id="portName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">Country</label>
+                                    <input type="text" class="form-control" id="country" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="locodePasteInput" class="form-label">UN/LOCODE Coordinate String (Optional)</label>
+                                    <input type="text" class="form-control" id="locodePasteInput" placeholder="Paste here, e.g., 3252N 06603E">
+                                    <div class="form-text">Pasting a valid coordinate string will auto-fill Latitude and Longitude below.</div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="latitude" class="form-label">Latitude (Decimal)</label>
+                                        <input type="number" class="form-control" id="latitude" step="0.000001" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="country" class="form-label">Country</label>
-                                        <input type="text" class="form-control" id="country" required>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="longitude" class="form-label">Longitude (Decimal)</label>
+                                        <input type="number" class="form-control" id="longitude" step="0.000001" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="latitude" class="form-label">Latitude</label>
-                                        <input type="number" class="form-control" id="latitude" step="0.000001" placeholder="e.g., 5.9804" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="longitude" class="form-label">Longitude</label>
-                                        <input type="number" class="form-control" id="longitude" step="0.000001" placeholder="e.g., 116.0735" required>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" form="portForm" class="btn btn-primary">
-                                    <i class="bi bi-save me-1"></i>Save Port
-                                </button>
-                            </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="portCongestionIndex" class="form-label">Congestion Index: <span id="congestionValue" class="fw-bold">50%</span></label>
+                                    <input type="range" class="form-range" id="portCongestionIndex" min="0" max="100" value="50" step="1">
+                                    <div class="form-text">A value representing average wait times. Higher is more congested.</div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="portForm" class="btn btn-primary">Save Port</button>
                         </div>
                     </div>
                 </div>

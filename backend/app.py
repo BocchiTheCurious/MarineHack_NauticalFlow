@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import os
 from functools import wraps
 import re # Imported for password validation
+from decimal import Decimal # Import for numeric types
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -33,23 +34,59 @@ class Port(db.Model):
     country = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
+    port_congestion_index = db.Column(db.Numeric(5, 2), nullable=False, default=0.0)
 
-class Vessel(db.Model):
-    __tablename__ = 'vessels'
+# NEW: FuelType Model
+class FuelType(db.Model):
+    __tablename__ = 'fuel_types'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    
+    # This will now store the USD equivalent cost
+    cost_per_ton = db.Column(db.Numeric(10, 2), nullable=False) 
+    
+    # Official IMO factor, populated automatically from the front-end
+    co2_factor = db.Column(db.Numeric(10, 4), nullable=False) 
+
+    # NEW: Fields for audit and traceability
+    original_cost = db.Column(db.Numeric(10, 2), nullable=True)
+    original_currency = db.Column(db.String(3), nullable=True) # e.g., "MYR"
+    exchange_rate = db.Column(db.Numeric(12, 6), nullable=True)
+    price_date = db.Column(db.Date, nullable=True)
+    bunkering_port = db.Column(db.String(100), nullable=True)
+
+# UPDATED: Replaced Vessel with CruiseShip
+class CruiseShip(db.Model):
+    __tablename__ = 'cruise_ships'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)
-    max_speed = db.Column(db.Float, nullable=False)
-    fuel_consumption = db.Column(db.Float, nullable=False)
+    
+    # This stores the complex performance data
+    fuel_consumption_curve = db.Column(db.JSON, nullable=True) 
+
+    # Establish the relationship to FuelType
+    fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
+    fuel_type = db.relationship('FuelType', backref='cruise_ships')
 
 
 # --- Database Initialization ---
 with app.app_context():
     db.create_all()
+    # Create a default admin user if one doesn't exist
     if not User.query.filter_by(username='admin').first():
         hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin_user = User(display_name='Admin User', username='admin', password=hashed_pw)
         db.session.add(admin_user)
+        db.session.commit()
+    # Create default fuel types if they don't exist
+    if not FuelType.query.first():
+        fuel_types_data = [
+            {'name': 'Marine Gas Oil (MGO)', 'cost_per_ton': Decimal('750.00'), 'co2_factor': Decimal('3.206')},
+            {'name': 'Heavy Fuel Oil (HFO)', 'cost_per_ton': Decimal('550.00'), 'co2_factor': Decimal('3.114')},
+            {'name': 'Liquefied Natural Gas (LNG)', 'cost_per_ton': Decimal('600.00'), 'co2_factor': Decimal('2.750')}
+        ]
+        for ft_data in fuel_types_data:
+            db.session.add(FuelType(**ft_data))
         db.session.commit()
 
 
@@ -68,7 +105,7 @@ def token_required(f):
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = User.query.filter_by(username=data['username']).first()
             if not current_user:
-                 return jsonify({'message': 'User not found!'}), 401
+                return jsonify({'message': 'User not found!'}), 401
         except JWTError:
             return jsonify({'message': 'Token is invalid!'}), 401
         except Exception as e:
@@ -134,28 +171,48 @@ def login():
     return jsonify({'error': 'Invalid username or password'}), 401
 
 
-# --- Port Endpoints ---
+# --- Port Endpoints (Full CRUD) ---
 
 @app.route('/api/ports', methods=['GET'])
 @token_required
 def get_ports(current_user):
     ports = Port.query.order_by(Port.name).all()
     return jsonify([{
-        'id': port.id, 'name': port.name, 'country': port.country, 
-        'latitude': port.latitude, 'longitude': port.longitude
-    } for port in ports])
+        'id': p.id,
+        'name': p.name,
+        'country': p.country,
+        'latitude': p.latitude,
+        'longitude': p.longitude,
+        'portCongestionIndex': str(p.port_congestion_index) # Add new field
+    } for p in ports])
 
 @app.route('/api/ports', methods=['POST'])
 @token_required
 def add_port(current_user):
     data = request.get_json()
     new_port = Port(
-        name=data['name'], country=data['country'],
-        latitude=data['latitude'], longitude=data['longitude']
+        name=data['name'],
+        country=data['country'],
+        latitude=data['latitude'],
+        longitude=data['longitude'],
+        port_congestion_index=data['portCongestionIndex'] # Add new field
     )
     db.session.add(new_port)
     db.session.commit()
-    return jsonify({'message': 'Port added successfully', 'id': new_port.id}), 201
+    return jsonify({'message': 'Port added successfully'}), 201
+
+@app.route('/api/ports/<int:port_id>', methods=['PUT'])
+@token_required
+def update_port(current_user, port_id):
+    port = Port.query.get_or_404(port_id)
+    data = request.get_json()
+    port.name = data['name']
+    port.country = data['country']
+    port.latitude = data['latitude']
+    port.longitude = data['longitude']
+    port.port_congestion_index = data['portCongestionIndex'] # Add new field
+    db.session.commit()
+    return jsonify({'message': 'Port updated successfully'})
 
 @app.route('/api/ports/<int:port_id>', methods=['DELETE'])
 @token_required
@@ -166,36 +223,120 @@ def delete_port(current_user, port_id):
     return jsonify({'message': 'Port deleted successfully'})
 
 
-# --- Vessel Endpoints ---
+# --- Cruise Ship Endpoints (CRUD) ---
 
-@app.route('/api/vessels', methods=['GET'])
+@app.route('/api/cruise-ships', methods=['GET'])
 @token_required
-def get_vessels(current_user):
-    vessels = Vessel.query.order_by(Vessel.name).all()
-    return jsonify([{
-        'id': v.id, 'name': v.name, 'type': v.type, 
-        'maxSpeed': v.max_speed, 'fuelConsumption': v.fuel_consumption
-    } for v in vessels])
+def get_cruise_ships(current_user):
+    ships = CruiseShip.query.order_by(CruiseShip.name).all()
+    results = []
+    for ship in ships:
+        results.append({
+            'id': ship.id,
+            'name': ship.name,
+            'fuelConsumptionCurve': ship.fuel_consumption_curve,
+            'fuelTypeId': ship.fuel_type_id,
+            'fuelTypeName': ship.fuel_type.name # Include the related fuel type name
+        })
+    return jsonify(results)
 
-@app.route('/api/vessels', methods=['POST'])
+@app.route('/api/cruise-ships', methods=['POST'])
 @token_required
-def add_vessel(current_user):
+def add_cruise_ship(current_user):
     data = request.get_json()
-    new_vessel = Vessel(
-        name=data['name'], type=data['type'],
-        max_speed=data['maxSpeed'], fuel_consumption=data['fuelConsumption']
+    new_ship = CruiseShip(
+        name=data['name'],
+        fuel_consumption_curve=data['fuelConsumptionCurve'],
+        fuel_type_id=data['fuelTypeId']
     )
-    db.session.add(new_vessel)
+    db.session.add(new_ship)
     db.session.commit()
-    return jsonify({'message': 'Vessel added successfully', 'id': new_vessel.id}), 201
+    return jsonify({'message': 'Cruise ship added successfully'}), 201
 
-@app.route('/api/vessels/<int:vessel_id>', methods=['DELETE'])
+@app.route('/api/cruise-ships/<int:ship_id>', methods=['DELETE'])
 @token_required
-def delete_vessel(current_user, vessel_id):
-    vessel = Vessel.query.get_or_404(vessel_id)
-    db.session.delete(vessel)
+def delete_cruise_ship(current_user, ship_id):
+    ship = CruiseShip.query.get_or_404(ship_id)
+    db.session.delete(ship)
     db.session.commit()
-    return jsonify({'message': 'Vessel deleted successfully'})
+    return jsonify({'message': 'Cruise ship deleted successfully'})
+
+@app.route('/api/cruise-ships/<int:ship_id>', methods=['PUT'])
+@token_required
+def update_cruise_ship(current_user, ship_id):
+    ship = CruiseShip.query.get_or_404(ship_id)
+    data = request.get_json()
+
+    # Update fields from the request data
+    ship.name = data['name']
+    ship.fuel_type_id = data['fuelTypeId']
+    ship.fuel_consumption_curve = data['fuelConsumptionCurve']
+    
+    db.session.commit()
+    return jsonify({'message': 'Cruise ship updated successfully'})
+
+
+# --- Fuel Type Endpoints ---
+@app.route('/api/fuel-types', methods=['GET'])
+@token_required
+def get_fuel_types(current_user):
+    fuel_types = FuelType.query.order_by(FuelType.name).all()
+    return jsonify([{
+        'id': ft.id, 'name': ft.name, 'costPerTon': str(ft.cost_per_ton), 
+        'co2Factor': str(ft.co2_factor), 'originalCost': str(ft.original_cost) if ft.original_cost else None,
+        'originalCurrency': ft.original_currency, 'exchangeRate': str(ft.exchange_rate) if ft.exchange_rate else None,
+        'priceDate': ft.price_date.strftime('%Y-%m-%d') if ft.price_date else None,
+        'bunkeringPort': ft.bunkering_port # UPDATED
+    } for ft in fuel_types])
+
+@app.route('/api/fuel-types', methods=['POST'])
+@token_required
+def add_fuel_type(current_user):
+    data = request.get_json()
+    new_fuel_type = FuelType(
+        # ... (name, cost, etc. are the same)
+        name=data.get('name'), cost_per_ton=data.get('costPerTon'),
+        co2_factor=data.get('co2Factor'), original_cost=data.get('originalCost'),
+        original_currency=data.get('originalCurrency'), exchange_rate=data.get('exchangeRate'),
+        price_date=datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None,
+        bunkering_port=data.get('bunkeringPort') # UPDATED
+    )
+    db.session.add(new_fuel_type)
+    db.session.commit()
+    return jsonify({'message': 'Fuel type added successfully'}), 201
+
+@app.route('/api/fuel-types/<int:fuel_type_id>', methods=['PUT'])
+@token_required
+def update_fuel_type(current_user, fuel_type_id):
+    fuel_type = FuelType.query.get_or_404(fuel_type_id)
+    data = request.get_json()
+    # ... (name, cost, etc. are the same)
+    fuel_type.name = data.get('name')
+    fuel_type.cost_per_ton = data.get('costPerTon')
+    fuel_type.co2_factor = data.get('co2Factor')
+    fuel_type.original_cost = data.get('originalCost')
+    fuel_type.original_currency = data.get('originalCurrency')
+    fuel_type.exchange_rate = data.get('exchangeRate')
+    fuel_type.price_date = datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None
+    fuel_type.bunkering_port = data.get('bunkeringPort') # UPDATED
+    db.session.commit()
+    return jsonify({'message': 'Fuel type updated successfully'})
+
+@app.route('/api/fuel-types/<int:fuel_type_id>', methods=['DELETE'])
+@token_required
+def delete_fuel_type(current_user, fuel_type_id):
+    fuel_type = FuelType.query.get_or_404(fuel_type_id)
+    db.session.delete(fuel_type)
+    db.session.commit()
+    return jsonify({'message': 'Fuel type deleted successfully'})
+
+@app.route('/api/exchange-rate', methods=['GET'])
+@token_required
+def get_exchange_rate(current_user):
+    # In a real application, this would call a financial data API.
+    # For this demo, we'll return a simulated historical rate.
+    # The document recommends fetching the rate for a specific date[cite: 39].
+    return jsonify({'rate': 4.7015}) # Simulated USD/MYR rate
 
 # --- Profile Management Endpoints ---
 
@@ -266,8 +407,8 @@ def get_profile_stats(current_user):
     # In a real app, you would calculate these values from the database
     stats = {
         'routesPlanned': Port.query.count() * 5, # Example calculation
-        'routesOptimized': Vessel.query.count() * 2, # Example calculation
-        'vesselsManaged': Vessel.query.count(),
+        'routesOptimized': CruiseShip.query.count() * 2, # UPDATED
+        'vesselsManaged': CruiseShip.query.count(), # UPDATED
         'daysActive': (datetime.utcnow().date() - datetime(2025, 7, 15).date()).days
     }
     return jsonify(stats)

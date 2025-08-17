@@ -7,7 +7,7 @@ const API_URL = 'http://127.0.0.1:5000/api';
 /**
  * A helper function to perform authenticated fetch requests.
  * It automatically adds the JWT token to the headers.
- * @param {string} endpoint - The API endpoint to call (e.g., '/ports').
+ * @param {string} endpoint - The API endpoint to call (e.g., '/ports').
  * @param {object} [options={}] - The options for the fetch call (method, body, etc.).
  * @returns {Promise<any>} The JSON response from the API.
  */
@@ -62,6 +62,14 @@ export async function deletePort(portId) {
     return getPorts();
 }
 
+export async function updatePort(portId, portData) {
+    await fetchWithAuth(`/ports/${portId}`, {
+        method: 'PUT',
+        body: JSON.stringify(portData)
+    });
+    return getPorts();
+}
+
 
 // --- Vessel Functions (Live API) ---
 
@@ -90,15 +98,97 @@ export async function deleteVessel(vesselId) {
     return getVessels();
 }
 
+
+// --- Cruise Ship Functions (Corrected Endpoint) ---
+
+export function getCruiseShips() {
+    return fetchWithAuth('/cruise-ships');
+}
+
+export async function addCruiseShip(shipData) {
+    await fetchWithAuth('/cruise-ships', { method: 'POST', body: JSON.stringify(shipData) });
+    return getCruiseShips();
+}
+
+export async function deleteCruiseShip(shipId) {
+    await fetchWithAuth(`/cruise-ships/${shipId}`, { method: 'DELETE' });
+    return getCruiseShips();
+}
+
+export async function updateCruiseShip(shipId, shipData) {
+    await fetchWithAuth(`/cruise-ships/${shipId}`, { 
+        method: 'PUT', 
+        body: JSON.stringify(shipData) 
+    });
+    return getCruiseShips();
+}
+
+
+// --- Fuel Type Functions ---
+
+export function getFuelTypes() { return fetchWithAuth('/fuel-types'); }
+
+export async function addFuelType(fuelTypeData) {
+    const payload = await prepareFuelPayload(fuelTypeData);
+    await fetchWithAuth('/fuel-types', { method: 'POST', body: JSON.stringify(payload) });
+    return getFuelTypes();
+}
+
+export async function updateFuelType(fuelTypeId, fuelTypeData) {
+    const payload = await prepareFuelPayload(fuelTypeData);
+    await fetchWithAuth(`/fuel-types/${fuelTypeId}`, { method: 'PUT', body: JSON.stringify(payload) });
+    return getFuelTypes();
+}
+
+export async function deleteFuelType(fuelTypeId) {
+    await fetchWithAuth(`/fuel-types/${fuelTypeId}`, { method: 'DELETE' });
+    return getFuelTypes();
+}
+
+// NEW HELPER for currency conversion
+async function prepareFuelPayload(data) {
+    let payload = { ...data };
+    if (data.currency === 'MYR') {
+        const rateData = await getExchangeRate(data.priceDate);
+        const rate = rateData.rate;
+        payload.costPerTon = (parseFloat(data.cost) / rate).toFixed(2);
+        payload.originalCost = data.cost;
+        payload.originalCurrency = 'MYR';
+        payload.exchangeRate = rate;
+    } else {
+        payload.costPerTon = data.cost;
+        payload.originalCost = null;
+        payload.originalCurrency = 'USD';
+        payload.exchangeRate = null;
+    }
+    delete payload.cost; // remove temporary field
+    delete payload.currency; // remove temporary field
+    return payload;
+}
+
+
 // --- Profile Functions ---
-export function getUserProfile() { return fetchWithAuth('/profile'); }
-export function getProfileStats() { return fetchWithAuth('/profile/stats'); }
+
+export function getUserProfile() {
+    return fetchWithAuth('/profile');
+}
+
+export function getProfileStats() {
+    return fetchWithAuth('/profile/stats');
+}
+
 export function updateUserProfile(profileData) {
     return fetchWithAuth('/profile', { method: 'PUT', body: JSON.stringify(profileData) });
 }
+
 export function changeUserPassword(passwordData) {
     return fetchWithAuth('/profile/password', { method: 'PUT', body: JSON.stringify(passwordData) });
 }
+
+export function getExchangeRate(date) {
+    return fetchWithAuth(`/exchange-rate?date=${date}`);
+}
+
 
 // =========================================================================
 // --- MOCK APIs (The functions below are simulated for development) ---
