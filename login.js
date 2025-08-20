@@ -2,16 +2,14 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
-    const API_URL = 'http://127.0.0.1:5000/api'; // Your Flask API URL
+    const API_URL = 'http://127.0.0.1:5000/api';
 
-    // If a token exists, the user is logged in. Redirect to the admin dashboard.
     if (localStorage.getItem('nauticalflow-token')) {
         redirectToDashboard();
     }
 
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
@@ -28,27 +26,22 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
 
             const data = await response.json();
-
             if (!response.ok) {
                 showError(data.error || 'Login failed. Please try again.');
                 return;
             }
-
-            // --- Successful Admin Login ---
+            
+            // --- Successful Login ---
             handleSuccessfulLogin(data.token, data.displayName);
 
         } catch (error) {
-            console.error('Login request failed:', error);
             showError('Could not connect to the server.');
         } finally {
-            // Restore button state only on failure
             if (!localStorage.getItem('nauticalflow-token')) {
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = originalBtnText;
@@ -57,14 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// --- Helper Functions ---
-
 function handleSuccessfulLogin(token, displayName) {
-    // Store token and display name
+    // Store only the token and display name
     localStorage.setItem('nauticalflow-token', token);
     localStorage.setItem('nauticalflow-display-name', displayName);
     
-    // Redirect to the dashboard
     redirectToDashboard();
 }
 
@@ -75,7 +65,7 @@ function showError(message) {
     errorMessage.style.display = 'block';
 }
 
-// This function now only has one destination
 function redirectToDashboard() {
+    // Always redirect to the single admin dashboard
     window.location.href = 'admin/homepage.html';
 }
