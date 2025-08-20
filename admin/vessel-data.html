@@ -17,59 +17,60 @@
                 <h1 class="h2"><i class="bi bi-send me-2"></i>Cruise Ship Management</h1>
             </div>
 
+            <!-- Merged and improved guidance card -->
             <div class="card bg-light border-info shadow-sm mb-4">
-    <div class="card-body">
-        <h5 class="card-title text-info">
-            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>Guidance: How to Add & Manage Ship Profiles
-        </h5>
-        <p class="card-text">
-            This guide explains how to manage your fleet's performance profiles. An accurate profile, especially the <strong>Fuel Consumption Curve</strong>, is the most critical input for our route optimization algorithm.
-        </p>
+                <div class="card-body">
+                    <h5 class="card-title text-info">
+                        <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>Guidance: How to Add & Manage Ship Profiles
+                    </h5>
+                    <p class="card-text">
+                        This guide explains how to manage your fleet's performance profiles. An accurate profile, especially the <strong>Fuel Consumption Curve</strong>, is the most critical input for our route optimization algorithm.
+                    </p>
 
-        <div class="mt-4">
-            <h6><i class="bi bi-bullseye me-2" aria-hidden="true"></i>Why This Data is So Important</h6>
-            <p>
-                A ship's fuel consumption increases exponentially with its speed—a small increase can cause a massive jump in fuel burn. This relationship is unique to each ship. The algorithm uses your specific curve to analyze thousands of route variations, finding the perfect balance between speed, fuel cost, and CO₂ emissions for the entire voyage.
-            </p>
-        </div>
+                    <div class="mt-4">
+                        <h6><i class="bi bi-bullseye me-2" aria-hidden="true"></i>Why This Data is So Important</h6>
+                        <p>
+                            A ship's fuel consumption increases exponentially with its speed—a small increase can cause a massive jump in fuel burn. This relationship is unique to each ship. The algorithm uses your specific curve to analyze thousands of route variations, finding the perfect balance between speed, fuel cost, and CO₂ emissions for the entire voyage.
+                        </p>
+                    </div>
 
-        <div class="mt-4">
-            <h6><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Choosing Your Data Entry Method</h6>
-            <p>
-                The "Add/Edit Ship" modal offers three methods for entering performance data.
-            </p>
-            <ul class="list-unstyled">
-                <li class="mt-3">
-                    <strong>Tier 1: Use a Template (Recommended Start)</strong>
-                    <p class="small text-muted mb-0">
-                        This is the easiest method. Select a pre-defined ship archetype (e.g., "Large LNG Cruise Ship") to instantly load a complete, realistic fuel curve based on industry-average data. You can then fine-tune the numbers.
-                    </p>
-                </li>
-                <li class="mt-3">
-                    <strong>Tier 2: Manual Entry</strong>
-                    <p class="small text-muted mb-0">
-                        Use this if you have specific data from a <strong>sea trial report</strong> or an onboard <strong>Ship Performance Monitoring (SPM) system</strong>. Be sure to enter the constant <strong>Hotel Load</strong> (fuel burn at zero speed) separately from the propulsion fuel.
-                    </p>
-                </li>
-                <li class="mt-3">
-                    <strong>Tier 3: Generate Curve</strong>
-                    <p class="small text-muted mb-0">
-                        A powerful tool if you don't have a curve. Enter the ship's basic specifications (Gross Tonnage, Power, Design Speed), and the system will use a physics-based model (the <strong>Propeller Law</strong>, where Power ∝ Speed³) to generate an approximate curve.
-                    </p>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="alert alert-primary mt-4 mb-0">
-            <strong><i class="bi bi-link-45deg me-2" aria-hidden="true"></i>Useful Resources</strong>
-            <p class="mb-1 mt-2">For finding cruise ship specifications needed for Tier 3, you can consult public databases:</p>
-            <ul>
-                <li><a href="https://en.wikipedia.org/wiki/List_of_largest_cruise_ships" target="_blank">Wikipedia's List of Largest Cruise Ships</a></li>
-                <li>Cruise Line Fleet Pages (e.g., <a href="https://www.royalcaribbeanpresscenter.com/fact-sheet/" target="_blank">Royal Caribbean</a>, <a href="https://www.ncl.com/cruise-ship" target="_blank">Norwegian Cruise Line</a>)</li>
-            </ul>
-        </div>
-    </div>
-</div>
+                    <div class="mt-4">
+                        <h6><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Choosing Your Data Entry Method</h6>
+                        <p>
+                            The "Add/Edit Ship" modal offers three methods for entering performance data.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li class="mt-3">
+                                <strong>Tier 1: Use a Template (Recommended Start)</strong>
+                                <p class="small text-muted mb-0">
+                                    This is the easiest method. Select a pre-defined ship archetype (e.g., "Large LNG Cruise Ship") to instantly load a complete, realistic fuel curve based on industry-average data. You can then fine-tune the numbers.
+                                </p>
+                            </li>
+                            <li class="mt-3">
+                                <strong>Tier 2: Manual Entry</strong>
+                                <p class="small text-muted mb-0">
+                                    Use this if you have specific data from a <strong>sea trial report</strong> or an onboard <strong>Ship Performance Monitoring (SPM) system</strong>. Be sure to enter the constant <strong>Hotel Load</strong> (fuel burn at zero speed) separately from the propulsion fuel.
+                                </p>
+                            </li>
+                            <li class="mt-3">
+                                <strong>Tier 3: Generate Curve</strong>
+                                <p class="small text-muted mb-0">
+                                    A powerful tool if you don't have a curve. Enter the ship's basic specifications (Gross Tonnage, Power, Design Speed), and the system will use a physics-based model (the <strong>Propeller Law</strong>, where Power ∝ Speed³) to generate an approximate curve.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-primary mt-4 mb-0">
+                        <strong><i class="bi bi-link-45deg me-2" aria-hidden="true"></i>Useful Resources</strong>
+                        <p class="mb-1 mt-2">For finding cruise ship specifications needed for Tier 3, you can consult public databases:</p>
+                        <ul>
+                            <li><a href="https://en.wikipedia.org/wiki/List_of_largest_cruise_ships" target="_blank">Wikipedia's List of Largest Cruise Ships</a></li>
+                            <li>Cruise Line Fleet Pages (e.g., <a href="https://www.royalcaribbeanpresscenter.com/fact-sheet/" target="_blank">Royal Caribbean</a>, <a href="https://www.ncl.com/cruise-ship" target="_blank">Norwegian Cruise Line</a>)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -95,7 +96,8 @@
             </div>
 
             <div class="modal fade" id="shipModal" tabindex="-1" aria-labelledby="shipModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl"> <div class="modal-content">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="shipModalLabel">Add New Cruise Ship</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -114,34 +116,19 @@
                                     </div>
                                 </div>
                                 <hr class="my-4">
-
                                 <ul class="nav nav-tabs" id="curveTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="template-tab" data-bs-toggle="tab" data-bs-target="#template-pane" type="button" role="tab">Tier 1: Use a Template</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button" role="tab">Tier 2: Manual Entry</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-pane" type="button" role="tab">Tier 3: Generate Curve</button>
-                                    </li>
+                                    <li class="nav-item" role="presentation"><button class="nav-link active" id="template-tab" data-bs-toggle="tab" data-bs-target="#template-pane" type="button" role="tab">Tier 1: Use a Template</button></li>
+                                    <li class="nav-item" role="presentation"><button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button" role="tab">Tier 2: Manual Entry</button></li>
+                                    <li class="nav-item" role="presentation"><button class="nav-link" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-pane" type="button" role="tab">Tier 3: Generate Curve</button></li>
                                 </ul>
-
                                 <div class="tab-content pt-3" id="curveTabsContent">
                                     <div class="tab-pane fade show active" id="template-pane" role="tabpanel">
                                         <p class="text-muted">Select a standard ship archetype to load a credible, pre-populated fuel curve. You can fine-tune the data in the "Manual Entry" tab after loading.</p>
-                                        <select class="form-select" id="shipArchetype">
-                                            <option value="" selected>-- Choose a ship archetype --</option>
-                                            </select>
+                                        <select class="form-select" id="shipArchetype"><option value="" selected>-- Choose a ship archetype --</option></select>
                                     </div>
-
                                     <div class="tab-pane fade" id="manual-pane" role="tabpanel">
                                         <div class="p-3 bg-light rounded border">
-                                            <div class="mb-3">
-                                                <label for="hotelLoad" class="form-label"><strong>Average Hotel Load (tons/hr)</strong></label>
-                                                <input type="number" class="form-control" id="hotelLoad" step="0.1" min="0" placeholder="e.g., 2.5">
-                                                <div class="form-text">Enter the ship's constant fuel consumption at zero speed (in port or at anchor).</div>
-                                            </div>
+                                            <div class="mb-3"><label for="hotelLoad" class="form-label"><strong>Average Hotel Load (tons/hr)</strong></label><input type="number" class="form-control" id="hotelLoad" step="0.1" min="0" placeholder="e.g., 2.5"><div class="form-text">Enter the ship's constant fuel consumption at zero speed (in port or at anchor).</div></div>
                                             <hr>
                                             <div class="row g-2 align-items-end">
                                                 <div class="col-sm"><label for="curveSpeed" class="form-label">Speed (knots)</label><input type="number" class="form-control" id="curveSpeed" step="0.1" min="0"></div>
@@ -150,7 +137,6 @@
                                             </div>
                                         </div>
                                     </div>
-
                                     <div class="tab-pane fade" id="generate-pane" role="tabpanel">
                                         <p class="text-muted">If you don't have a curve, provide the ship's basic specs to generate a scientifically plausible approximation using the Propeller Law.</p>
                                         <div class="row">
@@ -161,7 +147,6 @@
                                         <button type="button" class="btn btn-secondary mt-3" id="generate-curve-btn"><i class="bi bi-calculator me-2"></i>Generate Approximate Curve</button>
                                     </div>
                                 </div>
-                                
                                 <hr class="my-4">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -183,110 +168,6 @@
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" form="shipForm" class="btn btn-primary">Save Cruise Ship</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="vessel-data-table" width="100%" cellspacing="0">
-                                <thead>
-                                    <tr>
-                                        <th>Vessel ID</th>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Max Speed (knots)</th>
-                                        <th>Fuel Consumption (L/hour)</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>V001</td>
-                                        <td>MV Ocean Star</td>
-                                        <td>Container Ship</td>
-                                        <td>22.5</td>
-                                        <td>850</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>V002</td>
-                                        <td>MV Pacific Glory</td>
-                                        <td>Bulk Carrier</td>
-                                        <td>18.0</td>
-                                        <td>650</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>V003</td>
-                                        <td>MV Atlantic Queen</td>
-                                        <td>Tanker</td>
-                                        <td>20.0</td>
-                                        <td>1200</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>V004</td>
-                                        <td>MV Mediterranean</td>
-                                        <td>Passenger Ship</td>
-                                        <td>25.0</td>
-                                        <td>950</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Upload Vessel Modal -->
-                <div class="modal fade" id="uploadVesselModal" tabindex="-1" aria-labelledby="uploadVesselModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="uploadVesselModalLabel">Upload New Vessel</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="modalVesselForm">
-                                    <div class="mb-3">
-                                        <label for="modalVesselName" class="form-label">Vessel Name</label>
-                                        <input type="text" class="form-control" id="modalVesselName" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="modalVesselType" class="form-label">Vessel Type</label>
-                                        <select class="form-select" id="modalVesselType" required>
-                                            <option value="">Select Type</option>
-                                            <option value="container">Container Ship</option>
-                                            <option value="bulk">Bulk Carrier</option>
-                                            <option value="tanker">Tanker</option>
-                                            <option value="passenger">Passenger Ship</option>
-                                            <option value="fishing">Fishing Vessel</option>
-                                            <option value="cargo">General Cargo</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="modalMaxSpeed" class="form-label">Max Speed (knots)</label>
-                                        <input type="number" class="form-control" id="modalMaxSpeed" step="0.1" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="modalFuelConsumption" class="form-label">Fuel Consumption Rate (L/hour)</label>
-                                        <input type="number" class="form-control" id="modalFuelConsumption" step="0.1" required>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" form="modalVesselForm" class="btn btn-primary">
-                                    <i class="bi bi-upload me-1"></i>Upload Vessel
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>

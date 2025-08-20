@@ -9,7 +9,6 @@ let allShips = [];
 let currentCurveData = [];
 let chartInstance;
 
-// Data for Tier 1 Templates, based on the research document
 const shipArchetypes = {
     "large-lng": { name: "Large LNG Cruise Ship (~180,000 GT)", hotelLoad: 2.8, curve: [{speed: 10, consumption: 1.5}, {speed: 15, consumption: 3.5}, {speed: 18, consumption: 6.0}, {speed: 20, consumption: 8.5}, {speed: 22, consumption: 12.0}] },
     "mid-diesel": { name: "Mid-Size Diesel-Electric Ship (~90,000 GT)", hotelLoad: 1.8, curve: [{speed: 10, consumption: 1.0}, {speed: 14, consumption: 2.5}, {speed: 17, consumption: 4.5}, {speed: 19, consumption: 6.5}, {speed: 21, consumption: 9.0}] },
@@ -56,7 +55,7 @@ function setupEventListeners() {
     // Tier 2
     document.getElementById('add-curve-point-btn').addEventListener('click', handleAddCurvePoint);
     document.getElementById('fuel-curve-tbody').addEventListener('click', handleDeleteCurvePoint);
-    document.getElementById('hotelLoad').addEventListener('input', renderCurveTable); // Re-render when hotel load changes
+    document.getElementById('hotelLoad').addEventListener('input', renderCurveTable);
     // Tier 3
     document.getElementById('generate-curve-btn').addEventListener('click', handleGenerateCurve);
 }
@@ -69,7 +68,6 @@ function handleArchetypeSelect(event) {
 
     const template = shipArchetypes[archetypeKey];
     document.getElementById('hotelLoad').value = template.hotelLoad;
-    // The curve from the template is for PROPULSION only.
     currentCurveData = template.curve;
     renderCurveTable();
     showAlert(`Template for "${template.name}" loaded. You can now fine-tune the data.`, 'info');
@@ -105,19 +103,15 @@ function handleGenerateCurve() {
         return;
     }
     
-    // Use physics-based models to generate the curve
-    const hotelLoad = (gt / 75000).toFixed(2); // Simplified regression for hotel load
+    const hotelLoad = (gt / 75000).toFixed(2);
     document.getElementById('hotelLoad').value = hotelLoad;
 
-    const refPower = power * 0.85; // Assume 85% MCR at design speed
+    const refPower = power * 0.85; 
     
     currentCurveData = [];
-    // Generate points from 50% to 110% of design speed
     for (let i = 0.5; i <= 1.1; i += 0.1) {
         const currentSpeed = (speed * i).toFixed(1);
-        // Propeller Law (P ∝ V^3) to calculate power
         const currentPower = refPower * Math.pow(currentSpeed / speed, 3);
-        // Simplified SFOC (g/kWh) to tons/hr conversion
         const consumption = (currentPower * 200 / 1000000).toFixed(2); 
         currentCurveData.push({ speed: parseFloat(currentSpeed), consumption: parseFloat(consumption) });
     }
@@ -145,7 +139,6 @@ function handleModalOpen(event) {
     form.reset();
     currentCurveData = [];
     document.getElementById('shipId').value = '';
-    // Reset tabs to the first one
     new bootstrap.Tab(document.getElementById('template-tab')).show();
 
     if (shipId) {
@@ -156,12 +149,11 @@ function handleModalOpen(event) {
             document.getElementById('shipName').value = shipToEdit.name;
             document.getElementById('fuelType').value = shipToEdit.fuelTypeId;
             
-            // Separate hotel load from curve for editing
             const hotelLoad = shipToEdit.fuelConsumptionCurve.find(p => p.speed === 0)?.consumption || 0;
             document.getElementById('hotelLoad').value = hotelLoad;
             currentCurveData = shipToEdit.fuelConsumptionCurve.filter(p => p.speed > 0).map(p => ({
                 speed: p.speed,
-                consumption: p.consumption - hotelLoad // Show only propulsion part in table
+                consumption: p.consumption - hotelLoad
             }));
         }
     } else {
@@ -175,9 +167,8 @@ async function handleSaveShip(event) {
     const shipId = document.getElementById('shipId').value;
     const hotelLoad = parseFloat(document.getElementById('hotelLoad').value) || 0;
 
-    // Recombine hotel load with propulsion curve for saving
     const finalCurve = [
-        { speed: 0, consumption: hotelLoad }, // The y-intercept
+        { speed: 0, consumption: hotelLoad },
         ...currentCurveData.map(p => ({
             speed: p.speed,
             consumption: p.consumption + hotelLoad
@@ -190,7 +181,28 @@ async function handleSaveShip(event) {
         fuelConsumptionCurve: finalCurve
     };
     
-    // ... (rest of the save logic is the same)
+    // **COMPLETED LOGIC:** Added the try/catch/finally block for saving.
+    const submitBtn = document.querySelector('#shipModal .modal-footer button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+
+    try {
+        if (shipId) {
+            allShips = await updateCruiseShip(shipId, shipData);
+            showAlert('Cruise ship updated successfully!', 'success');
+        } else {
+            allShips = await addCruiseShip(shipData);
+            showAlert('Cruise ship added successfully!', 'success');
+        }
+        renderShipsTable(allShips);
+        shipModal.hide();
+    } catch (error) {
+        showAlert(`Failed to save cruise ship. ${error.message}`, 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
 }
 
 // --- Charting and Table Rendering ---
@@ -227,7 +239,6 @@ function initializeChart() {
 function updateChart() {
     const hotelLoad = parseFloat(document.getElementById('hotelLoad').value) || 0;
     const displayData = [...currentCurveData];
-    // Add a point for hotel load at zero speed for visualization
     displayData.unshift({ speed: 0, consumption: 0 });
     displayData.sort((a,b) => a.speed - b.speed);
 
@@ -237,7 +248,6 @@ function updateChart() {
 }
 
 // --- Main Table and Dropdown Population ---
-// ... (renderShipsTable, handleTableActions, populateFuelTypeDropdown, populateArchetypeDropdown) ...
 
 function populateArchetypeDropdown() {
     const select = document.getElementById('shipArchetype');
@@ -248,7 +258,7 @@ function populateArchetypeDropdown() {
         select.appendChild(option);
     }
 }
-//... (The rest of the functions like renderShipsTable, handleTableActions, and populateFuelTypeDropdown remain largely the same, but handleTableActions should be updated for the new view-curve Swal)
+
 async function handleTableActions(event) {
     const targetBtn = event.target.closest('button');
     if (!targetBtn) return;
@@ -298,6 +308,7 @@ function renderShipsTable(ships) {
 }
 function populateFuelTypeDropdown(fuelTypes) {
     const select = document.getElementById('fuelType');
+    // **IMPROVEMENT:** Changed label to be more specific
     select.innerHTML = '<option value="" disabled selected>Select a Fuel Name</option>';
     fuelTypes.forEach(ft => {
         const option = document.createElement('option');
