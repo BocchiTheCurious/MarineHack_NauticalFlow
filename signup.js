@@ -3,16 +3,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signup-form');
     const passwordInput = document.getElementById('password');
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const API_URL = 'http://127.0.0.1:5000/api'; // Base URL for your Flask API
+    const API_URL = 'http://127.0.0.1:5000/api'; // Your Flask API URL
 
-    // Handle password visibility toggle
-    togglePasswordBtn.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.querySelector('i').classList.toggle('bi-eye');
-        this.querySelector('i').classList.toggle('bi-eye-slash');
-    });
+    // **UPDATED:** Set up toggles for both password fields
+    setupPasswordToggle('toggle-password', 'password');
+    setupPasswordToggle('toggle-confirm-password', 'confirm-password');
     
     // Password strength checker
     passwordInput.addEventListener('input', function() {
@@ -30,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = passwordInput.value;
         const confirmPassword = document.getElementById('confirm-password').value;
         
-        // --- Client-side validation ---
         const validation = validateForm(displayName, username, password, confirmPassword);
         if (!validation.isValid) {
             showError(validation.message);
@@ -52,40 +46,50 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) {
-                // Show specific error from backend (e.g., "Username already exists")
                 showError(data.error || `Error: ${response.statusText}`);
                 return;
             }
 
-            // --- Successful Signup ---
             handleSuccessfulSignup(displayName, signupBtn);
 
         } catch (error) {
-            console.error('Signup request failed:', error);
             showError('Could not connect to the server. Please try again later.');
         } finally {
-            if (!response || !response.ok) { // Only re-enable if there was an error
-                 signupBtn.disabled = false;
-                 signupBtn.innerHTML = originalText;
-            }
+             signupBtn.disabled = false;
+             signupBtn.innerHTML = originalText;
         }
     });
 });
 
+/**
+ * NEW: A reusable function to add show/hide functionality to a password field.
+ * @param {string} toggleId The ID of the button element.
+ * @param {string} inputId The ID of the input[type=password] element.
+ */
+function setupPasswordToggle(toggleId, inputId) {
+    const toggleButton = document.getElementById(toggleId);
+    const passwordInput = document.getElementById(inputId);
+
+    if (toggleButton && passwordInput) {
+        toggleButton.addEventListener('click', () => {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            toggleButton.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
+}
 
 // --- Helper Functions (mostly unchanged) ---
 
 function handleSuccessfulSignup(displayName, signupBtn) {
-    // Show success state on button
     signupBtn.classList.remove('btn-primary');
     signupBtn.classList.add('btn-success');
     signupBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Account Created!';
     
     showSuccess(`Welcome, ${displayName}! Redirecting to login...`);
     
-    // Redirect to login page after a short delay
     setTimeout(() => {
-        window.location.href = 'index.html'; // Or your login page filename
+        window.location.href = 'index.html';
     }, 2500);
 }
 
