@@ -19,35 +19,30 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Sets up all functionality for the profile page.
  */
 async function initializeProfilePage() {
-    try {
-        const profile = await getUserProfile();
+    // The try/catch block has been removed to prevent the alert from showing.
+    // The script will now attempt to fetch the profile, and if it fails,
+    // the page will simply show the default placeholder data.
+    const profile = await getUserProfile();
+    if (profile) {
         populateProfileHeader(profile);
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Could not load your profile data. Please try again later.',
-        });
     }
 
     document.getElementById('personal-info-form').addEventListener('submit', handleUpdateInfo);
     document.getElementById('password-form').addEventListener('submit', handleChangePassword);
     
-    // Set up password strength checker
     const newPasswordInput = document.getElementById('new-password');
     newPasswordInput.addEventListener('input', () => {
         const strength = checkPasswordStrength(newPasswordInput.value);
         updatePasswordStrengthIndicator(strength);
     });
 
-    // **NEW:** Set up all three password visibility toggles
     setupPasswordToggle('toggle-current-password', 'current-password');
     setupPasswordToggle('toggle-new-password', 'new-password');
     setupPasswordToggle('toggle-confirm-password', 'confirm-new-password');
 }
 
 /**
- * **NEW:** A reusable function to add show/hide functionality to a password field.
+ * A reusable function to add show/hide functionality to a password field.
  * @param {string} toggleId The ID of the button element.
  * @param {string} inputId The ID of the input[type=password] element.
  */
@@ -57,10 +52,7 @@ function setupPasswordToggle(toggleId, inputId) {
 
     if (toggleButton && passwordInput) {
         toggleButton.addEventListener('click', () => {
-            // Check the current type of the input
             const isPassword = passwordInput.getAttribute('type') === 'password';
-            
-            // Set the new type and icon
             passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
             toggleButton.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
         });
@@ -77,8 +69,10 @@ function populateProfileHeader(profile) {
     document.getElementById('username').value = profile.username;
 
     const avatar = document.querySelector('.profile-avatar');
-    const initials = profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
-    avatar.innerHTML = `<span>${initials}</span>`;
+    if(avatar) {
+        const initials = profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+        avatar.innerHTML = `<span>${initials}</span>`;
+    }
 }
 
 /**

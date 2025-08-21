@@ -1,67 +1,128 @@
-/* NauticalFlow Dashboard - Modern Maritime LIGHT Theme */
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+/* NauticalFlow Dashboard - Deep Sea Exploration Theme */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
 
 :root {
-    /* === CORE MARITIME PALETTE === */
-    --maritime-navy-dark: #0d1b2a;   /* For text and the dark navbar */
-    --maritime-navy-light: #1b263b;  /* For the dark navbar */
-    --maritime-border-light: #dee2e6; /* Light borders and dividers */
-    --maritime-text-dark: #212529;   /* Primary text color */
-    --maritime-text-muted: #6c757d;  /* Secondary text, muted gray */
-    --maritime-accent-teal: #00f5d4;  /* Bright, modern teal for highlights */
-    --maritime-hover-bg-light: #e9ecef; /* Subtle gray for hover states */
+    /* === DEEP SEA EXPLORATION PALETTE === */
+    --maritime-navy-dark: #03045e;      /* Midnight Blue */
+    --maritime-navy-light: #0a0a0a;
+    --maritime-slate: #4895ef;
+    --maritime-light-slate: #ade8f4;
+    --maritime-white: #f0f8ff;
+    --maritime-teal: #90f1ef;          /* Electric Cyan */
+    --maritime-bg-light: #f0f8ff;      /* Alice Blue */
+    --maritime-bg-content: #ffffff;
+    --maritime-border-light: #d6e8f6;
+    --maritime-shadow-color: rgba(3, 4, 94, 0.1);
 
-    /* === SEMANTIC COLORS (For stats, alerts etc.) === */
-    --primary-color: #0d6efd;    /* Classic Bootstrap Blue */
-    --success-color: #198754;
-    --info-color: #0dcaf0;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
+    /* === SEMANTIC COLORS === */
+    --primary-color: #00b4d8;          /* Bright Cerulean */
+    --success-color: #2dce89;
+    --info-color: #11cdef;
+    --warning-color: #fb6340;
+    --danger-color: #f5365c;
 
     /* === GLOBAL THEME VARIABLES === */
-    --bg-main: #f4f7fc;           /* Light, cool blue-gray for the main background */
-    --bg-content: #ffffff;         /* Pure white for cards, modals, etc. */
-    --text-primary: var(--maritime-text-dark);
-    --text-secondary: var(--maritime-text-muted);
+    --bg-main: var(--maritime-bg-light);
+    --bg-content: var(--maritime-bg-content);
+    --text-primary: var(--maritime-navy-dark);
+    --text-secondary: var(--maritime-navy-light);
     --border-color: var(--maritime-border-light);
-    --accent-color: var(--maritime-accent-teal);
+    --accent-color: var(--maritime-teal);
 
     /* === LAYOUT & STYLE VARIABLES === */
-    --sidebar-width: 250px;
-    --navbar-height: 60px;
-    --border-radius-base: 0.5rem;
-    --transition-speed: 0.3s;
+    --sidebar-width: 260px;
+    --navbar-height: 70px;
+    --border-radius-base: 0.75rem;
+    --transition-speed: 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 body {
-    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-main);
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background-image: url('https://cdn.pixabay.com/photo/2019/09/08/09/26/cruise-ship-4460493_1280.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    position: relative;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
 }
 
-/* Navbar (Kept dark for strong contrast and branding) */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 27, 42, 0.6);
+    z-index: -1;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--maritime-navy-dark);
+    font-weight: 700;
+}
+
+/* === GLASSMORPHISM NAVBAR === */
 .navbar {
-    background: linear-gradient(90deg, var(--maritime-navy-light) 0%, var(--maritime-navy-dark) 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: rgba(3, 4, 94, 0.5);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
     height: var(--navbar-height);
     z-index: 1030;
 }
+
 .navbar-brand {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: #fff !important;
-}
-.navbar-brand i {
-    color: var(--accent-color);
-}
-.navbar .nav-link {
-    color: #e0e1dd !important;
+    color: var(--maritime-white) !important;
 }
 
-/* Sidebar (Light theme to match the main content) */
+.navbar-brand i {
+    color: var(--primary-color);
+}
+
+.navbar .nav-link {
+    color: var(--maritime-light-slate) !important;
+    font-weight: 500;
+}
+.navbar .nav-link:hover {
+    color: var(--maritime-white) !important;
+}
+
+/* === NAVBAR DROPDOWN MENU === */
+.dropdown-menu {
+    border-radius: var(--border-radius-base);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 30px var(--maritime-shadow-color);
+    padding: 0.5rem 0;
+}
+.dropdown-item {
+    padding: 0.6rem 1.25rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+.dropdown-item:hover {
+    background-color: var(--maritime-bg-light);
+    color: var(--primary-color);
+}
+.dropdown-item i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 20px;
+}
+.dropdown-divider {
+    border-top: 1px solid var(--border-color);
+}
+
+/* === GLASSMORPHISM SIDEBAR === */
 .sidebar {
     position: fixed;
     top: 0;
@@ -70,168 +131,251 @@ body {
     padding-top: var(--navbar-height);
     z-index: 100;
     width: var(--sidebar-width);
-    background-color: var(--bg-content);
-    border-right: 1px solid var(--border-color);
-    transition: all var(--transition-speed) ease;
+    background: rgba(3, 4, 94, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+    transition: all var(--transition-speed);
 }
 
 .sidebar-heading {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
+    color: var(--maritime-navy-light);
+    font-size: 0.8rem;
+    font-weight: 600;
     text-transform: uppercase;
-    font-weight: 700;
-    padding: 1rem 1.5rem 0.5rem;
+    padding: 1.5rem 1.5rem 0.75rem;
+    letter-spacing: 0.5px;
 }
 
 .sidebar .nav-link {
-    color: var(--text-secondary);
-    padding: 0.8rem 1.5rem;
+    color: var(--maritime-light-slate);
+    padding: 0.9rem 1.5rem;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
-    border-radius: 6px;
-    margin: 0.25rem 0.75rem;
+    border-radius: var(--border-radius-base);
+    margin: 0.3rem 1rem;
     display: flex;
     align-items: center;
-    border-left: 3px solid transparent;
 }
 
 .sidebar .nav-link:hover {
-    color: var(--text-primary);
-    background-color: var(--maritime-hover-bg-light);
-    transform: translateX(5px);
+    color: var(--maritime-white);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar .nav-link.active {
-    color: var(--primary-color);
+    color: var(--maritime-white);
     font-weight: 600;
-    background: linear-gradient(90deg, rgba(13, 110, 253, 0.07) 0%, rgba(13, 110, 253, 0) 100%);
-    border-left: 3px solid var(--primary-color);
+    background: rgba(0, 180, 216, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.2);
 }
 
 .sidebar .nav-link i {
-    width: 25px;
+    width: 28px;
     text-align: center;
-    font-size: 1.1rem;
-    margin-right: 0.75rem;
-    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    color: var(--maritime-slate);
     transition: color 0.2s ease-in-out;
 }
 
-.sidebar .nav-link:hover i,
+.sidebar .nav-link:hover i {
+    color: var(--maritime-light-slate);
+}
 .sidebar .nav-link.active i {
-    color: var(--primary-color);
+    color: var(--maritime-white);
 }
 
-/* Main Content */
+/* === MAIN CONTENT & SPACING === */
 main {
     margin-left: var(--sidebar-width);
-    padding-top: calc(var(--navbar-height) + 24px);
+    padding: calc(var(--navbar-height) + 30px) 30px 30px;
     min-height: 100vh;
-    transition: margin-left var(--transition-speed) ease;
+    transition: margin-left var(--transition-speed);
 }
 
-/* Cards (Clean and modern with subtle shadows) */
+/* === MODERN CARDS WITH DEPTH === */
 .card {
     background-color: var(--bg-content);
     border: none;
     border-radius: var(--border-radius-base);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: all var(--transition-speed) ease;
+    box-shadow: 0 8px 30px var(--maritime-shadow-color);
+    transition: all var(--transition-speed);
+    overflow: hidden;
 }
 
 .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(3, 4, 94, 0.15);
 }
 
 .card-header {
     background-color: transparent;
     border-bottom: 1px solid var(--border-color);
-    padding: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem;
     font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    border-top: 3px solid transparent;
 }
 
-/* Stats Cards with Themed Borders */
-.border-left-primary { border-left: 0.25rem solid var(--primary-color) !important; }
-.border-left-success { border-left: 0.25rem solid var(--success-color) !important; }
-.border-left-info { border-left: 0.25rem solid var(--info-color) !important; }
-.border-left-warning { border-left: 0.25rem solid var(--warning-color) !important; }
+/* Card Header Accents */
+.card-header-primary { border-top-color: var(--primary-color); }
+.card-header-teal { border-top-color: var(--maritime-teal); }
 
-/* Buttons */
+/* === STATS CARDS WITH ICON BUBBLES === */
+.stat-card .card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stat-card .stat-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.75rem;
+    color: #fff;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.stat-icon-primary { background: linear-gradient(310deg, #00b4d8, #4895ef); }
+.stat-icon-success { background: linear-gradient(310deg, #2dce89, #2dcecc); }
+.stat-icon-info { background: linear-gradient(310deg, #11cdef, #1171ef); }
+.stat-icon-warning { background: linear-gradient(310deg, #fb6340, #fbb140); }
+
+.stat-card .stat-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.stat-card .stat-number {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+}
+
+/* === BUTTONS WITH GLOW EFFECT === */
 .btn {
     border-radius: var(--border-radius-base);
     font-weight: 600;
-    transition: all var(--transition-speed) ease;
+    padding: 0.75rem 1.5rem;
+    transition: all var(--transition-speed);
+    letter-spacing: 0.5px;
+    border: none;
 }
+
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    background: var(--primary-color);
     color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.4);
+}
+.btn-primary:hover {
+    background: var(--primary-color);
+    box-shadow: 0 7px 25px rgba(0, 180, 216, 0.6);
 }
 
-/* Form Controls */
+.btn-teal {
+    background: var(--maritime-teal);
+    color: var(--maritime-navy-dark);
+    box-shadow: 0 4px 15px rgba(144, 241, 239, 0.5);
+}
+.btn-teal:hover {
+    background: var(--maritime-teal);
+    box-shadow: 0 7px 25px rgba(144, 241, 239, 0.7);
+}
+
+/* === FORM CONTROLS === */
 .form-control, .form-select {
-    background-color: var(--bg-content);
+    background-color: var(--maritime-bg-light);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     border-radius: var(--border-radius-base);
+    padding: 0.75rem 1rem;
+    transition: all var(--transition-speed);
 }
 .form-control:focus, .form-select:focus {
     background-color: var(--bg-content);
     color: var(--text-primary);
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.2);
 }
 .form-control::placeholder {
-    color: #adb5bd;
+    color: var(--maritime-light-slate);
 }
 
-/* Table Styles */
+/* === TABLE STYLES === */
 .table {
     color: var(--text-primary);
     border-color: var(--border-color);
 }
 .table th {
-    background-color: #f8f9fa;
-    color: var(--text-primary);
+    background-color: var(--maritime-white);
+    color: var(--text-secondary);
     font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    border-bottom: 2px solid var(--border-color);
+}
+.table td {
+    vertical-align: middle;
 }
 .table-hover > tbody > tr:hover > * {
-    background-color: var(--maritime-hover-bg-light);
+    background-color: var(--maritime-white);
     color: var(--text-primary);
 }
 
-/* Modal Styles */
-.modal-content {
-    background-color: var(--bg-content);
-    border: none;
-    color: var(--text-primary);
-}
-.modal-header { border-bottom: 1px solid var(--border-color); }
-.modal-footer { border-top: 1px solid var(--border-color); }
-
-/* Responsive Design */
-@media (max-width: 768px) {
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 992px) {
     .sidebar {
-        top: var(--navbar-height);
-        left: -100%;
-        width: 100%;
-        height: calc(100vh - var(--navbar-height));
-        transition: left var(--transition-speed) ease;
-        border-right: none;
-        overflow-y: auto;
+        left: calc(-1 * var(--sidebar-width));
     }
-    .sidebar.show { left: 0; }
-    main { margin-left: 0; }
-    .navbar-brand { font-size: 1.25rem; }
+    .sidebar.show {
+        left: 0;
+        box-shadow: 0 0 50px var(--maritime-shadow-color);
+    }
+    main {
+        margin-left: 0;
+    }
 }
 
-/* Utility & Animation Classes */
-.chart-area { position: relative; height: 20rem; width: 100%; }
-.fade-in { animation: fadeIn 0.5s ease-in; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 768px) {
+    main {
+        padding: calc(var(--navbar-height) + 20px) 15px 15px;
+    }
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+}
+
+/* === UTILITY & ANIMATION CLASSES === */
+.chart-area {
+    position: relative;
+    height: 22rem;
+    width: 100%;
+}
+.fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
