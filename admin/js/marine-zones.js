@@ -5,6 +5,9 @@ import { loadLayout } from './modules/layout.js';
 let map;
 let eezLayer = null;
 let territorialSeasLayer = null;
+let windLayer = null;
+let waveHeightLayer = null;
+
 
 // Debug logging function
 function debugLog(message, data = null) {
@@ -90,16 +93,18 @@ async function loadMarineZones() {
         // Load EEZ and Territorial Seas using WMS
         await Promise.all([
             loadEEZBoundaries(),
-            loadTerritorialSeas()
+            loadTerritorialSeas(),
+            loadWindData(),
+            loadWaveHeightData(),
         ]);
         
-        debugLog('Marine zones load completed successfully');
-        showAlert('Marine zones loaded successfully!', 'success');
+        debugLog('All map data loaded completed successfully');
+        showAlert('All map data loaded successfully!', 'success');
         
     } catch (error) {
-        debugLog('Error loading marine zones', { error: error.message });
-        console.error('Error loading marine zones:', error);
-        showAlert('Failed to load marine zones data', 'warning');
+        debugLog('Error loading map data', { error: error.message });
+        console.error('Error loading map data:', error);
+        showAlert('Failed to load some map data', 'warning');
     }
 }
 
@@ -178,32 +183,66 @@ async function loadTerritorialSeas() {
     }
 }
 
+/**
+ * Loads Wind data using a tile layer from OpenPortGuide
+ */
+async function loadWindData() {
+    try {
+        debugLog('Starting Wind data load');
 
+        const windUrl = 'http://www.openportguide.org/tiles/actual/wind_stream/5/{z}/{x}/{y}.png';
 
+        const windTileLayer = L.tileLayer(windUrl, {
+            attribution: 'OpenPortGuide',
+            transparent: true,
+            opacity: 0.8
+        });
 
+        debugLog('Adding Wind tile layer to map');
+        
+        windTileLayer.addTo(map);
+        windLayer = windTileLayer;
+        
+        debugLog('Wind tile layer added successfully');
+        console.log('Wind tile layer loaded successfully');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    } catch (error) {
+        debugLog('Wind data loading failed', { error: error.message });
+        console.error('Failed to load wind data:', error);
+    }
+}
 
 /**
- * Adds a legend for marine zones and weather data
+ * Loads Wave Height data using a tile layer from OpenSeaMap.
+ */
+async function loadWaveHeightData() {
+    try {
+        debugLog('Starting Wave Height data load');
+
+        const waveHeightUrl = 'http://www.openportguide.org/tiles/actual/significant_wave_height/5/{z}/{x}/{y}.png';
+
+        const waveHeightTileLayer = L.tileLayer(waveHeightUrl, {
+            attribution: 'OpenPortGuide',
+            transparent: true,
+            opacity: 0.7
+        });
+
+        debugLog('Adding Wave Height tile layer to map');
+        
+        waveHeightTileLayer.addTo(map);
+        waveHeightLayer = waveHeightTileLayer;
+        
+        debugLog('Wave Height tile layer added successfully');
+        console.log('Wave Height tile layer loaded successfully');
+
+    } catch (error) {
+        debugLog('Wave Height data loading failed', { error: error.message });
+        console.error('Failed to load Wave Height data:', error);
+    }
+}
+
+/**
+ * Adds a legend for marine zones and weather data with interactive toggles.
  */
 function addMarineZonesLegend() {
     const legend = L.Control.extend({
@@ -213,9 +252,10 @@ function addMarineZonesLegend() {
         
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control legend');
+            
             container.innerHTML = `
                 <div style="background: rgba(255,255,255,0.9); padding: 10px; border-radius: 4px; font-size: 12px; min-width: 200px;">
-                    <h6 style="margin: 0 0 8px 0; font-weight: bold; color: #333;">Marine Zones</h6>
+                    <h6 style="margin: 0 0 8px 0; font-weight: bold; color: #333;">Marine Zones & Weather</h6>
                     <div style="margin-bottom: 5px;">
                         <span style="display: inline-block; width: 12px; height: 12px; background: #42B7B7; margin-right: 8px;"></span>
                         <span>200 NM</span>
@@ -232,9 +272,42 @@ function addMarineZonesLegend() {
                         <span style="display: inline-block; width: 12px; height: 12px; background: #FF0000; margin-right: 8px;"></span>
                         <span>Overlapping Claims</span>
                     </div>
-
+                    
+                    <hr>
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                         <input type="checkbox" id="wind-layer-toggle" checked style="margin-right: 8px;">
+                        <label for="wind-layer-toggle">Wind</label>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="wave-height-layer-toggle" checked style="margin-right: 8px;">
+                        <label for="wave-height-layer-toggle">Wave Height</label>
+                    </div>
                 </div>
             `;
+
+            // Prevent map interactions when clicking on the legend
+            container.onmousedown = container.ondblclick = container.onmousewheel = L.DomEvent.stopPropagation;
+
+            // Add event listeners for the checkboxes
+            const windToggle = container.querySelector('#wind-layer-toggle');
+            const waveHeightToggle = container.querySelector('#wave-height-layer-toggle');
+
+            windToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    if (windLayer) map.addLayer(windLayer);
+                } else {
+                    if (windLayer) map.removeLayer(windLayer);
+                }
+            });
+
+            waveHeightToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    if (waveHeightLayer) map.addLayer(waveHeightLayer);
+                } else {
+                    if (waveHeightLayer) map.removeLayer(waveHeightLayer);
+                }
+            });
+
             return container;
         }
     });
