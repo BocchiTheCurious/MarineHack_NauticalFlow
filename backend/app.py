@@ -9,6 +9,7 @@ from functools import wraps
 import re # Imported for password validation
 from decimal import Decimal # Import for numeric types
 import requests
+from optimization_solver import run_route_optimization
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -69,6 +70,17 @@ class CruiseShip(db.Model):
     # Establish the relationship to FuelType
     fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
     fuel_type = db.relationship('FuelType', backref='cruise_ships')
+
+# --- Marine Zone Ports Model ---
+
+class PortMarineZone(db.Model):
+    __tablename__ = 'ports_marinezone'
+    id = db.Column(db.Integer, primary_key=True)
+    port_name = db.Column(db.String(100), nullable=False)
+    country = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    unlocode = db.Column(db.String(10))
 
 
 # --- Database Initialization ---
@@ -450,6 +462,50 @@ def get_profile_stats(current_user):
         'daysActive': (datetime.utcnow().date() - datetime(2025, 7, 15).date()).days
     }
     return jsonify(stats)
+
+# --- Route Optimization Endpoint ---
+
+@app.route('/api/optimize', methods=['POST'])
+@token_required
+def optimize_route(current_user):
+    """
+    Receives an array of port coordinates, runs the GA optimization,
+    and returns the result.
+    """
+    data = request.get_json()
+
+    # Validate incoming data
+    if not data or 'route' not in data or not isinstance(data['route'], list):
+        return jsonify({"error": "Invalid data. Expected a 'route' key with a list of coordinates."}), 400
+
+    coordinates = data['route']
+    print(f"User '{current_user.username}' is optimizing a route with {len(coordinates)} ports.")
+
+    # Call the optimization function from the other file
+    try:
+        result = run_route_optimization(coordinates)
+        print(f"Optimization successful. Result: {result}")
+
+        # Return the result from the solver as a JSON response
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"An error occurred during optimization: {e}")
+        return jsonify({"error": "An internal error occurred during the optimization process."}), 500
+    
+@app.route('/api/marine-zone-ports', methods=['GET'])
+@token_required
+def get_marine_zone_ports(current_user):
+    """Returns all ports from the marine zone table for display on the map."""
+    ports = PortMarineZone.query.order_by(PortMarineZone.port_name).all()
+    return jsonify([{
+        'id': p.id,
+        'port_name': p.port_name,
+        'country': p.country,
+        'latitude': p.latitude,
+        'longitude': p.longitude,
+        'unlocode': p.unlocode
+    } for p in ports])
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
