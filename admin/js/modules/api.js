@@ -70,7 +70,6 @@ export async function updatePort(portId, portData) {
     return getPorts();
 }
 
-
 // --- Vessel Functions (Live API) ---
 
 export function getVessels() {

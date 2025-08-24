@@ -269,12 +269,22 @@ async function handleTableActions(event) {
     const ship = allShips.find(s => s.id == shipId);
 
     if (targetBtn.classList.contains('delete-btn')) {
-        if (confirm(`Are you sure you want to delete "${ship.name}"?`)) {
-            await deleteCruiseShip(shipId);
-            showAlert(`Ship "${ship.name}" deleted.`, 'success');
-            allShips = await getCruiseShips();
-            renderShipsTable(allShips);
-        }
+        // **FIX 2: UPGRADED TO SWEETALERT**
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You are about to delete "${ship.name}". This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await deleteCruiseShip(shipId);
+                showAlert(`Ship "${ship.name}" deleted.`, 'success');
+                allShips = await getCruiseShips();
+                renderShipsTable(allShips);
+            }
+        });
     } else if (targetBtn.classList.contains('view-curve-btn')) {
         const curveString = JSON.stringify(ship.fuelConsumptionCurve, null, 2);
         Swal.fire({

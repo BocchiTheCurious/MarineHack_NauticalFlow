@@ -8,6 +8,7 @@ import os
 from functools import wraps
 import re # Imported for password validation
 from decimal import Decimal # Import for numeric types
+import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -31,6 +32,7 @@ class Port(db.Model):
     __tablename__ = 'ports'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    unlocode = db.Column(db.String(5), unique=True, nullable=True)
     country = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
@@ -222,7 +224,6 @@ def delete_port(current_user, port_id):
     db.session.commit()
     return jsonify({'message': 'Port deleted successfully'})
 
-
 # --- Cruise Ship Endpoints (CRUD) ---
 
 @app.route('/api/cruise-ships', methods=['GET'])
@@ -293,13 +294,18 @@ def get_fuel_types(current_user):
 @token_required
 def add_fuel_type(current_user):
     data = request.get_json()
+    
+    # THE FIX: Check if a fuel with this name already exists
+    if FuelType.query.filter_by(name=data.get('name')).first():
+        return jsonify({'error': f"A fuel type with the name '{data.get('name')}' already exists."}), 409 # 409 Conflict is the correct status code
+
+    # ... (the rest of the function is the same)
     new_fuel_type = FuelType(
-        # ... (name, cost, etc. are the same)
         name=data.get('name'), cost_per_ton=data.get('costPerTon'),
         co2_factor=data.get('co2Factor'), original_cost=data.get('originalCost'),
         original_currency=data.get('originalCurrency'), exchange_rate=data.get('exchangeRate'),
         price_date=datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None,
-        bunkering_port=data.get('bunkeringPort') # UPDATED
+        bunkering_port=data.get('bunkeringPort')
     )
     db.session.add(new_fuel_type)
     db.session.commit()
@@ -310,7 +316,13 @@ def add_fuel_type(current_user):
 def update_fuel_type(current_user, fuel_type_id):
     fuel_type = FuelType.query.get_or_404(fuel_type_id)
     data = request.get_json()
-    # ... (name, cost, etc. are the same)
+    
+    # THE FIX: Add a check here as well to prevent renaming to an existing name
+    existing_fuel = FuelType.query.filter(FuelType.name == data.get('name'), FuelType.id != fuel_type_id).first()
+    if existing_fuel:
+        return jsonify({'error': f"Another fuel type with the name '{data.get('name')}' already exists."}), 409
+
+    # ... (the rest of the function is the same)
     fuel_type.name = data.get('name')
     fuel_type.cost_per_ton = data.get('costPerTon')
     fuel_type.co2_factor = data.get('co2Factor')
@@ -318,7 +330,7 @@ def update_fuel_type(current_user, fuel_type_id):
     fuel_type.original_currency = data.get('originalCurrency')
     fuel_type.exchange_rate = data.get('exchangeRate')
     fuel_type.price_date = datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None
-    fuel_type.bunkering_port = data.get('bunkeringPort') # UPDATED
+    fuel_type.bunkering_port = data.get('bunkeringPort')
     db.session.commit()
     return jsonify({'message': 'Fuel type updated successfully'})
 
@@ -333,10 +345,36 @@ def delete_fuel_type(current_user, fuel_type_id):
 @app.route('/api/exchange-rate', methods=['GET'])
 @token_required
 def get_exchange_rate(current_user):
-    # In a real application, this would call a financial data API.
-    # For this demo, we'll return a simulated historical rate.
-    # The document recommends fetching the rate for a specific date[cite: 39].
-    return jsonify({'rate': 4.7015}) # Simulated USD/MYR rate
+    """
+    Fetches the latest USD to MYR exchange rate from a live API.
+    NOTE: The free ExchangeRate-API plan does not support historical data,
+    so this will always return the LATEST rate, regardless of the date requested.
+    """
+    # Your free API key is included here.
+    # In a production app, this should be stored securely as an environment variable.
+    api_key = "d545249a3ffd92444428fb29"
+    exchange_rate_url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/USD"
+
+    try:
+        response = requests.get(exchange_rate_url)
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        data = response.json()
+
+        # Check if the API call was successful and the rates are present
+        if data.get('result') == 'success' and 'conversion_rates' in data:
+            # Extract the specific rate for Malaysian Ringgit (MYR)
+            myr_rate = data['conversion_rates'].get('MYR')
+            if myr_rate is None:
+                return jsonify({'error': 'MYR currency data not found in API response.'}), 500
+            
+            return jsonify({'rate': myr_rate})
+        else:
+            # Handle cases where the API returns an error
+            error_message = data.get('error-type', 'Unknown API error')
+            return jsonify({'error': f'Failed to fetch exchange rates: {error_message}'}), 502
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Failed to connect to the exchange rate API: {e}'}), 502
 
 # --- Profile Management Endpoints ---
 

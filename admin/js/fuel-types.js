@@ -1,12 +1,19 @@
-// js/fuel-types.js
-
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
 import { getFuelTypes, addFuelType, deleteFuelType, updateFuelType } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let fuelTypeModal;
-let allFuelTypes = []; // Cache the fuel types to get data for editing
+let allFuelTypes = [];
+
+// Configure Toastr notifications for a consistent look and feel
+toastr.options = {
+    "closeButton": true,
+    "progressBar": true,
+    "positionClass": "toast-top-right",
+    "preventDuplicates": true,
+    "timeOut": "3000"
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
@@ -39,20 +46,15 @@ async function loadAndRenderFuelTypes() {
         allFuelTypes = await getFuelTypes();
         renderFuelTypesTable(allFuelTypes);
     } catch (error) {
-        showAlert('Could not load fuel types.', 'danger');
+        toastr.error('Could not load fuel types.', 'Load Failed');
     }
 }
 
-/**
- * Renders the fuel types data into the main table.
- * @param {Array<Object>} fuelTypes - The array of fuel type objects to display.
- */
 function renderFuelTypesTable(fuelTypes) {
     const tableBody = document.querySelector('#fuel-types-table tbody');
     tableBody.innerHTML = '';
     
     if (fuelTypes.length === 0) {
-        // Corrected colspan to 6 to match the headers
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No fuel types found.</td></tr>';
         return;
     }
@@ -60,12 +62,6 @@ function renderFuelTypesTable(fuelTypes) {
     fuelTypes.forEach(ft => {
         const row = document.createElement('tr');
         const originalCostDisplay = ft.originalCurrency === 'MYR' ? `(MYR ${ft.originalCost})` : '';
-        
-        // ======================================================
-        // === THE FIX IS HERE ==================================
-        // The order of <td> elements now matches the <thead>
-        // and the missing Price Date has been added.
-        // ======================================================
         row.innerHTML = `
             <td>${ft.name}</td>
             <td>${ft.bunkeringPort || 'N/A'}</td>
@@ -84,7 +80,6 @@ function renderFuelTypesTable(fuelTypes) {
         tableBody.appendChild(row);
     });
 }
-
 
 function handleModalOpen(event) {
     const button = event.relatedTarget;
@@ -128,22 +123,26 @@ async function handleSaveFuelType(event) {
     };
     
     if (!fuelTypeData.co2Factor) {
-        showAlert('Please select a Fuel Category for IMO reporting.', 'warning');
+        toastr.warning('Please select a Fuel Category for IMO reporting.');
         return;
     }
     
     try {
         if (fuelTypeId) {
             await updateFuelType(fuelTypeId, fuelTypeData);
-            showAlert('Fuel type updated successfully!', 'success');
+            toastr.success('Fuel type updated successfully!');
         } else {
             await addFuelType(fuelTypeData);
-            showAlert('Fuel type added successfully!', 'success');
+            toastr.success('Fuel type added successfully!');
         }
         fuelTypeModal.hide();
         loadAndRenderFuelTypes();
     } catch (error) {
-        showAlert(`Failed to save fuel type. ${error.message}`, 'danger');
+        if (error.message && error.message.includes('already exists')) {
+            toastr.error(error.message, 'Duplicate Entry');
+        } else {
+            toastr.error(`Failed to save fuel type. ${error.message}`, 'Save Failed');
+        }
     }
 }
 
@@ -154,9 +153,23 @@ async function handleTableActions(event) {
     const fuelTypeId = targetBtn.dataset.fuelTypeId;
     const fuelTypeName = targetBtn.closest('tr').cells[0].textContent;
 
-    if (confirm(`Are you sure you want to delete "${fuelTypeName}"?`)) {
-        await deleteFuelType(fuelTypeId);
-        showAlert(`Fuel type "${fuelTypeName}" deleted.`, 'success');
-        loadAndRenderFuelTypes();
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete "${fuelTypeName}". This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                await deleteFuelType(fuelTypeId);
+                toastr.success(`Fuel type "${fuelTypeName}" was deleted.`);
+                loadAndRenderFuelTypes();
+            } catch (error) {
+                toastr.error('Failed to delete fuel type.', 'Delete Failed');
+            }
+        }
+    });
 }

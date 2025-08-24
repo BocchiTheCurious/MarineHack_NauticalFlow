@@ -4,7 +4,7 @@
 :root {
     /* === DEEP SEA EXPLORATION PALETTE === */
     --maritime-navy-dark: #03045e;      /* Midnight Blue */
-    --maritime-navy-light: #0a0a0a;
+    --maritime-navy-light: #023e8a;
     --maritime-slate: #4895ef;
     --maritime-light-slate: #ade8f4;
     --maritime-white: #f0f8ff;
@@ -63,6 +63,11 @@ body::before {
 
 h1, h2, h3, h4, h5, h6 {
     color: var(--maritime-navy-dark);
+    font-weight: 700;
+}
+
+.page-title {
+    color: var(--maritime-white);
     font-weight: 700;
 }
 
@@ -139,7 +144,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-heading {
-    color: var(--maritime-navy-light);
+    color: var(--maritime-white);
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;

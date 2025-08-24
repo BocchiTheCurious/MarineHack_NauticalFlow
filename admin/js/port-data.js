@@ -188,15 +188,27 @@ async function handleTableActions(event) {
     const portId = targetBtn.dataset.portId;
     const portName = targetBtn.closest('tr').cells[1].textContent;
 
-    if (confirm(`Are you sure you want to delete "${portName}"?`)) {
-        try {
-            await deletePort(portId);
-            showAlert(`Port "${portName}" deleted.`, 'success');
-            loadAndRenderPorts();
-        } catch (error) {
-            showAlert('Failed to delete port.', 'danger');
+    // THE FIX: Replaced the old confirm() with SweetAlert
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete "${portName}". This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                await deletePort(portId);
+                // Using toastr for the success message for consistency
+                toastr.success(`Port "${portName}" was deleted.`);
+                loadAndRenderPorts(); // Refresh the table
+            } catch (error) {
+                toastr.error('Failed to delete port.', 'Delete Failed');
+            }
         }
-    }
+    });
 }
 
 function handleSearch(event) {

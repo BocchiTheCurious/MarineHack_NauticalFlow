@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Port Data - NauticalFlow</title>
+    <!-- Using the newer Bootstrap and Bootstrap Icons links -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../styles.css" rel="stylesheet"> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
 </head>
 <body>
     
@@ -20,13 +21,13 @@
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">
+                <h1 class="page-title">
                     <i class="bi bi-geo me-2"></i>
                     Port Data Management
                 </h1>
             </div>
 
-            <!-- Informational card about port data -->
+            <!-- Informational card about port data (from the first file) -->
             <div class="card bg-light border-info shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title text-info"><i class="bi bi-info-circle-fill me-2"></i>Guidance: Understanding Port Data</h5>
@@ -41,21 +42,21 @@
                     <ul>
                         <li>
                             <strong>For Latitude & Longitude (Official Source):</strong>
-                            <br>The industry standard for location data is the **UN/LOCODE** list maintained by the United Nations. This provides a unique code and coordinates for thousands of transport locations worldwide.
-                                <ul>
-                                    <li><strong>Source:</strong> <a href="https://unece.org/trade/cefact/unlocode-code-list-country-and-territory" target="_blank">UN/LOCODE Code List</a></li>
-                                    <li><strong>How-to:</strong> Search for your port on the official list. The coordinates are provided in the "Coordinates" column.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>For Congestion Index (Live Data Source):</strong>
-                                <br>Congestion is dynamic. While internal company data is valuable, specialized maritime analytics tools provide the best near-real-time data by analyzing global vessel traffic.
-                                <ul>
-                                    <li><strong>Source:</strong> <a href="https://seadex.ai/en/free-tools/port-congestion-tool" target="_blank">SeaDex.ai Port Congestion Tool</a></li>
-                                    <li><strong>How-to:</strong> Use this free tool to view the current and historical congestion levels for major ports. Use this data to enter a realistic index (e.g., a percentage or a 1-100 score).</li>
-                                </ul>
-                            </li>
-                        </ul>
+                            <br>The industry standard for location data is the <strong>UN/LOCODE</strong> list maintained by the United Nations. This provides a unique code and coordinates for thousands of transport locations worldwide.
+                            <ul>
+                                <li><strong>Source:</strong> <a href="https://unece.org/trade/cefact/unlocode-code-list-country-and-territory" target="_blank">UN/LOCODE Code List</a></li>
+                                <li><strong>How-to:</strong> Search for your port on the official list. The coordinates are provided in the "Coordinates" column.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>For Congestion Index (Live Data Source):</strong>
+                            <br>Congestion is dynamic. While internal company data is valuable, specialized maritime analytics tools provide the best near-real-time data by analyzing global vessel traffic.
+                            <ul>
+                                <li><strong>Source:</strong> <a href="https://seadex.ai/en/free-tools/port-congestion-tool" target="_blank">SeaDex.ai Port Congestion Tool</a></li>
+                                <li><strong>How-to:</strong> Use this free tool to view the current and historical congestion levels for major ports. Use this data to enter a realistic index (e.g., a percentage or a 1-100 score).</li>
+                            </ul>
+                        </li>
+                    </ul>
                     <hr>
                     <div class="alert alert-primary mb-0">
                         <strong><i class="bi bi-star-fill me-2"></i>Pro-Tip for Operators:</strong> For the most precise voyage calculations, use the Latitude and Longitude of the port's <strong>main channel entrance buoy</strong> (also called the "sea buoy" or "fairway buoy"). This represents the true start and end point of the open-ocean segment of a voyage.
@@ -64,7 +65,7 @@
             </div>
 
             <!-- Port Data Table -->
-            <div class="card shadow mb-4">
+             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
                     <div class="d-flex gap-2">
@@ -97,7 +98,7 @@
             </div>
 
             <!-- Add/Edit Port Modal -->
-            <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+           <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -150,8 +151,10 @@
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
+
+    <!-- Bootstrap JS and SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom JS -->
     <script type="module" src="js/port-data.js"></script>
 </body>
