@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - NauticalFlow</title>
+    <title>NauticalFlow - Login & Signup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     
     <style>
+        /* --- Base & Background Styles --- */
         body {
-            /* Background Image from Unsplash */
             background-image: url('https://cdn.pixabay.com/photo/2019/09/08/09/26/cruise-ship-4460493_1280.jpg');
             background-size: cover;
             background-position: center center;
             min-height: 100vh;
             position: relative;
             color: #fff;
+            font-family: 'Inter', sans-serif; /* A clean, modern font */
+            overflow-y: auto;
+            overflow-x: hidden;
         }
-        
+
         body::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(13, 27, 42, 0.6); /* Deep navy overlay */
+            background-color: rgba(13, 27, 42, 0.6);
             z-index: 1;
         }
-        
+
         .form-container {
             min-height: 100vh;
             display: flex;
@@ -33,10 +37,32 @@
             justify-content: center;
             position: relative;
             z-index: 2;
+            padding: 2rem 0;
         }
-        
+
+        /* --- Flip Animation Styles --- */
+        /* 1. Set up the 3D "scene" for the flip effect */
+        .flipper-container {
+            perspective: 1000px; /* This creates the 3D depth */
+        }
+
+        /* 2. The flipper element that actually rotates */
+        #flipper {
+            position: relative;
+            /* Set a min-height to prevent layout collapse. Adjust if your forms are taller. */
+            min-height: 700px; 
+            transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Added a bouncy transition */
+            transform-style: preserve-3d; /* This is crucial for the 3D effect */
+        }
+
+        /* 3. The class that triggers the flip via JavaScript */
+        #flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* --- Card Styles --- */
         .auth-card {
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -44,105 +70,188 @@
             border-radius: 1rem;
         }
 
-        .auth-card .form-control,
+        /* 4. Style both cards to sit on top of each other within the flipper */
+        #flipper .auth-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* For Safari */
+            backface-visibility: hidden; /* Hides the back of a card when it's not facing the screen */
+        }
+
+        /* 5. The signup card is the "back" face, so it starts off rotated */
+        #flipper #signup-card {
+            transform: rotateY(180deg);
+        }
+
+        /* --- Form Element Styles --- */
+        .auth-card .form-control, 
         .auth-card .input-group-text {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
             color: #fff;
         }
         
-        .auth-card .form-control::placeholder {
+        /* Style for the toggle button */
+        .auth-card .btn-toggle {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: rgba(255, 255, 255, 0.7);
         }
 
+        .auth-card .form-control::placeholder { 
+            color: rgba(255, 255, 255, 0.7); 
+        }
+
         .auth-card .form-control:focus {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-color: #fff;
-            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.2); 
+            border-color: #78c0e0; 
+            box-shadow: 0 0 0 0.25rem rgba(120, 192, 224, 0.3); 
             color: #fff;
         }
-        
-        .auth-card .form-label,
-        .auth-card .form-check-label,
-        .auth-card .text-muted,
-        .auth-card h2,
-        .auth-card p {
-            color: #fff !important;
+
+        .auth-card .form-label, 
+        .auth-card .form-check-label, 
+        .auth-card .text-muted, 
+        .auth-card h2, 
+        .auth-card p { 
+            color: #fff !important; 
         }
-        .auth-card .text-primary {
-            color: #78c0e0 !important;
+
+        .auth-card .text-primary { 
+            color: #78c0e0 !important; 
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
+        .auth-card .text-primary:hover {
+            opacity: 0.8;
+        }
+        /* --- Password Strength Indicator --- */
+.progress-bar.strength-weak { background-color: #dc3545; }
+.progress-bar.strength-medium { background-color: #ffc107; }
+.progress-bar.strength-strong { background-color: #198754; }
     </style>
 </head>
 <body>
     <div class="form-container">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-md-6 col-lg-4">
-                    <div class="card auth-card border-0">
-                        <div class="card-body p-4 p-md-5">
-                            <div class="text-center mb-4">
-                                <i class="bi bi-water" style="font-size: 3rem; color: #78c0e0 !important;"></i>
-                                <h2 class="mt-3 mb-1 fw-bold">NauticalFlow</h2>
-                                <p class="text-muted small">Maritime Navigation Dashboard</p>
-                            </div>
-                            
-                            <form id="login-form">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Username</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                <!-- This is the 3D scene container -->
+                <div class="col-md-6 col-lg-4 flipper-container">
+                    <!-- This is the element that will flip -->
+                    <div id="flipper">
+                        <!-- ============== LOGIN CARD (Front Face) ============== -->
+                        <div id="login-card" class="card auth-card border-0">
+                             <div class="card-body p-4 p-md-5">
+                                <div class="text-center mb-4">
+                                    <i class="bi bi-water" style="font-size: 3rem; color: #78c0e0 !important;"></i>
+                                    <h2 class="mt-3 mb-1 fw-bold">NauticalFlow</h2>
+                                    <p class="text-muted small">Maritime Navigation Dashboard</p>
+                                </div>
+                                <form id="login-form">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                        <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                                    <div class="mb-4">
+                                        <label for="password" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-password"><i class="bi bi-eye"></i></button>
+                                        </div>
                                     </div>
+                                    <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+                                </form>
+                                <div class="text-center mt-4">
+                                    <p class="mb-0">
+                                        Don't have an account? 
+                                        <a id="show-signup" class="text-primary fw-bold">Sign up here</a>
+                                    </p>
                                 </div>
-                                
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="remember-me">
-                                    <label class="form-check-label" for="remember-me">Remember me</label>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100 py-2">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
-                                </button>
-                            </form>
-                            
-                            <div class="text-center mt-4">
-                                <small class="text-muted">
-                                    <strong>Demo Credentials:</strong><br>
-                                    Admin: admin / admin123
-                                </small>
-                            </div>
-                            
-                            <div class="text-center mt-3">
-                                <p class="mb-0">
-                                    Don't have an account? 
-                                    <a href="signup.html" class="text-primary fw-bold">Sign up here</a>
-                                </p>
-                            </div>
-                            
-                            <div id="error-message" class="alert alert-danger mt-3" style="display: none;">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                <span id="error-text"></span>
-                            </div>
+                             </div>
                         </div>
-                    </div>
-                </div>
+
+                        <!-- ============== SIGNUP CARD (Back Face) ============== -->
+                        <div id="signup-card" class="card auth-card border-0">
+                             <div class="card-body p-4 p-md-5">
+                                <div class="text-center mb-4">
+                                   <i class="bi bi-water text-primary" style="font-size: 3rem;"></i>
+                                   <h2 class="mt-3 mb-1 fw-bold">NauticalFlow</h2>
+                                   <p class="text-muted small">Create Your Account</p>
+                                </div>
+                                <form id="signup-form">
+                                    <div class="mb-3">
+                                        <label for="display-name" class="form-label">Display Name</label>
+                                        <div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input type="text" class="form-control" id="display-name" required></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="username-signup" class="form-label">Username</label>
+                                        <div class="input-group"><span class="input-group-text"><i class="bi bi-person-badge"></i></span><input type="text" class="form-control" id="username-signup" required></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="password-signup" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="password-signup" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-password-signup"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                        <div class="progress mt-2" style="height: 5px;">
+                                            <div id="password-strength" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                     <div class="mb-3">
+                                        <label for="confirm-password" class="form-label">Confirm Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="confirm-password" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-confirm-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 py-2 mt-3">Create Account</button>
+                                </form>
+                                 <div class="text-center mt-4">
+                                     <p class="mb-0">Already have an account? <a id="show-login" class="text-primary fw-bold">Sign in here</a></p>
+                                 </div>
+                             </div>
+                        </div>
+                    </div> <!-- End #flipper -->
+                </div> <!-- End .flipper-container -->
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script type="module">
-    import { initializeLoginPage } from '/admin/js/modules/auth.js';
-    document.addEventListener('DOMContentLoaded', initializeLoginPage);
+        import { initializeAuthPage } from '/admin/js/modules/auth.js'; // Adjust path if needed
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Flip Animation Logic ---
+            const flipper = document.getElementById('flipper');
+            const showSignupLink = document.getElementById('show-signup');
+            const showLoginLink = document.getElementById('show-login');
+
+            showSignupLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                flipper.classList.add('is-flipped');
+            });
+
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                flipper.classList.remove('is-flipped');
+            });
+            
+            // --- Initialize Authentication Logic ---
+            initializeAuthPage(); 
+        });
     </script>
+
 </body>
 </html>

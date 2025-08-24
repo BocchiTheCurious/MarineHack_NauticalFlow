@@ -3,6 +3,26 @@
 // --- Configuration ---
 const API_URL = 'http://127.0.0.1:5000/api';
 
+// --- NEW: Toastr Global Configuration ---
+// Place this right after your configuration constants.
+toastr.options = {
+  "closeButton": true,
+  "debug": false,
+  "newestOnTop": false,
+  "progressBar": true,
+  "positionClass": "toast-top-right",
+  "preventDuplicates": true,
+  "onclick": null,
+  "showDuration": "300",
+  "hideDuration": "1000",
+  "timeOut": "5000",
+  "extendedTimeOut": "1000",
+  "showEasing": "swing",
+  "hideEasing": "linear",
+  "showMethod": "fadeIn",
+  "hideMethod": "fadeOut"
+};
+
 // --- General Auth Utilities (Exported) ---
 
 /**
@@ -48,37 +68,47 @@ export function setupLogout() {
 // --- Page Initializers (Exported) ---
 
 /**
+ * NEW: Initializes both login and signup forms on a single page.
+ * Call this on DOMContentLoaded for a page containing both forms.
+ */
+export function initializeAuthPage() {
+    initializeLoginPage();
+    initializeSignupPage();
+}
+
+/**
  * Sets up all event listeners and initial checks for the login page.
- * It should be called on DOMContentLoaded for the login page.
  */
 export function initializeLoginPage() {
     const loginForm = document.getElementById('login-form');
-    if (!loginForm) return; // Exit if not on the login page
+    if (!loginForm) return; // Exit if login form isn't on the page
 
-    // If the user is already logged in, redirect them to the dashboard
+    // If the user is already logged in, redirect them
     if (localStorage.getItem('nauticalflow-token')) {
         redirectToDashboard();
         return;
     }
+    
+    // ADD THIS LINE to handle the login password toggle
+    setupPasswordToggle('toggle-password', 'password');
 
     loginForm.addEventListener('submit', handleLoginSubmit);
 }
 
 /**
  * Sets up all event listeners and functionality for the signup page.
- * It should be called on DOMContentLoaded for the signup page.
  */
 export function initializeSignupPage() {
     const signupForm = document.getElementById('signup-form');
-    if (!signupForm) return; // Exit if not on the signup page
+    if (!signupForm) return;
 
-    const passwordInput = document.getElementById('password');
+    // Define 'passwordInput' by getting the element from the document.
+    const passwordInput = document.getElementById('password-signup');
 
-    // Setup password visibility toggles for both password fields
-    setupPasswordToggle('toggle-password', 'password');
+    setupPasswordToggle('toggle-password-signup', 'password-signup');
     setupPasswordToggle('toggle-confirm-password', 'confirm-password');
 
-    // Setup password strength indicator
+    // Now this 'if' block will work correctly.
     if (passwordInput) {
         passwordInput.addEventListener('input', function() {
             const strength = checkPasswordStrength(this.value);
@@ -88,7 +118,6 @@ export function initializeSignupPage() {
 
     signupForm.addEventListener('submit', handleSignupSubmit);
 }
-
 
 // --- Form Submit Handlers (Internal) ---
 
@@ -102,7 +131,7 @@ async function handleLoginSubmit(e) {
     const password = document.getElementById('password').value;
 
     if (!username || !password) {
-        showError('Please enter both username and password.');
+        showError('Please enter both username and password.'); // This will now call the Toastr version
         return;
     }
 
@@ -119,7 +148,7 @@ async function handleLoginSubmit(e) {
 
         const data = await response.json();
         if (!response.ok) {
-            showError(data.error || 'Login failed. Please try again.');
+            showError(data.error || 'Login failed. Please check your credentials.');
             return;
         }
 
@@ -129,7 +158,7 @@ async function handleLoginSubmit(e) {
         console.error('Login request failed:', error);
         showError('Could not connect to the server.');
     } finally {
-        // Only re-enable the button if the login failed and the user is not being redirected
+        // This logic is still correct: only reset the button on failure.
         if (!localStorage.getItem('nauticalflow-token')) {
             toggleButtonSpinner(loginBtn, originalBtnText, false);
         }
@@ -142,21 +171,23 @@ async function handleLoginSubmit(e) {
  */
 async function handleSignupSubmit(e) {
     e.preventDefault();
-
     const displayName = document.getElementById('display-name').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('username-signup').value.trim();
+    const password = document.getElementById('password-signup').value;
     const confirmPassword = document.getElementById('confirm-password').value;
 
     const validation = validateSignupForm(displayName, username, password, confirmPassword);
     if (!validation.isValid) {
-        showError(validation.message);
+        showError(validation.message); // This will now call the Toastr version
         return;
     }
 
     const signupBtn = this.querySelector('button[type="submit"]');
     const originalBtnText = signupBtn.innerHTML;
     toggleButtonSpinner(signupBtn, 'Creating Account...', true);
+    
+    // REFACTORED: Use a flag to track success for the 'finally' block
+    let signupSuccessful = false; 
 
     try {
         const response = await fetch(`${API_URL}/signup`, {
@@ -171,15 +202,16 @@ async function handleSignupSubmit(e) {
             return;
         }
 
+        signupSuccessful = true; // Set flag to true on success
         handleSuccessfulSignup(displayName, signupBtn);
 
     } catch (error) {
         console.error('Signup request failed:', error);
         showError('Could not connect to the server. Please try again later.');
     } finally {
-        // The success handler has a timeout, so don't re-enable the button immediately on success
-        if (!document.getElementById('success-message').style.display || document.getElementById('success-message').style.display === 'none') {
-             toggleButtonSpinner(signupBtn, originalBtnText, false);
+        // REFACTORED: This logic is cleaner and no longer depends on HTML elements
+        if (!signupSuccessful) {
+            toggleButtonSpinner(signupBtn, originalBtnText, false);
         }
     }
 }
@@ -207,17 +239,26 @@ function handleSuccessfulSignup(displayName, signupBtn) {
     signupBtn.classList.remove('btn-primary');
     signupBtn.classList.add('btn-success');
     signupBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Account Created!';
-    signupBtn.disabled = true; // Keep disabled
+    signupBtn.disabled = true;
 
+    // Use the new Toastr success function
     showSuccess(`Welcome, ${displayName}! Redirecting to login...`);
 
     setTimeout(() => {
-        window.location.href = 'index.html'; // Redirect to login page
+        // Flip the card back to the login form before redirecting for a nice effect
+        const flipper = document.getElementById('flipper');
+        if (flipper) {
+            flipper.classList.remove('is-flipped');
+        }
+    }, 1500);
+
+    setTimeout(() => {
+        window.location.href = 'index.html'; // Or just reload() if on the same page
     }, 2500);
 }
 
 /**
- * Navigates the user to the admin dashboard page.
+ * Navigates the user to the homepage page.
  */
 function redirectToDashboard() {
     window.location.href = 'admin/homepage.html';
@@ -234,7 +275,7 @@ function toggleButtonSpinner(button, text, isDisabled) {
     if (isDisabled) {
         button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${text}`;
     } else {
-        button.innerHTML = text; // Restore original text
+        button.innerHTML = text;
     }
 }
 
@@ -304,10 +345,23 @@ function checkPasswordStrength(password) {
 function updatePasswordStrengthIndicator(strength) {
     const strengthBar = document.getElementById('password-strength');
     if (!strengthBar) return;
-    strengthBar.className = 'password-strength'; // Reset classes
-    if (strength) {
-        strengthBar.classList.add(`strength-${strength}`);
+    
+    // Reset classes
+    strengthBar.classList.remove('strength-weak', 'strength-medium', 'strength-strong');
+
+    let width = '0%';
+    if (strength === 'weak') {
+        width = '33%';
+        strengthBar.classList.add('strength-weak');
+    } else if (strength === 'medium') {
+        width = '66%';
+        strengthBar.classList.add('strength-medium');
+    } else if (strength === 'strong') {
+        width = '100%';
+        strengthBar.classList.add('strength-strong');
     }
+    
+    strengthBar.style.width = width;
 }
 
 /**
@@ -315,15 +369,7 @@ function updatePasswordStrengthIndicator(strength) {
  * @param {string} message The message to display.
  */
 function showSuccess(message) {
-    const successMessageEl = document.getElementById('success-message');
-    const successTextEl = document.getElementById('success-text');
-    const errorMessageEl = document.getElementById('error-message');
-
-    if (successTextEl && successMessageEl && errorMessageEl) {
-        successTextEl.textContent = message;
-        successMessageEl.style.display = 'block';
-        errorMessageEl.style.display = 'none';
-    }
+    toastr.success(message, 'Success');
 }
 
 /**
@@ -331,15 +377,5 @@ function showSuccess(message) {
  * @param {string} message The message to display.
  */
 function showError(message) {
-    const errorMessageEl = document.getElementById('error-message');
-    const errorTextEl = document.getElementById('error-text');
-    const successMessageEl = document.getElementById('success-message');
-
-    if (errorTextEl && errorMessageEl) {
-        errorTextEl.textContent = message;
-        errorMessageEl.style.display = 'block';
-        if (successMessageEl) {
-            successMessageEl.style.display = 'none';
-        }
-    }
+    toastr.error(message, 'Error');
 }
