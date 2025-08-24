@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
 import { getUserProfile, updateUserProfile, changeUserPassword } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserDisplayName();
 
     initializeProfilePage();
+
+     hideLoader();
 });
 
 /**

@@ -1,6 +1,6 @@
 // js/dashboard.js
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
 
 document.addEventListener('DOMContentLoaded', async () => { 
@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize charts for the dashboard overview
     initializeDashboardCharts();
+
+        hideLoader();
 });
 
 function initializeDashboardCharts() {

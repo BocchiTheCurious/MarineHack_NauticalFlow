@@ -71,3 +71,23 @@ export function updateUserDisplayName() {
         displayNameElement.textContent = storedName;
     }
 }
+
+/**
+ * Shows the full-screen loading overlay.
+ */
+export function showLoader() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) {
+        loader.classList.remove('hidden');
+    }
+}
+
+/**
+ * Hides the full-screen loading overlay with a fade-out effect.
+ */
+export function hideLoader() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) {
+        loader.classList.add('hidden');
+    }
+}

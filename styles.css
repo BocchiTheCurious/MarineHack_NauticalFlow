@@ -384,3 +384,41 @@ main {
         transform: translateY(0);
     }
 }
+
+/* === Loading Overlay Styles === */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 27, 42, 0.8); /* Dark navy overlay */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1; /* Visible by default */
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none; /* Allows clicks to pass through when hidden */
+}
+
+.loader-icon {
+    width: 80px; /* Adjust size as needed */
+    height: 80px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

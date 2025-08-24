@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
 import { getPorts, getWeatherData } from './modules/api.js';
 
@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserDisplayName();
 
     initializeLiveDataPage();
+
+    hideLoader();
 });
 
 /**

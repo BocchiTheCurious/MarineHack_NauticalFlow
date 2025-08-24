@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
 
 let map;
@@ -364,4 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize the marine zones page
     initializeMarineZonesPage();
+
+    hideLoader();
 });

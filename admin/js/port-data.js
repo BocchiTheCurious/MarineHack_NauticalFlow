@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
 import { getPorts, addPort, deletePort, updatePort } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserDisplayName();
 
     initializePortDataPage();
+
+     hideLoader();
 });
 
 async function initializePortDataPage() {

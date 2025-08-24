@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate, showLoader, hideLoader } from './modules/utils.js';
 import { runOptimization, getSavedOptimizations, saveOptimizationResult, deleteOptimizationResult } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeMap();
     initializeControls();
     initializeSavedResults();
+
+    hideLoader();
 });
 
 /**

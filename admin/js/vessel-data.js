@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
 import { getCruiseShips, addCruiseShip, deleteCruiseShip, updateCruiseShip, getFuelTypes } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserDisplayName();
     
     initializeShipDataPage();
+
+     hideLoader();
 });
 
 async function initializeShipDataPage() {

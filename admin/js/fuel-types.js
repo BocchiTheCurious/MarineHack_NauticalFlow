@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
 import { getFuelTypes, addFuelType, deleteFuelType, updateFuelType } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserDisplayName();
 
     initializeFuelTypesPage();
+
+    hideLoader();
 });
 
 async function initializeFuelTypesPage() {
