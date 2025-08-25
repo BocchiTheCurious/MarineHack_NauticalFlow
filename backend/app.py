@@ -39,35 +39,21 @@ class Port(db.Model):
     longitude = db.Column(db.Float, nullable=False)
     port_congestion_index = db.Column(db.Numeric(5, 2), nullable=False, default=0.0)
 
-# NEW: FuelType Model
+# FuelType Model
 class FuelType(db.Model):
     __tablename__ = 'fuel_types'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
-    
-    # This will now store the USD equivalent cost
-    cost_per_ton = db.Column(db.Numeric(10, 2), nullable=False) 
-    
-    # Official IMO factor, populated automatically from the front-end
-    co2_factor = db.Column(db.Numeric(10, 4), nullable=False) 
+    co2_factor = db.Column(db.Numeric(10, 4), nullable=False)
 
-    # NEW: Fields for audit and traceability
-    original_cost = db.Column(db.Numeric(10, 2), nullable=True)
-    original_currency = db.Column(db.String(3), nullable=True) # e.g., "MYR"
-    exchange_rate = db.Column(db.Numeric(12, 6), nullable=True)
-    price_date = db.Column(db.Date, nullable=True)
-    bunkering_port = db.Column(db.String(100), nullable=True)
-
-# UPDATED: Replaced Vessel with CruiseShip
+# CruiseShip
 class CruiseShip(db.Model):
     __tablename__ = 'cruise_ships'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    
-    # This stores the complex performance data
+    company = db.Column(db.String(100), nullable=True) # NEW FIELD
+    gross_tonnage = db.Column(db.Integer, nullable=False) # NEW FIELD
     fuel_consumption_curve = db.Column(db.JSON, nullable=True) 
-
-    # Establish the relationship to FuelType
     fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
     fuel_type = db.relationship('FuelType', backref='cruise_ships')
 
@@ -92,17 +78,6 @@ with app.app_context():
         admin_user = User(display_name='Admin User', username='admin', password=hashed_pw)
         db.session.add(admin_user)
         db.session.commit()
-    # Create default fuel types if they don't exist
-    if not FuelType.query.first():
-        fuel_types_data = [
-            {'name': 'Marine Gas Oil (MGO)', 'cost_per_ton': Decimal('750.00'), 'co2_factor': Decimal('3.206')},
-            {'name': 'Heavy Fuel Oil (HFO)', 'cost_per_ton': Decimal('550.00'), 'co2_factor': Decimal('3.114')},
-            {'name': 'Liquefied Natural Gas (LNG)', 'cost_per_ton': Decimal('600.00'), 'co2_factor': Decimal('2.750')}
-        ]
-        for ft_data in fuel_types_data:
-            db.session.add(FuelType(**ft_data))
-        db.session.commit()
-
 
 # --- Authentication Decorator ---
 def token_required(f):
@@ -247,9 +222,11 @@ def get_cruise_ships(current_user):
         results.append({
             'id': ship.id,
             'name': ship.name,
+            'company': ship.company,
+            'grossTonnage': ship.gross_tonnage,
             'fuelConsumptionCurve': ship.fuel_consumption_curve,
             'fuelTypeId': ship.fuel_type_id,
-            'fuelTypeName': ship.fuel_type.name # Include the related fuel type name
+            'fuelTypeName': ship.fuel_type.name
         })
     return jsonify(results)
 
@@ -259,6 +236,8 @@ def add_cruise_ship(current_user):
     data = request.get_json()
     new_ship = CruiseShip(
         name=data['name'],
+        company=data.get('company'),
+        gross_tonnage=data['grossTonnage'],
         fuel_consumption_curve=data['fuelConsumptionCurve'],
         fuel_type_id=data['fuelTypeId']
     )
@@ -279,15 +258,13 @@ def delete_cruise_ship(current_user, ship_id):
 def update_cruise_ship(current_user, ship_id):
     ship = CruiseShip.query.get_or_404(ship_id)
     data = request.get_json()
-
-    # Update fields from the request data
     ship.name = data['name']
+    ship.company = data.get('company')
+    ship.gross_tonnage = data['grossTonnage']
     ship.fuel_type_id = data['fuelTypeId']
     ship.fuel_consumption_curve = data['fuelConsumptionCurve']
-    
     db.session.commit()
     return jsonify({'message': 'Cruise ship updated successfully'})
-
 
 # --- Fuel Type Endpoints ---
 @app.route('/api/fuel-types', methods=['GET'])
@@ -295,29 +272,21 @@ def update_cruise_ship(current_user, ship_id):
 def get_fuel_types(current_user):
     fuel_types = FuelType.query.order_by(FuelType.name).all()
     return jsonify([{
-        'id': ft.id, 'name': ft.name, 'costPerTon': str(ft.cost_per_ton), 
-        'co2Factor': str(ft.co2_factor), 'originalCost': str(ft.original_cost) if ft.original_cost else None,
-        'originalCurrency': ft.original_currency, 'exchangeRate': str(ft.exchange_rate) if ft.exchange_rate else None,
-        'priceDate': ft.price_date.strftime('%Y-%m-%d') if ft.price_date else None,
-        'bunkeringPort': ft.bunkering_port # UPDATED
+        'id': ft.id,
+        'name': ft.name,
+        'co2Factor': str(ft.co2_factor)
     } for ft in fuel_types])
 
 @app.route('/api/fuel-types', methods=['POST'])
 @token_required
 def add_fuel_type(current_user):
     data = request.get_json()
-    
-    # THE FIX: Check if a fuel with this name already exists
     if FuelType.query.filter_by(name=data.get('name')).first():
-        return jsonify({'error': f"A fuel type with the name '{data.get('name')}' already exists."}), 409 # 409 Conflict is the correct status code
-
-    # ... (the rest of the function is the same)
+        return jsonify({'error': f"A fuel type with the name '{data.get('name')}' already exists."}), 409
+    
     new_fuel_type = FuelType(
-        name=data.get('name'), cost_per_ton=data.get('costPerTon'),
-        co2_factor=data.get('co2Factor'), original_cost=data.get('originalCost'),
-        original_currency=data.get('originalCurrency'), exchange_rate=data.get('exchangeRate'),
-        price_date=datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None,
-        bunkering_port=data.get('bunkeringPort')
+        name=data.get('name'),
+        co2_factor=data.get('co2Factor')
     )
     db.session.add(new_fuel_type)
     db.session.commit()
@@ -329,20 +298,12 @@ def update_fuel_type(current_user, fuel_type_id):
     fuel_type = FuelType.query.get_or_404(fuel_type_id)
     data = request.get_json()
     
-    # THE FIX: Add a check here as well to prevent renaming to an existing name
     existing_fuel = FuelType.query.filter(FuelType.name == data.get('name'), FuelType.id != fuel_type_id).first()
     if existing_fuel:
         return jsonify({'error': f"Another fuel type with the name '{data.get('name')}' already exists."}), 409
 
-    # ... (the rest of the function is the same)
     fuel_type.name = data.get('name')
-    fuel_type.cost_per_ton = data.get('costPerTon')
     fuel_type.co2_factor = data.get('co2Factor')
-    fuel_type.original_cost = data.get('originalCost')
-    fuel_type.original_currency = data.get('originalCurrency')
-    fuel_type.exchange_rate = data.get('exchangeRate')
-    fuel_type.price_date = datetime.strptime(data.get('priceDate'), '%Y-%m-%d').date() if data.get('priceDate') else None
-    fuel_type.bunkering_port = data.get('bunkeringPort')
     db.session.commit()
     return jsonify({'message': 'Fuel type updated successfully'})
 
@@ -353,40 +314,6 @@ def delete_fuel_type(current_user, fuel_type_id):
     db.session.delete(fuel_type)
     db.session.commit()
     return jsonify({'message': 'Fuel type deleted successfully'})
-
-@app.route('/api/exchange-rate', methods=['GET'])
-@token_required
-def get_exchange_rate(current_user):
-    """
-    Fetches the latest USD to MYR exchange rate from a live API.
-    NOTE: The free ExchangeRate-API plan does not support historical data,
-    so this will always return the LATEST rate, regardless of the date requested.
-    """
-    # Your free API key is included here.
-    # In a production app, this should be stored securely as an environment variable.
-    api_key = "d545249a3ffd92444428fb29"
-    exchange_rate_url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/USD"
-
-    try:
-        response = requests.get(exchange_rate_url)
-        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-        data = response.json()
-
-        # Check if the API call was successful and the rates are present
-        if data.get('result') == 'success' and 'conversion_rates' in data:
-            # Extract the specific rate for Malaysian Ringgit (MYR)
-            myr_rate = data['conversion_rates'].get('MYR')
-            if myr_rate is None:
-                return jsonify({'error': 'MYR currency data not found in API response.'}), 500
-            
-            return jsonify({'rate': myr_rate})
-        else:
-            # Handle cases where the API returns an error
-            error_message = data.get('error-type', 'Unknown API error')
-            return jsonify({'error': f'Failed to fetch exchange rates: {error_message}'}), 502
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Failed to connect to the exchange rate API: {e}'}), 502
 
 # --- Profile Management Endpoints ---
 
@@ -468,30 +395,29 @@ def get_profile_stats(current_user):
 @app.route('/api/optimize', methods=['POST'])
 @token_required
 def optimize_route(current_user):
-    """
-    Receives an array of port coordinates, runs the GA optimization,
-    and returns the result.
-    """
     data = request.get_json()
+    
+    # Get the route coordinates AND the selected ship ID from the request
+    coordinates = data.get('route')
+    ship_id = data.get('shipId')
 
-    # Validate incoming data
-    if not data or 'route' not in data or not isinstance(data['route'], list):
-        return jsonify({"error": "Invalid data. Expected a 'route' key with a list of coordinates."}), 400
+    if not all([coordinates, ship_id]):
+        return jsonify({"error": "Invalid data. Route and shipId are required."}), 400
 
-    coordinates = data['route']
-    print(f"User '{current_user.username}' is optimizing a route with {len(coordinates)} ports.")
+    # Fetch the selected ship and its fuel type from the database
+    ship = CruiseShip.query.get(ship_id)
+    if not ship:
+        return jsonify({"error": "Selected ship not found."}), 404
 
-    # Call the optimization function from the other file
+    fuel_curve = ship.fuel_consumption_curve
+    co2_factor = ship.fuel_type.co2_factor
+
     try:
-        result = run_route_optimization(coordinates)
-        print(f"Optimization successful. Result: {result}")
-
-        # Return the result from the solver as a JSON response
+        # Pass the ship's specific data to the solver
+        result = run_route_optimization(coordinates, fuel_curve, co2_factor)
         return jsonify(result)
-
     except Exception as e:
-        print(f"An error occurred during optimization: {e}")
-        return jsonify({"error": "An internal error occurred during the optimization process."}), 500
+        return jsonify({"error": "An internal error occurred during optimization."}), 500
     
 @app.route('/api/marine-zone-ports', methods=['GET'])
 @token_required

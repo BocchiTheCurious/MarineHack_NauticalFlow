@@ -126,43 +126,17 @@ export async function updateCruiseShip(shipId, shipData) {
 // --- Fuel Type Functions ---
 
 export function getFuelTypes() { return fetchWithAuth('/fuel-types'); }
-
 export async function addFuelType(fuelTypeData) {
-    const payload = await prepareFuelPayload(fuelTypeData);
-    await fetchWithAuth('/fuel-types', { method: 'POST', body: JSON.stringify(payload) });
+    await fetchWithAuth('/fuel-types', { method: 'POST', body: JSON.stringify(fuelTypeData) });
     return getFuelTypes();
 }
-
 export async function updateFuelType(fuelTypeId, fuelTypeData) {
-    const payload = await prepareFuelPayload(fuelTypeData);
-    await fetchWithAuth(`/fuel-types/${fuelTypeId}`, { method: 'PUT', body: JSON.stringify(payload) });
+    await fetchWithAuth(`/fuel-types/${fuelTypeId}`, { method: 'PUT', body: JSON.stringify(fuelTypeData) });
     return getFuelTypes();
 }
-
 export async function deleteFuelType(fuelTypeId) {
     await fetchWithAuth(`/fuel-types/${fuelTypeId}`, { method: 'DELETE' });
     return getFuelTypes();
-}
-
-// NEW HELPER for currency conversion
-async function prepareFuelPayload(data) {
-    let payload = { ...data };
-    if (data.currency === 'MYR') {
-        const rateData = await getExchangeRate(data.priceDate);
-        const rate = rateData.rate;
-        payload.costPerTon = (parseFloat(data.cost) / rate).toFixed(2);
-        payload.originalCost = data.cost;
-        payload.originalCurrency = 'MYR';
-        payload.exchangeRate = rate;
-    } else {
-        payload.costPerTon = data.cost;
-        payload.originalCost = null;
-        payload.originalCurrency = 'USD';
-        payload.exchangeRate = null;
-    }
-    delete payload.cost; // remove temporary field
-    delete payload.currency; // remove temporary field
-    return payload;
 }
 
 
@@ -258,100 +232,25 @@ export async function getWeatherData(latitude, longitude) {
     }
 }
 
-
-
-// =========================================================================
-// --- MOCK APIs (The functions below are simulated for development) ---
-// =========================================================================
-
-// --- Route Data Management (Mock) ---
-
-const routeDatabase = {
-    'route-1': { name: 'Port Klang → Singapore (Cargo Ship)', origin: 'Port Klang, Malaysia', destination: 'Singapore' },
-    'route-2': { name: 'Rotterdam → Hamburg (Tanker)', origin: 'Rotterdam, Netherlands', destination: 'Hamburg, Germany' },
-    'route-3': { name: 'Shanghai → Los Angeles (Container)', origin: 'Shanghai, China', destination: 'Los Angeles, USA' }
-};
-
-export function getRoutes() {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const routeList = Object.keys(routeDatabase).map(key => ({ id: key, name: routeDatabase[key].name }));
-            resolve(routeList);
-        }, 500);
-    });
+// --- Optimization ---
+export function runOptimization(routeCoords, shipId) {
+    const payload = {
+        route: routeCoords,
+        shipId: shipId
+    };
+    return fetchWithAuth('/optimize', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
 }
-
-export function getRouteById(routeId) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve(routeDatabase[routeId] || null);
-        }, 1000);
-    });
-}
-
-
-// --- Marine Zone Management (Mock) ---
-
-const marineZonesDatabase = [
-    { id: 'Z001', name: 'North Atlantic Shipping Lane', type: 'Navigation Zone', coordinates: '40°N, 60°W to 45°N, 50°W', area: '125,000', status: 'Active', lastUpdated: '2025-08-10T14:30:00Z' },
-    { id: 'Z002', name: 'Mediterranean Protected Area', type: 'Protected Area', coordinates: '35°N, 15°E to 40°N, 25°E', area: '45,000', status: 'Active', lastUpdated: '2025-08-05T11:00:00Z' },
-    { id: 'Z003', name: 'Pacific Military Zone', type: 'Restricted Area', coordinates: '20°N, 160°E to 25°N, 170°E', area: '75,000', status: 'Active', lastUpdated: '2025-07-28T09:15:00Z' },
-];
-
-export function getMarineZones() {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve(marineZonesDatabase);
-        }, 500);
-    });
-}
-
-
-// --- Route Optimization Management (Mock) ---
-
-export function runOptimization(params) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const fuelSavings = (params.priorities.fuel / 100 * 20 + 5).toFixed(1);
-            const timeSavings = (params.priorities.time / 100 * 3 + 1).toFixed(2);
-            const co2Savings = (fuelSavings * 0.9).toFixed(1);
-            const result = {
-                id: `opt_${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                route: `${params.departure.split(',')[0]} → ${params.arrival}`,
-                vessel: params.vessel,
-                fuelSaved: `${fuelSavings}%`,
-                co2Reduced: `${co2Savings}%`,
-                timeSaved: `${timeSavings}h`
-            };
-            resolve(result);
-        }, 2500);
-    });
-}
-
 export function getSavedOptimizations() {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const results = JSON.parse(localStorage.getItem('nauticalflow-saved-optimizations')) || [];
-            resolve(results);
-        }, 300);
-    });
-}
-
-export function saveOptimizationResult(result) {
-    return new Promise(async resolve => {
-        const results = await getSavedOptimizations();
-        results.unshift(result);
-        localStorage.setItem('nauticalflow-saved-optimizations', JSON.stringify(results));
-        resolve(results);
-    });
+    // This endpoint should return a list of saved results from your backend
+    return fetchWithAuth('/optimizations/saved'); 
 }
 
 export function deleteOptimizationResult(resultId) {
-    return new Promise(async resolve => {
-        let results = await getSavedOptimizations();
-        results = results.filter(r => r.id !== resultId);
-        localStorage.setItem('nauticalflow-saved-optimizations', JSON.stringify(results));
-        resolve(results);
-    });
+    // This endpoint should delete a specific result by its ID
+    return fetchWithAuth(`/optimizations/saved/${resultId}`, {
+        method: 'DELETE'
+    });
 }

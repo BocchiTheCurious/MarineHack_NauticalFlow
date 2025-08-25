@@ -1,6 +1,6 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate } from './modules/utils.js';
-import { getSavedOptimizations, deleteOptimizationResult, getPorts } from './modules/api.js';
+import { getSavedOptimizations, deleteOptimizationResult, getPorts, getCruiseShips, runOptimization } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 // --- MODULE-LEVEL VARIABLES ---
@@ -26,13 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Redirect to login if user is not authenticated
     if (!checkAuth()) return;
 
-    // Load common layout elements (navbar, footer, etc.)
+    // Load common layout elements
     await loadLayout();
 
-    // Setup event listeners for port selection UI
+    // Setup event listeners
     setupPortSelectionListeners();
-    
-    // Setup event listener for the main optimization button
     document.getElementById('run-optimization').addEventListener('click', handleRunOptimization);
 
     // Initialize standard UI components
@@ -46,7 +44,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeSavedResults();
     populatePortDropdown('departure-port');
     populatePortDropdown('add-destination-port');
+    populateVesselDropdown(); // <-- MOVED HERE
 });
+
 
 
 // --- PORT SELECTION LOGIC ---
@@ -155,119 +155,60 @@ function renderRouteBadges() {
 
 // --- OPTIMIZATION LOGIC ---
 /**
- * Handles the "Run Optimization" button click. It sends the selected route to the backend
- * for optimization and displays the results.
+ * Handles the "Run Optimization" button click. 
+ * It validates the selected route, sends it to the backend for optimization,
+ * and then displays the results on the map and in the comparison table.
  */
 async function handleRunOptimization() {
+    // 1. Get UI elements and current selections
     const runBtn = document.getElementById('run-optimization');
     const originalBtnText = runBtn.innerHTML;
+    const selectedShipId = document.getElementById('vessel-name').value;
 
-    if (!route.departure || route.arrivals.length === 0) {
-        showAlert("Please select a departure port and at least one arrival port.", "warning");
+    // 2. Validate inputs (no changes here)
+    if (!route.departure || route.arrivals.length < 2 || !selectedShipId) {
+        showAlert("Please select a departure port, at least two destination ports, and a vessel.", "warning");
         return;
     }
 
-    // Update button state to show loading
+    // 3. Update UI to show a loading state (no changes here)
     runBtn.disabled = true;
     runBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Optimizing...';
 
-    const standardRoutePorts = [route.departure, ...route.arrivals];
-    const standardMetrics = calculateRouteMetrics(standardRoutePorts);
-    const coordinates = standardRoutePorts.map(port => [port.latitude, port.longitude]);
-
-    console.log("Sending coordinates to Python:", coordinates);
+    // 4. Prepare the data for the API (no changes here)
+    const originalRoutePorts = [route.departure, ...route.arrivals];
+    const coordinates = originalRoutePorts.map(port => [port.latitude, port.longitude]);
 
     try {
-        // API call to the optimization endpoint
-        const response = await fetch('http://127.0.0.1:5000/api/optimize', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('nauticalflow-token')}`
-            },
-            body: JSON.stringify({ route: coordinates })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: `Server responded with status: ${response.status}` }));
-            throw new Error(errorData.error || `Server error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("Received result from Python:", result);
+        // 5. Call the API. The 'result' object now contains both standard and optimized metrics.
+        const result = await runOptimization(coordinates, selectedShipId);
         showAlert('Optimization complete!', 'success');
 
-        // Reorder ports based on the optimized route indices from the API response
+        // 6. Get the metrics directly from the result. NO frontend calculation needed.
+        const standardMetrics = result.standard_metrics;
+        const optimizedMetrics = result.optimized_metrics;
+        
+        // 7. Reconstruct the ordered port list for the UI map
         const orderedPorts = [route.departure];
         result.best_route_indices.forEach(index => {
-            // API returns 1-based indices for arrivals, so adjust to 0-based
+            // API indices (1, 2, 3...) correspond to the arrivals array (0, 1, 2...)
             orderedPorts.push(route.arrivals[index - 1]);
         });
         
-        // Update the UI with the results
-        updateComparisonTable(standardMetrics, result, standardRoutePorts, orderedPorts);
+        // 8. Update the UI with the fair comparison results
+        updateComparisonTable(standardMetrics, optimizedMetrics, originalRoutePorts, orderedPorts);
         drawOptimizedRoute(orderedPorts);
 
     } catch (error) {
+        // Handle any errors from the API call
         console.error("Optimization failed:", error);
         showAlert(`Optimization failed: ${error.message}`, 'danger');
     } finally {
-        // Restore button state
+        // 9. Always restore the button to its original state
         runBtn.disabled = false;
         runBtn.innerHTML = originalBtnText;
     }
 }
-
-
-// --- CALCULATION HELPERS ---
-/**
- * Calculates the great-circle distance between two points on Earth using the Haversine formula.
- * This is much more accurate for geographical coordinates than Euclidean distance.
- * @param {object} port1 - The first port object {latitude, longitude}.
- * @param {object} port2 - The second port object {latitude, longitude}.
- * @returns {number} The distance in kilometers.
- */
-function getHaversineDistance(port1, port2) {
-    const R = 6371; // Radius of the Earth in kilometers
-    const toRad = (deg) => deg * (Math.PI / 180);
-
-    const dLat = toRad(port2.latitude - port1.latitude);
-    const dLon = toRad(port2.longitude - port1.longitude);
-
-    const lat1 = toRad(port1.latitude);
-    const lat2 = toRad(port2.latitude);
-
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
-    return R * c; // Distance in km
-}
-
-/**
- * Calculates baseline metrics (distance, fuel, CO2) for a given port order.
- * @param {Array<object>} portOrder - An array of port objects in sequence.
- * @returns {object} An object containing total distance, fuel, and co2.
- */
-function calculateRouteMetrics(portOrder) {
-    const fuel_rate_per_km = 0.25; // Liters per km
-    const emission_factor = 3.206; // kg CO2 per liter of fuel
-
-    if (portOrder.length < 2) return { distance: 0, fuel: 0, co2: 0 };
-
-    let totalDistance = 0;
-    // Calculate distance between all ports in sequence
-    for (let i = 0; i < portOrder.length - 1; i++) {
-        totalDistance += getHaversineDistance(portOrder[i], portOrder[i + 1]);
-    }
-    // Add distance from the last port back to the departure port
-    totalDistance += getHaversineDistance(portOrder[portOrder.length - 1], portOrder[0]);
-
-    const totalFuel = totalDistance * fuel_rate_per_km;
-    const totalCO2 = totalFuel * emission_factor;
-    return { distance: totalDistance, fuel: totalFuel, co2: totalCO2 };
-}
-
 
 // --- UI and MAP UPDATE FUNCTIONS ---
 /**
@@ -277,28 +218,30 @@ function calculateRouteMetrics(portOrder) {
  * @param {Array<object>} standardRoutePorts - The original sequence of ports.
  * @param {Array<object>} optimizedRoutePorts - The optimized sequence of ports.
  */
-function updateComparisonTable(standardMetrics, optimizedResult, standardRoutePorts, optimizedRoutePorts) {
+function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts) {
     const formatImprovement = (standard, optimized) => {
         if (standard === 0) return 'N/A';
         const improvement = ((standard - optimized) / standard) * 100;
         const color = improvement >= 0 ? 'success' : 'danger';
-        return `<span class="badge bg-${color}">${improvement.toFixed(1)}% savings</span>`;
+        const sign = improvement >= 0 ? '' : ''; // No need for '+' sign
+        return `<span class="badge bg-${color}">${sign}${improvement.toFixed(1)}% savings</span>`;
     };
 
+    // Update the table using the new, consistent data objects
     document.getElementById('standard-route-sequence').textContent = standardRoutePorts.map(p => p.name).join(' → ');
     document.getElementById('optimized-route-sequence').textContent = optimizedRoutePorts.map(p => p.name).join(' → ');
     
-    document.getElementById('standard-fuel').textContent = standardMetrics.fuel.toFixed(2);
-    document.getElementById('optimized-fuel').textContent = optimizedResult.fuel_liters.toFixed(2);
-    document.getElementById('fuel-improvement').innerHTML = formatImprovement(standardMetrics.fuel, optimizedResult.fuel_liters);
+    document.getElementById('standard-fuel').textContent = standardMetrics.fuel_liters.toFixed(2);
+    document.getElementById('optimized-fuel').textContent = optimizedMetrics.fuel_liters.toFixed(2);
+    document.getElementById('fuel-improvement').innerHTML = formatImprovement(standardMetrics.fuel_liters, optimizedMetrics.fuel_liters);
     
-    document.getElementById('standard-co2').textContent = standardMetrics.co2.toFixed(2);
-    document.getElementById('optimized-co2').textContent = optimizedResult.co2_kg.toFixed(2);
-    document.getElementById('co2-improvement').innerHTML = formatImprovement(standardMetrics.co2, optimizedResult.co2_kg);
+    document.getElementById('standard-co2').textContent = standardMetrics.co2_kg.toFixed(2);
+    document.getElementById('optimized-co2').textContent = optimizedMetrics.co2_kg.toFixed(2);
+    document.getElementById('co2-improvement').innerHTML = formatImprovement(standardMetrics.co2_kg, optimizedMetrics.co2_kg);
     
-    document.getElementById('standard-distance').textContent = standardMetrics.distance.toFixed(2);
-    document.getElementById('optimized-distance').textContent = optimizedResult.distance_km.toFixed(2);
-    document.getElementById('distance-improvement').innerHTML = formatImprovement(standardMetrics.distance, optimizedResult.distance_km);
+    document.getElementById('standard-distance').textContent = standardMetrics.distance_km.toFixed(2);
+    document.getElementById('optimized-distance').textContent = optimizedMetrics.distance_km.toFixed(2);
+    document.getElementById('distance-improvement').innerHTML = formatImprovement(standardMetrics.distance_km, optimizedMetrics.distance_km);
 }
 
 /**
@@ -494,7 +437,7 @@ async function populatePortDropdown(elementId) {
 /**
  * Asynchronously loads all marine zone and weather data layers.
  */
-async function loadMarineZones() {
+function loadMarineZones() {
     try {
         console.log('Starting marine zones load');
         showAlert('Loading marine zones...', 'info');
@@ -656,3 +599,20 @@ function addMarineZonesLegend() {
     
     map.addControl(new legend());
 }
+
+async function populateVesselDropdown() {
+    const selectElement = document.getElementById('vessel-name');
+    try {
+        const ships = await getCruiseShips();
+        selectElement.innerHTML = '<option selected disabled>Select a cruise ship...</option>';
+        ships.forEach(ship => {
+            const option = document.createElement('option');
+            option.value = ship.id; // Use the ship's ID as the value
+            option.textContent = ship.name;
+            selectElement.appendChild(option);
+        });
+    } catch (error) {
+        selectElement.innerHTML = '<option>Error loading ships</option>';
+    }
+}
+

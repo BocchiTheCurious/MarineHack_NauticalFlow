@@ -28,47 +28,40 @@
             </div>
 
             <!-- Informational card about fuel data -->
-          <div class="card bg-light border-info shadow-sm mb-4">
+  <div class="card bg-light border-info shadow-sm mb-4">
     <div class="card-body">
         <h5 class="card-title text-info"><i class="bi bi-info-circle-fill me-2"></i>Guidance: Understanding Fuel Data for Optimization</h5>
-        <p class="card-text">Accurate fuel data is the lifeblood of our Genetic Algorithm. It allows the system to make intelligent, cost-effective, and compliant routing decisions.</p>
+        <p class="card-text">Accurate fuel data is the lifeblood of our Genetic Algorithm. It allows the system to make intelligent and environmentally compliant routing decisions.</p>
         
         <hr>
 
         <h6><i class="bi bi-bullseye me-2"></i>Why This Data is Needed?</h6>
+        <p>The algorithm uses the <strong>CO₂ Emission Factor</strong> as the primary environmental cost for every potential route. This allows the system to:</p>
         <ul>
-            <li><strong>Cost per Ton ($):</strong> This is the direct financial cost. The algorithm cannot find the cheapest route without knowing the exact price of different fuels at various ports.</li>
-            <li><strong>CO₂ Emission Factor:</strong> This is the environmental and regulatory cost. The algorithm uses this to plan routes that comply with Emission Control Areas (ECAs), avoiding significant fines and ensuring your fleet meets environmental targets.</li>
+            <li>Calculate the total carbon footprint for a voyage.</li>
+            <li>Plan routes that comply with Emission Control Areas (ECAs), avoiding significant fines.</li>
+            <li>Ensure your fleet meets its environmental and sustainability targets.</li>
         </ul>
 
         <h6><i class="bi bi-droplet-half me-2"></i>Common Fuel Types for Cruise Ships</h6>
         <p>The system is designed to handle modern marine fuels used in international shipping:</p>
         <ul>
             <li><strong>Very Low Sulphur Fuel Oil (VLSFO):</strong> The most common fuel used globally to comply with the IMO 2020 sulphur cap.</li>
-            <li><strong>Marine Gas Oil (MGO):</strong> A cleaner, more expensive distillate fuel required for operation inside strict Emission Control Areas (ECAs).</li>
-            <li><strong>Liquified Natural Gas (LNG):</strong> A cleaner-burning alternative fuel used by modern ships to significantly reduce sulphur, nitrogen oxides, and particulate matter.</li>
+            <li><strong>Marine Gas Oil (MGO):</strong> A cleaner, distillate fuel often required for operation inside strict Emission Control Areas.</li>
+            <li><strong>Liquefied Natural Gas (LNG):</strong> A cleaner-burning alternative fuel used by modern ships to significantly reduce emissions.</li>
         </ul>
 
         <h6><i class="bi bi-clipboard-data me-2"></i>How to Get Accurate Data</h6>
+        <p>
+            The <strong>CO₂ Emission Factor</strong> is a standardized, non-changing value provided by the International Maritime Organization (IMO) for compliance reporting.
+        </p>
         <ul>
-            <li>
-                <strong>Cost per Ton:</strong> Fuel prices are highly variable and differ by port. For operational planning, you can get free, daily price indications from online aggregators.
-                <ul>
-                    <li><strong>Recommended Source:</strong> <a href="https://shipandbunker.com/prices" target="_blank">Ship & Bunker</a></li>
-                    <li><strong>How-to:</strong> Visit the link to find the latest indicative price in USD for your intended bunkering port. Since Singapore is the main price reference for the Southeast Asian region, its price is a reliable benchmark.</li>
-                </ul>
-            </li>
-            <li>
-                <strong>CO₂ Emission Factor:</strong> These are standardized, non-changing values provided by the International Maritime Organization (IMO) for compliance reporting.
-                <ul>
-                    <li><strong>Official Source Document:</strong> <a href="https://www.classnk.or.jp/hp/pdf/activities/statutory/eedi/mepc_1-circ_684.pdf" target="_blank">IMO Circular MEPC.1/Circ.684</a></li>
-                    <li><strong>How-to:</strong> The system automates this for you. Simply select the correct "Fuel Category" in the form, and the official factor will be applied automatically.</li>
-                </ul>
-            </li>
+            <li><strong>Official Source Document:</strong> <a href="https://www.classnk.or.jp/hp/pdf/activities/statutory/eedi/mepc_1-circ_684.pdf" target="_blank">IMO Circular MEPC.1/Circ.684</a></li>
+            <li><strong>How-to:</strong> The system automates this for you. Simply select the correct "Fuel Category" in the form, and the official factor will be applied automatically.</li>
         </ul>
         <hr>
         <div class="alert alert-primary mb-0">
-            <strong><i class="bi bi-star-fill me-2"></i>Pro-Tip for Operators:</strong> Fuel prices change daily. For the most effective cost savings, it is critical to update the fuel costs in this system **before planning any new itineraries**. This ensures the algorithm is working with the most current market data.
+            <strong><i class="bi bi-star-fill me-2"></i>Pro-Tip for Operators:</strong> Always ensure the correct "Fuel Category" is selected when adding or editing a fuel type. Using the official IMO factors is crucial for accurate compliance reporting and ensuring the algorithm makes the best environmental decisions.
         </div>
     </div>
 </div>
@@ -85,12 +78,9 @@
                     <div class="table-responsive">
                         <table class="table table-hover" id="fuel-types-table">
                             <thead>
-                                <tr>
-                                    <th>Fuel Name</th>
-                                    <th>Bunkering Port</th>
-                                    <th>Cost per Ton (USD)</th>
-                                    <th>Price Date</th>
-                                    <th>CO₂ Emission Factor</th>
+                                 <tr>
+                                    <th>Fuel Type</th>
+                                    <th>CO₂ Emission Factor (t-CO₂ / t-Fuel)</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -103,7 +93,7 @@
             </div>
 
             <!-- Modal for adding/editing a fuel type -->
-           <div class="modal fade" id="fuelTypeModal" tabindex="-1">
+<div class="modal fade" id="fuelTypeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -114,37 +104,11 @@
                 <form id="fuelTypeForm">
                     <input type="hidden" id="fuelTypeId">
                     <div class="mb-3">
-                        <label for="fuelName" class="form-label">Fuel Name (e.g., VLSFO 0.5%)</label>
+                        <label for="fuelName" class="form-label">Fuel Type</label>
                         <input type="text" class="form-control" id="fuelName" required>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label for="cost" class="form-label">Cost</label>
-                            <input type="number" class="form-control" id="cost" step="0.01" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="currency" class="form-label">Currency</label>
-                            <select id="currency" class="form-select">
-                                <option value="USD" selected>USD</option>
-                                <option value="MYR">MYR</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="priceDate" class="form-label">Price Date</label>
-                            <input type="date" class="form-control" id="priceDate" required>
-                        </div>
-                    </div>
-                    <div class="form-text mb-3">If MYR is selected, the cost will be converted and stored in USD.</div>
-
                     <div class="mb-3">
-                        <label for="bunkeringPort" class="form-label">Bunkering Port</label>
-                        <input type="text" class="form-control" id="bunkeringPort" placeholder="e.g., Singapore">
-                        <div class="form-text">Enter the port where this price is applicable.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="fuelCategory" class="form-label">Fuel Category (for IMO Reporting)</label>
+                        <label for="fuelCategory" class="form-label">Fuel Category (Based on IMO)</label>
                         <select id="fuelCategory" class="form-select" required>
                             <option value="" disabled selected>Select an official category...</option>
                             <option value="3.206000">Diesel / Gas Oil</option>
@@ -156,7 +120,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="co2Factor" class="form-label">CO₂ Factor (t-CO₂ / t-Fuel)</label>
+                        <label for="co2Factor" class="form-label">CO₂ Emission Factor</label>
                         <input type="text" class="form-control" id="co2Factor" readonly>
                     </div>
                 </form>

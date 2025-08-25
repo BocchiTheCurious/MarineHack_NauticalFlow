@@ -1,21 +1,27 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, hideLoader } from './modules/utils.js';
 import { getCruiseShips, addCruiseShip, deleteCruiseShip, updateCruiseShip, getFuelTypes } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
-// --- State and Configuration Variables ---
 let shipModal;
 let allShips = [];
-let currentCurveData = [];
-let chartInstance;
 
+// Simplified Archetype data, focused on GT ranges for auto-selection
 const shipArchetypes = {
-    "large-lng": { name: "Large LNG Cruise Ship (~180,000 GT)", hotelLoad: 2.8, curve: [{speed: 10, consumption: 1.5}, {speed: 15, consumption: 3.5}, {speed: 18, consumption: 6.0}, {speed: 20, consumption: 8.5}, {speed: 22, consumption: 12.0}] },
-    "mid-diesel": { name: "Mid-Size Diesel-Electric Ship (~90,000 GT)", hotelLoad: 1.8, curve: [{speed: 10, consumption: 1.0}, {speed: 14, consumption: 2.5}, {speed: 17, consumption: 4.5}, {speed: 19, consumption: 6.5}, {speed: 21, consumption: 9.0}] },
-    "legacy-mid": { name: "Legacy Mid-Size Ship (~70,000 GT)", hotelLoad: 1.2, curve: [{speed: 10, consumption: 1.2}, {speed: 14, consumption: 2.8}, {speed: 17, consumption: 5.0}, {speed: 19, consumption: 7.2}, {speed: 22, consumption: 10.5}] }
+    "legacy-mid": { name: "Legacy Mid-Size (~70k-90k GT)", minGT: 70000, maxGT: 90000, hotelLoad: 1.2, curve: [{speed: 10, consumption: 1.2}, {speed: 14, consumption: 2.8}, {speed: 17, consumption: 5.0}, {speed: 19, consumption: 7.2}, {speed: 22, consumption: 10.5}] },
+    "mid-diesel": { name: "Mid-Size Diesel-Electric (~90k-130k GT)", minGT: 90001, maxGT: 130000, hotelLoad: 1.8, curve: [{speed: 10, consumption: 1.0}, {speed: 14, consumption: 2.5}, {speed: 17, consumption: 4.5}, {speed: 19, consumption: 6.5}, {speed: 21, consumption: 9.0}] },
+    "large-lng": { name: "Large Modern Ship (>130k GT)", minGT: 130001, maxGT: Infinity, hotelLoad: 2.8, curve: [{speed: 10, consumption: 1.5}, {speed: 15, consumption: 3.5}, {speed: 18, consumption: 6.0}, {speed: 20, consumption: 8.5}, {speed: 22, consumption: 12.0}] }
 };
 
-// --- Main Initialization ---
+// Configure Toastr notifications for a consistent look and feel
+toastr.options = {
+    "closeButton": true,
+    "progressBar": true,
+    "positionClass": "toast-top-right",
+    "preventDuplicates": true,
+    "timeOut": "3000"
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
     await loadLayout();
@@ -25,9 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     highlightCurrentPage();
     updateUserDisplayName();
     
-    initializeShipDataPage();
-
-     hideLoader();
+    await initializeShipDataPage();
+    hideLoader();
 });
 
 async function initializeShipDataPage() {
@@ -38,99 +43,81 @@ async function initializeShipDataPage() {
         allShips = ships;
         renderShipsTable(allShips);
         populateFuelTypeDropdown(fuelTypes);
-        populateArchetypeDropdown();
     } catch (error) {
-        showAlert('Could not load initial page data.', 'danger');
+        toastr.error('Could not load initial page data.', 'Load Failed');
     }
 
-    setupEventListeners();
-    initializeChart();
-}
-
-function setupEventListeners() {
     document.getElementById('shipForm').addEventListener('submit', handleSaveShip);
     document.querySelector('#vessel-data-table tbody').addEventListener('click', handleTableActions);
     document.getElementById('shipModal').addEventListener('show.bs.modal', handleModalOpen);
-
-    // Tier 1
-    document.getElementById('shipArchetype').addEventListener('change', handleArchetypeSelect);
-    // Tier 2
-    document.getElementById('add-curve-point-btn').addEventListener('click', handleAddCurvePoint);
-    document.getElementById('fuel-curve-tbody').addEventListener('click', handleDeleteCurvePoint);
-    document.getElementById('hotelLoad').addEventListener('input', renderCurveTable);
-    // Tier 3
-    document.getElementById('generate-curve-btn').addEventListener('click', handleGenerateCurve);
 }
 
-// --- Tiered UI and Data Entry Logic ---
+// --- New "Smart Template" Logic ---
 
-function handleArchetypeSelect(event) {
-    const archetypeKey = event.target.value;
-    if (!archetypeKey) return;
-
-    const template = shipArchetypes[archetypeKey];
-    document.getElementById('hotelLoad').value = template.hotelLoad;
-    currentCurveData = template.curve;
-    renderCurveTable();
-    showAlert(`Template for "${template.name}" loaded. You can now fine-tune the data.`, 'info');
+function getArchetypeForGT(gt) {
+    for (const key in shipArchetypes) {
+        const archetype = shipArchetypes[key];
+        if (gt >= archetype.minGT && gt <= archetype.maxGT) {
+            return archetype;
+        }
+    }
+    return null;
 }
 
-function handleAddCurvePoint() {
-    const speedInput = document.getElementById('curveSpeed');
-    const consumptionInput = document.getElementById('curveConsumption');
-    const speed = parseFloat(speedInput.value);
-    const propulsionConsumption = parseFloat(consumptionInput.value);
+function generateCurveFromArchetype(archetype) {
+    if (!archetype) return [];
+    const hotelLoad = archetype.hotelLoad;
+    const finalCurve = [
+        { speed: 0, consumption: hotelLoad },
+        ...archetype.curve.map(p => ({
+            speed: p.speed,
+            consumption: p.consumption + hotelLoad
+        }))
+    ];
+    return finalCurve;
+}
 
-    if (isNaN(speed) || isNaN(propulsionConsumption) || speed <= 0 || propulsionConsumption < 0) {
-        showAlert('Please enter valid, positive numbers for speed and propulsion consumption.', 'warning');
+// --- Main CRUD Functions ---
+
+async function handleSaveShip(event) {
+    event.preventDefault();
+    const form = event.target;
+    if (!form.checkValidity()) {
+        toastr.warning('Please fill in all required fields.');
         return;
     }
     
-    currentCurveData.push({ speed, consumption: propulsionConsumption });
-    currentCurveData.sort((a, b) => a.speed - b.speed);
-
-    renderCurveTable();
-    speedInput.value = '';
-    consumptionInput.value = '';
-    speedInput.focus();
-}
-
-function handleGenerateCurve() {
-    const gt = parseFloat(document.getElementById('genGrossTonnage').value);
-    const power = parseFloat(document.getElementById('genTotalPower').value);
-    const speed = parseFloat(document.getElementById('genDesignSpeed').value);
-
-    if (isNaN(gt) || isNaN(power) || isNaN(speed)) {
-        showAlert('Please enter all three technical parameters to generate a curve.', 'warning');
+    const shipId = document.getElementById('shipId').value;
+    const grossTonnage = parseInt(document.getElementById('grossTonnage').value, 10);
+    
+    const selectedArchetype = getArchetypeForGT(grossTonnage);
+    if (!selectedArchetype) {
+        toastr.error(`No performance template available for a ship with ${grossTonnage} GT.`, 'Invalid Tonnage');
         return;
     }
     
-    const hotelLoad = (gt / 75000).toFixed(2);
-    document.getElementById('hotelLoad').value = hotelLoad;
+    const shipData = {
+        name: document.getElementById('shipName').value,
+        company: document.getElementById('company').value,
+        grossTonnage: grossTonnage,
+        fuelTypeId: document.getElementById('fuelType').value,
+        fuelConsumptionCurve: generateCurveFromArchetype(selectedArchetype)
+    };
 
-    const refPower = power * 0.85; 
-    
-    currentCurveData = [];
-    for (let i = 0.5; i <= 1.1; i += 0.1) {
-        const currentSpeed = (speed * i).toFixed(1);
-        const currentPower = refPower * Math.pow(currentSpeed / speed, 3);
-        const consumption = (currentPower * 200 / 1000000).toFixed(2); 
-        currentCurveData.push({ speed: parseFloat(currentSpeed), consumption: parseFloat(consumption) });
-    }
-
-    renderCurveTable();
-    showAlert('Approximate curve generated based on your inputs.', 'info');
-}
-
-function handleDeleteCurvePoint(event) {
-    const deleteBtn = event.target.closest('.delete-point-btn');
-    if (deleteBtn) {
-        currentCurveData.splice(parseInt(deleteBtn.dataset.index, 10), 1);
-        renderCurveTable();
+    try {
+        if (shipId) {
+            await updateCruiseShip(shipId, shipData);
+            toastr.success('Cruise ship updated successfully!');
+        } else {
+            await addCruiseShip(shipData);
+            toastr.success('Cruise ship added successfully!');
+        }
+        shipModal.hide();
+        await loadAndRenderShips();
+    } catch (error) {
+        toastr.error(`Failed to save cruise ship. ${error.message}`, 'Save Failed');
     }
 }
-
-// --- Modal and Form Handling ---
 
 function handleModalOpen(event) {
     const button = event.relatedTarget;
@@ -138,140 +125,57 @@ function handleModalOpen(event) {
     const form = document.getElementById('shipForm');
     const modalTitle = document.getElementById('shipModalLabel');
     
-    form.reset();
-    currentCurveData = [];
-    document.getElementById('shipId').value = '';
-    new bootstrap.Tab(document.getElementById('template-tab')).show();
-
     if (shipId) {
         modalTitle.textContent = 'Edit Cruise Ship';
         const shipToEdit = allShips.find(s => s.id == shipId);
         if (shipToEdit) {
             document.getElementById('shipId').value = shipToEdit.id;
             document.getElementById('shipName').value = shipToEdit.name;
+            document.getElementById('company').value = shipToEdit.company;
+            document.getElementById('grossTonnage').value = shipToEdit.grossTonnage;
             document.getElementById('fuelType').value = shipToEdit.fuelTypeId;
-            
-            const hotelLoad = shipToEdit.fuelConsumptionCurve.find(p => p.speed === 0)?.consumption || 0;
-            document.getElementById('hotelLoad').value = hotelLoad;
-            currentCurveData = shipToEdit.fuelConsumptionCurve.filter(p => p.speed > 0).map(p => ({
-                speed: p.speed,
-                consumption: p.consumption - hotelLoad
-            }));
         }
     } else {
         modalTitle.textContent = 'Add New Cruise Ship';
-    }
-    renderCurveTable();
-}
-
-async function handleSaveShip(event) {
-    event.preventDefault();
-    const shipId = document.getElementById('shipId').value;
-    const hotelLoad = parseFloat(document.getElementById('hotelLoad').value) || 0;
-
-    const finalCurve = [
-        { speed: 0, consumption: hotelLoad },
-        ...currentCurveData.map(p => ({
-            speed: p.speed,
-            consumption: p.consumption + hotelLoad
-        }))
-    ];
-
-    const shipData = {
-        name: document.getElementById('shipName').value,
-        fuelTypeId: document.getElementById('fuelType').value,
-        fuelConsumptionCurve: finalCurve
-    };
-    
-    // **COMPLETED LOGIC:** Added the try/catch/finally block for saving.
-    const submitBtn = document.querySelector('#shipModal .modal-footer button[type="submit"]');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
-
-    try {
-        if (shipId) {
-            allShips = await updateCruiseShip(shipId, shipData);
-            showAlert('Cruise ship updated successfully!', 'success');
-        } else {
-            allShips = await addCruiseShip(shipData);
-            showAlert('Cruise ship added successfully!', 'success');
-        }
-        renderShipsTable(allShips);
-        shipModal.hide();
-    } catch (error) {
-        showAlert(`Failed to save cruise ship. ${error.message}`, 'danger');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+        form.reset();
+        document.getElementById('shipId').value = '';
     }
 }
 
-// --- Charting and Table Rendering ---
+async function loadAndRenderShips() {
+    allShips = await getCruiseShips();
+    renderShipsTable(allShips);
+}
 
-function renderCurveTable() {
-    const tbody = document.getElementById('fuel-curve-tbody');
-    const hotelLoad = parseFloat(document.getElementById('hotelLoad').value) || 0;
-    tbody.innerHTML = '';
-
-    const displayData = [...currentCurveData];
-    displayData.sort((a,b) => a.speed - b.speed);
-    
-    displayData.forEach((point, index) => {
+function renderShipsTable(ships) {
+    const tableBody = document.querySelector('#vessel-data-table tbody');
+    tableBody.innerHTML = '';
+    ships.forEach(ship => {
         const row = document.createElement('tr');
+        row.dataset.shipId = ship.id;
         row.innerHTML = `
-            <td>${point.speed.toFixed(1)}</td>
-            <td>${(point.consumption + hotelLoad).toFixed(2)}</td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger delete-point-btn" data-index="${index}"><i class="bi bi-x-circle"></i></button></td>
+            <td>${ship.name}</td>
+            <td>${ship.company || 'N/A'}</td>
+            <td>${ship.grossTonnage.toLocaleString()}</td>
+            <td>${ship.fuelTypeName}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Ship" data-bs-toggle="modal" data-bs-target="#shipModal" data-ship-id="${ship.id}"><i class="bi bi-pencil-square"></i></button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Ship"><i class="bi bi-trash"></i></button>
+            </td>
         `;
-        tbody.appendChild(row);
+        tableBody.appendChild(row);
     });
-    updateChart();
-}
-
-function initializeChart() {
-    const ctx = document.getElementById('curve-chart').getContext('2d');
-    chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: 'Total Fuel Consumption (tons/hr)', data: [], borderColor: '#0d6efd', tension: 0.4, fill: false }] },
-        options: { scales: { x: { title: { display: true, text: 'Speed (knots)' } }, y: { title: { display: true, text: 'Consumption (t/hr)' }, beginAtZero: true } } }
-    });
-}
-
-function updateChart() {
-    const hotelLoad = parseFloat(document.getElementById('hotelLoad').value) || 0;
-    const displayData = [...currentCurveData];
-    displayData.unshift({ speed: 0, consumption: 0 });
-    displayData.sort((a,b) => a.speed - b.speed);
-
-    chartInstance.data.labels = displayData.map(p => p.speed);
-    chartInstance.data.datasets[0].data = displayData.map(p => p.consumption + hotelLoad);
-    chartInstance.update();
-}
-
-// --- Main Table and Dropdown Population ---
-
-function populateArchetypeDropdown() {
-    const select = document.getElementById('shipArchetype');
-    for (const key in shipArchetypes) {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = shipArchetypes[key].name;
-        select.appendChild(option);
-    }
 }
 
 async function handleTableActions(event) {
     const targetBtn = event.target.closest('button');
     if (!targetBtn) return;
     
-    const shipId = targetBtn.dataset.shipId;
+    const shipId = targetBtn.closest('tr').dataset.shipId;
     if (!shipId) return;
     
-    const ship = allShips.find(s => s.id == shipId);
-
     if (targetBtn.classList.contains('delete-btn')) {
-        // **FIX 2: UPGRADED TO SWEETALERT**
+        const ship = allShips.find(s => s.id == shipId);
         Swal.fire({
             title: 'Are you sure?',
             text: `You are about to delete "${ship.name}". This action cannot be undone.`,
@@ -281,47 +185,21 @@ async function handleTableActions(event) {
             confirmButtonText: 'Yes, delete it!'
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await deleteCruiseShip(shipId);
-                showAlert(`Ship "${ship.name}" deleted.`, 'success');
-                allShips = await getCruiseShips();
-                renderShipsTable(allShips);
+                try {
+                    await deleteCruiseShip(shipId);
+                    toastr.success(`Ship "${ship.name}" was deleted.`);
+                    await loadAndRenderShips();
+                } catch (error) {
+                    toastr.error('Failed to delete ship.', 'Delete Failed');
+                }
             }
-        });
-    } else if (targetBtn.classList.contains('view-curve-btn')) {
-        const curveString = JSON.stringify(ship.fuelConsumptionCurve, null, 2);
-        Swal.fire({
-            title: `<strong>Curve for ${ship.name}</strong>`,
-            html: `<pre class="text-start p-2 bg-light border rounded">${curveString}</pre>`,
-            icon: 'info'
         });
     }
 }
 
-function renderShipsTable(ships) {
-    const tableBody = document.querySelector('#vessel-data-table tbody');
-    tableBody.innerHTML = '';
-    if (ships.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No cruise ships found.</td></tr>';
-        return;
-    }
-    ships.forEach(ship => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${ship.name}</td>
-            <td>${ship.fuelTypeName}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Ship" data-bs-toggle="modal" data-bs-target="#shipModal" data-ship-id="${ship.id}"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-info view-curve-btn" title="View Consumption Curve" data-ship-id="${ship.id}"><i class="bi bi-graph-up"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Ship" data-ship-id="${ship.id}"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
 function populateFuelTypeDropdown(fuelTypes) {
     const select = document.getElementById('fuelType');
-    // **IMPROVEMENT:** Changed label to be more specific
-    select.innerHTML = '<option value="" disabled selected>Select a Fuel Name</option>';
+    select.innerHTML = '<option value="" disabled selected>Select a Fuel Type</option>';
     fuelTypes.forEach(ft => {
         const option = document.createElement('option');
         option.value = ft.id;

@@ -1,85 +1,98 @@
-# optimization_solver.py
-
 import math
 import numpy as np
 import pygad
+from decimal import Decimal
 
-# NOTE: The plotting part (matplotlib) is removed because a server can't open a GUI window.
-# We will return the data instead.
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculates the great-circle distance between two points on Earth.
+    This is much more accurate for geographical coordinates.
+    """
+    R = 6371  # Radius of the Earth in kilometers
+    
+    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+    
+    dlon = lon2_rad - lon1_rad
+    dlat = lat2_rad - lat1_rad
+    
+    a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    return R * c
 
-def run_route_optimization(coords_list):
+# This function calculates all metrics for a given route order.
+def get_route_metrics(route_indices, dist_matrix, fuel_curve, co2_factor):
+    """Calculates distance, fuel, and CO2 for a specific port sequence."""
+    
+    # Calculate total distance
+    total_distance = dist_matrix[0, route_indices[0]] # Start to first stop
+    for i in range(len(route_indices) - 1):
+        total_distance += dist_matrix[route_indices[i], route_indices[i+1]]
+    total_distance += dist_matrix[route_indices[-1], 0] # Last stop back to start
+
+    # Calculate fuel and CO2 based on distance
+    mid_point = fuel_curve[len(fuel_curve) // 2]
+    fuel_rate_per_km = mid_point['consumption'] / mid_point['speed']
+    fuel_tons = total_distance * fuel_rate_per_km
+    co2_tons = fuel_tons * float(co2_factor)
+
+    # Convert to frontend units
+    fuel_liters = fuel_tons * 1176.5
+    co2_kg = co2_tons * 1000
+
+    return {
+        "distance_km": round(total_distance, 2),
+        "fuel_liters": round(fuel_liters, 2),
+        "co2_kg": round(co2_kg, 2)
+    }
+
+
+def run_route_optimization(coords_list, fuel_curve, co2_factor):
     """
-    Takes a list of [latitude, longitude] pairs, runs the GA optimization,
-    and returns the results as a dictionary.
+    Runs the GA optimization and returns metrics for BOTH the original and optimized routes.
     """
-    # 1. The hardcoded 'coords' is now replaced by the function argument
     coords = np.array(coords_list, dtype=float)
-
-    # --- All of your existing optimization logic goes here ---
-
-    # Ship fuel & emission parameters
-    fuel_rate_per_km = 0.25  # liters/km
-    emission_factor = 3.206  # kg CO₂ per liter
     customer_ids = np.arange(1, len(coords))
-
-    # Distance matrix (using haversine for real-world distance would be better, but euclid is kept for now)
-    def euclid(a, b):
-        return math.hypot(a[0] - b[0], a[1] - b[1])
-
+    
+    # Create distance matrix using Haversine formula
     N = len(coords)
     dist = np.zeros((N, N), dtype=float)
     for i in range(N):
         for j in range(N):
-            dist[i, j] = euclid(coords[i], coords[j])
+            dist[i, j] = haversine_distance(coords[i, 0], coords[i, 1], coords[j, 0], coords[j, 1])
 
-    # Decode GA solution into route order
     def decode_solution(keys):
-        order = customer_ids[np.argsort(keys)]
-        return order.tolist()
+        return customer_ids[np.argsort(keys)].tolist()
 
-    # Route metrics
-    def route_distance(route):
-        if not route: return 0.0
-        total = dist[0, route[0]]
-        for i in range(len(route) - 1):
-            total += dist[route[i], route[i+1]]
-        total += dist[route[-1], 0]
-        return total
-
-    def route_cost(route):
-        dist_km = route_distance(route)
-        fuel = dist_km * fuel_rate_per_km
-        co2 = fuel * emission_factor
-        return dist_km, fuel, co2
-
-    # Fitness function
     def fitness_func(ga_instance, solution, solution_idx):
         route = decode_solution(solution)
-        _dist, fuel, _co2 = route_cost(route)
-        return -fuel
+        metrics = get_route_metrics(route, dist, fuel_curve, co2_factor)
+        # Fitness is based on minimizing fuel consumption
+        return -metrics["fuel_liters"]
 
-    # GA config
-    num_genes = len(customer_ids)
     ga_instance = pygad.GA(
         num_generations=200, sol_per_pop=40, num_parents_mating=20,
-        fitness_func=fitness_func, num_genes=num_genes, gene_type=float,
+        fitness_func=fitness_func, num_genes=len(customer_ids), gene_type=float,
         gene_space={'low': 0.0, 'high': 1.0}, parent_selection_type="tournament",
         K_tournament=3, crossover_type="single_point", mutation_type="random",
         mutation_percent_genes=20
     )
-
     ga_instance.run()
 
-    # Best result
+    # --- CALCULATE AND RETURN BOTH METRICS ---
+    # 1. Get metrics for the OPTIMIZED route
     best_keys, _, _ = ga_instance.best_solution()
-    best_route_indices = decode_solution(best_keys)
-    dist_km, fuel, co2 = route_cost(best_route_indices)
+    optimized_indices = decode_solution(best_keys)
+    optimized_metrics = get_route_metrics(optimized_indices, dist, fuel_curve, co2_factor)
 
-    # 2. Package the results into a dictionary to send back as JSON
-    result = {
-        "best_route_indices": best_route_indices,
-        "distance_km": round(dist_km, 2),
-        "fuel_liters": round(fuel, 2),
-        "co2_kg": round(co2, 2)
+    # 2. Get metrics for the ORIGINAL (as-entered) route
+    original_indices = customer_ids.tolist()
+    standard_metrics = get_route_metrics(original_indices, dist, fuel_curve, co2_factor)
+    
+    # 3. Return a single object containing both results
+    return {
+        "standard_metrics": standard_metrics,
+        "optimized_metrics": optimized_metrics,
+        "best_route_indices": optimized_indices # Keep this for drawing the map
     }
-    return result
