@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <link href="../styles.css" rel="stylesheet">
     <!-- Custom Styles -->
@@ -71,17 +70,6 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
         
-        /* Weather overlay on the map */
-        .weather-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            padding: 10px;
-            z-index: 1000;
-        }
-        
         /* Table styling for better visibility */
         .comparison-table {
             background-color: white;
@@ -119,6 +107,36 @@
         .comparison-table .badge {
             font-size: 0.875em;
         }
+
+        /* Cyclone marker styling */
+        .cyclone-marker {
+            background: transparent;
+            border: none;
+        }
+        
+        .cyclone-marker div {
+            transition: all 0.3s ease;
+        }
+        
+        .cyclone-marker:hover div {
+            transform: scale(1.5);
+            box-shadow: 0 0 8px rgba(0,0,0,0.8) !important;
+        }
+        
+        /* Enhanced popup styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .leaflet-popup-content {
+            margin: 12px;
+            line-height: 1.5;
+        }
+        
+        .leaflet-popup-tip {
+            background: white;
+        }
     </style>
 </head>
 <body>
@@ -129,7 +147,7 @@
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="page-title">
+                <h1 class="h2 text-white">
                     <i class="bi bi-gear-wide-connected me-2"></i>
                     Optimized Route Planner (Multi-Port)
                 </h1>
@@ -160,10 +178,7 @@
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Vessel Name</label>
                         <select class="form-select" id="vessel-name">
-                            <option value="mv-ocean-star">MV Ocean Star</option>
-                            <option value="mv-pacific-glory">MV Pacific Glory</option>
-                            <option value="mv-atlantic-queen">MV Atlantic Queen</option>
-                            <option value="mv-mediterranean">MV Mediterranean</option>
+                            <option selected disabled>Select a cruise ship...</option>
                         </select>
                     </div>
 
@@ -199,17 +214,6 @@
                         </div>
                         <div class="card-body p-0 position-relative">
                             <div id="nautical-map"></div>
-                            <div class="weather-overlay">
-                                <h6 class="mb-2"><i class="bi bi-cloud-sun me-1"></i>Weather Overlay</h6>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="wind-overlay" checked>
-                                    <label class="form-check-label" for="wind-overlay">Wind</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="waves-overlay" checked>
-                                    <label class="form-check-label" for="waves-overlay">Waves</label>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -274,6 +278,44 @@
                 </div>
             </div>
 
+            <!-- How It Works Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-info-circle me-2"></i>How The Calculation Works
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">Our system uses a sophisticated process to provide you with an accurate and optimized route plan. Here's a breakdown of the data and methods we use:</p>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <h6 class="mb-1"><i class="bi bi-cpu me-2"></i>The Optimization Algorithm</h6>
+                                    <small>We employ a <strong>Genetic Algorithm (GA)</strong> to solve this complex routing challenge, which is a version of the classic Traveling Salesperson Problem (TSP). Inspired by natural selection, the GA intelligently searches through a vast number of possible route combinations to find the most efficient sequence of ports, saving you from having to test them all manually.</small>
+                                </li>
+                                <li class="list-group-item">
+                                    <h6 class="mb-1"><i class="bi bi-rulers me-2"></i>Distance Calculation</h6>
+                                    <small>To ensure accuracy, our system doesn't just measure straight lines. It uses the <strong>Haversine formula</strong>, which calculates the great-circle distance (the shortest path on a sphere) between ports using their precise latitude and longitude coordinates.</small>
+                                </li>
+                                <li class="list-group-item">
+                                    <h6 class="mb-1"><i class="bi bi-clock me-2"></i>Travel Time Calculation</h6>
+                                    <small>Travel time is calculated by dividing the total distance by an average vessel speed. This speed is derived from the specific <strong>fuel consumption curve</strong> data you provided for the selected vessel, ensuring the estimate is tailored to that ship's performance characteristics.</small>
+                                </li>
+                                <li class="list-group-item">
+                                    <h6 class="mb-1"><i class="bi bi-fuel-pump me-2"></i>Fuel Consumption Calculation</h6>
+                                    <small>Fuel usage is determined by multiplying the total distance by a fuel rate (e.g., tons per kilometer). This rate is also extracted from the vessel's unique <strong>fuel consumption curve</strong>, which directly links the ship's speed to its rate of fuel burn.</small>
+                                </li>
+                                <li class="list-group-item">
+                                    <h6 class="mb-1"><i class="bi bi-cloud me-2"></i>CO₂ Emissions Calculation</h6>
+                                    <small>This is a direct calculation: the total fuel consumed is multiplied by the specific <strong>CO₂ factor</strong> associated with the vessel's designated fuel type (e.g., Heavy Fuel Oil, Marine Gas Oil). This provides an accurate estimate of the voyage's carbon footprint.</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
              <!-- Saved Results Table -->
             <div class="row mt-4">
                 <div class="col-12">
@@ -298,20 +340,8 @@
                                         </tr>
                                     </thead>
                                     <tbody id="saved-results-body">
-                                        <!-- Example Row -->
-                                        <tr>
-                                            <td>2024-01-15 14:30</td>
-                                            <td>Port Klang → Singapore → Batam</td>
-                                            <td>Container Ship</td>
-                                            <td><span class="badge bg-success">-18%</span></td>
-                                            <td><span class="badge bg-info">-14%</span></td>
-                                            <td><span class="badge bg-warning">+3h 20m</span></td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <!-- This body is now intentionally left empty. -->
+                                        <!-- It will be populated dynamically by optimized-route-planner.js -->
                                     </tbody>
                                 </table>
                             </div>
@@ -345,11 +375,13 @@
 
     <!-- External JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <!-- Main application logic -->
     <script type="module" src="js/optimized-route-planner.js"></script>
 </body>
 </html>
+
