@@ -4,6 +4,40 @@
 const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 /**
+ * Decodes a JWT token without verification (client-side only)
+ * @param {string} token - The JWT token
+ * @returns {object|null} - Decoded payload or null if invalid
+ */
+function decodeJWT(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        
+        const payload = parts[1];
+        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(decoded);
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        return null;
+    }
+}
+
+/**
+ * Checks if a JWT token is expired
+ * @param {string} token - The JWT token
+ * @returns {boolean} - True if expired
+ */
+function isTokenExpired(token) {
+    const decoded = decodeJWT(token);
+    if (!decoded || !decoded.exp) {
+        return true;
+    }
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    return decoded.exp < currentTime;
+}
+
+/**
  * A helper function to perform authenticated fetch requests.
  * It automatically adds the JWT token to the headers and handles common responses.
  * @param {string} endpoint - The API endpoint to call (e.g., '/ports').
@@ -12,8 +46,18 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
  * @returns {Promise<any>} The JSON response from the API, or null for empty responses.
  */
 async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
-    // NOTE: Ensure your application consistently uses 'nauticalflow-token' as the key in localStorage.
     const token = localStorage.getItem('nauticalflow-token');
+    
+    // NEW: Check token expiration BEFORE making the request
+    if (requiresAuth && token && isTokenExpired(token)) {
+        console.log('Token expired before request, logging out...');
+        localStorage.removeItem('nauticalflow-token');
+        localStorage.removeItem('nauticalflow-display-name');
+        localStorage.setItem('nauticalflow-logout-reason', 'expired');
+        window.location.href = '../index.html';
+        throw new Error('Session expired');
+    }
+    
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -27,8 +71,13 @@ async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
 
     if (!response.ok) {
         if (response.status === 401 && requiresAuth) {
-            // If unauthorized, token might be expired or invalid. Redirect to login.
+            // Token is invalid or expired according to server
+            console.log('401 Unauthorized - clearing session...');
+            localStorage.removeItem('nauticalflow-token');
+            localStorage.removeItem('nauticalflow-display-name');
+            localStorage.setItem('nauticalflow-logout-reason', 'expired');
             window.location.href = '../index.html';
+            throw new Error('Session expired');
         }
         // Attempt to parse error message from the server, otherwise use status text.
         const errorData = await response.json().catch(() => ({ error: response.statusText }));

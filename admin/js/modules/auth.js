@@ -189,6 +189,9 @@ export function initializeLoginPage() {
     const loginForm = document.getElementById('login-form');
     if (!loginForm) return; // Exit if login form isn't on the page
 
+    // NEW: Check for logout messages (like session expiration)
+    checkLogoutMessage();
+
     // If the user is already logged in, redirect them
     if (localStorage.getItem('nauticalflow-token')) {
         redirectToDashboard();
@@ -200,7 +203,6 @@ export function initializeLoginPage() {
 
     loginForm.addEventListener('submit', handleLoginSubmit);
 }
-
 /**
  * Sets up all event listeners and functionality for the signup page.
  */
