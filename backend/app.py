@@ -6,9 +6,9 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import os
 from functools import wraps
-import re # Imported for password validation
-from decimal import Decimal # Import for numeric types
-from optimization_solver import run_route_optimization, waypoints, graph_edges
+import re
+from decimal import Decimal
+from optimization_solver import run_route_optimization  # Removed waypoints and graph_edges import
 
 app = Flask(__name__)
 CORS(app)
@@ -38,14 +38,12 @@ class Port(db.Model):
     longitude = db.Column(db.Float, nullable=False)
     port_congestion_index = db.Column(db.Numeric(5, 2), nullable=False, default=0.0)
 
-# FuelType Model
 class FuelType(db.Model):
     __tablename__ = 'fuel_types'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     co2_factor = db.Column(db.Numeric(10, 4), nullable=False)
 
-# CruiseShip
 class CruiseShip(db.Model):
     __tablename__ = 'cruise_ships'
     id = db.Column(db.Integer, primary_key=True)
@@ -56,7 +54,6 @@ class CruiseShip(db.Model):
     fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
     fuel_type = db.relationship('FuelType', backref='cruise_ships')
 
-# OptimizationResult Model
 class OptimizationResult(db.Model):
     __tablename__ = 'optimization_results'
     id = db.Column(db.Integer, primary_key=True)
@@ -68,11 +65,9 @@ class OptimizationResult(db.Model):
     timeSaved = db.Column(db.String(50), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-
 # --- Database Initialization ---
 with app.app_context():
     db.create_all()
-    # Create a default admin user if one doesn't exist
     if not User.query.filter_by(username='admin').first():
         hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin_user = User(display_name='Admin User', username='admin', password=hashed_pw)
@@ -92,7 +87,6 @@ def token_required(f):
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
         try:
-            # CORRECTED: Ensured algorithm is HS256 and simplified exception handling
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = User.query.filter_by(username=data['username']).first()
             if not current_user:
@@ -104,7 +98,6 @@ def token_required(f):
 
 # --- Password Validation Helper ---
 def is_strong_password(password):
-    """Checks if a password meets strength requirements."""
     if len(password) < 8: return False
     if not re.search("[a-z]", password): return False
     if not re.search("[A-Z]", password): return False
@@ -123,7 +116,6 @@ def signup():
         if not all([display_name, username, password]):
             return jsonify({'error': 'All fields are required'}), 400
         
-        # UPDATE: Removed strong password check from signup as per request
         if User.query.filter_by(username=username).first():
             return jsonify({'error': 'Username already exists'}), 409
         
@@ -364,16 +356,7 @@ def get_profile_stats(current_user):
     return jsonify(stats)
 
 # --- Route Optimization Endpoint ---
-@app.route('/api/waypoints', methods=['GET'])
-@token_required
-def get_waypoints(current_user):
-    """
-    Sends the waypoint graph data to the frontend for visualization.
-    """
-    return jsonify({
-        'waypoints': waypoints,
-        'edges': graph_edges
-    })
+# REMOVED: /api/waypoints endpoint (no longer needed)
 
 @app.route('/api/optimize', methods=['POST'])
 @token_required
@@ -411,7 +394,6 @@ def get_saved_optimizations(current_user):
         'co2Reduced': r.co2Reduced, 'timeSaved': r.timeSaved
     } for r in results])
 
-# CORRECTED: Added the missing @app.route decorator
 @app.route('/api/optimizations', methods=['POST'])
 @token_required
 def save_optimization(current_user):
