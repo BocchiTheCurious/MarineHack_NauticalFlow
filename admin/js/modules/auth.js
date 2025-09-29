@@ -32,22 +32,71 @@ toastr.options = {
  * @returns {boolean} Returns true if the user is authenticated, otherwise false.
  */
 export function checkAuth() {
-    if (!localStorage.getItem('nauticalflow-token')) {
-        // Adjust the path if your pages are nested differently
-        window.location.href = '../index.html';
+    const token = localStorage.getItem('nauticalflow-token');
+    
+    if (!token) {
+        redirectToLogin();
         return false;
     }
+    
+    // NEW: Check if token is expired
+    if (isTokenExpired(token)) {
+        console.log('Token expired, logging out...');
+        handleLogout();
+        return false;
+    }
+    
     return true;
+}
+
+/**
+ * Decodes a JWT token without verification (client-side only)
+ * @param {string} token - The JWT token
+ * @returns {object|null} - Decoded payload or null if invalid
+ */
+function decodeJWT(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        
+        const payload = parts[1];
+        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(decoded);
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        return null;
+    }
+}
+
+/**
+ * Checks if a JWT token is expired
+ * @param {string} token - The JWT token
+ * @returns {boolean} - True if expired
+ */
+function isTokenExpired(token) {
+    const decoded = decodeJWT(token);
+    if (!decoded || !decoded.exp) {
+        return true; // Treat invalid tokens as expired
+    }
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    return decoded.exp < currentTime;
 }
 
 /**
  * Logs the user out by removing their token and display name from localStorage,
  * then redirects them to the main index page.
  */
-export function handleLogout() {
+export function handleLogout(isExpired = false) {
     localStorage.removeItem('nauticalflow-token');
     localStorage.removeItem('nauticalflow-display-name');
-    window.location.href = '../index.html';
+    
+    if (isExpired) {
+        // Store a message to show after redirect
+        localStorage.setItem('nauticalflow-logout-reason', 'expired');
+    }
+    
+    redirectToLogin();
 }
 
 /**
@@ -64,6 +113,63 @@ export function setupLogout() {
     }
 }
 
+/**
+ * Centralized redirect to login
+ */
+function redirectToLogin() {
+    window.location.href = '../index.html';
+}
+
+/**
+ * Check for logout messages and display them
+ * Call this in your login page initialization
+ */
+export function checkLogoutMessage() {
+    const reason = localStorage.getItem('nauticalflow-logout-reason');
+    if (reason === 'expired') {
+        showError('Your session has expired. Please log in again.');
+        localStorage.removeItem('nauticalflow-logout-reason');
+    }
+}
+
+/**
+ * Enhanced API call wrapper that handles token expiration
+ * @param {string} url - API endpoint
+ * @param {object} options - Fetch options
+ * @returns {Promise} - Fetch promise
+ */
+export async function authenticatedFetch(url, options = {}) {
+    const token = localStorage.getItem('nauticalflow-token');
+    
+    if (!token || isTokenExpired(token)) {
+        handleLogout(true);
+        throw new Error('Authentication required');
+    }
+    
+    // Add token to headers
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+    };
+    
+    try {
+        const response = await fetch(url, { ...options, headers });
+        
+        // Handle token expiration from server
+        if (response.status === 401) {
+            handleLogout(true);
+            throw new Error('Authentication expired');
+        }
+        
+        return response;
+    } catch (error) {
+        if (error.message === 'Authentication required' || error.message === 'Authentication expired') {
+            throw error;
+        }
+        throw new Error('Network error occurred');
+    }
+}
 
 // --- Page Initializers (Exported) ---
 
