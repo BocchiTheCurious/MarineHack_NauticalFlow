@@ -299,17 +299,25 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
         shadowSize: [41, 41]
     });
 
-    const markers = orderedPorts.map((port, index) => {
-        // *** FIX: Start with an empty options object. ***
-        const markerOptions = {};
-        // *** Only add the custom icon for the starting port. ***
-        if (index === 0) {
-            markerOptions.icon = greenIcon;
-        }
-        const popupContent = `<b>${index === 0 ? 'Start/End' : `Stop ${index}`}</b>: ${port.name}`;
-        // For other ports, Leaflet will use its default icon, preventing the error.
-        return L.marker([port.latitude, port.longitude], markerOptions).bindPopup(popupContent);
-    });
+  const markers = orderedPorts.map((port, index) => {
+    const markerOptions = {};
+    if (index === 0) {
+        markerOptions.icon = greenIcon;
+    }
+    const labelText = `${index === 0 ? 'Start' : `Stop ${index}`}: ${port.name}`;
+    
+    // Create marker with both tooltip (always visible) and popup (on click)
+    const marker = L.marker([port.latitude, port.longitude], markerOptions)
+        .bindTooltip(labelText, {
+            permanent: true,
+            direction: 'top',
+            className: 'port-label-tooltip',
+            offset: [0, -20]
+        })
+        .bindPopup(`<b>${labelText}</b>`);
+    
+    return marker;
+});
 
     portMarkersLayer = L.layerGroup(markers).addTo(map);
 

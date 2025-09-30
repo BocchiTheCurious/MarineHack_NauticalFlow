@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,7 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
+
         /* Map container styling */
         #nautical-map {
             height: 600px;
@@ -28,11 +29,11 @@
         .leaflet-popup-content {
             font-size: 14px;
         }
-        
+
         .leaflet-popup-content b {
             color: #0055cc;
         }
-        
+
         /* Controls section styling */
         .route-controls {
             background: rgba(255, 255, 255, 0.95);
@@ -69,41 +70,41 @@
             margin-left: 8px;
             filter: invert(1) grayscale(100%) brightness(200%);
         }
-        
+
         /* Table styling for better visibility */
         .comparison-table {
             background-color: white;
             color: #212529;
         }
-        
+
         .comparison-table th {
             background-color: #343a40 !important;
             color: white !important;
             border: 2px solid #000 !important;
             font-weight: bold;
         }
-        
+
         .comparison-table td {
             background-color: white !important;
             color: #212529 !important;
             border: 1px solid #000 !important;
             padding: 12px 8px;
-            word-break: break-word; 
+            word-break: break-word;
         }
-        
+
         .comparison-table tbody tr:nth-child(even) {
             background-color: #f8f9fa !important;
         }
-        
+
         .comparison-table tbody tr:hover {
             background-color: #e9ecef !important;
         }
-        
+
         .comparison-table .text-success {
             color: #198754 !important;
             font-weight: bold;
         }
-        
+
         .comparison-table .badge {
             font-size: 0.875em;
         }
@@ -113,32 +114,48 @@
             background: transparent;
             border: none;
         }
-        
+
         .cyclone-marker div {
             transition: all 0.3s ease;
         }
-        
+
         .cyclone-marker:hover div {
             transform: scale(1.5);
-            box-shadow: 0 0 8px rgba(0,0,0,0.8) !important;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.8) !important;
         }
-        
+
         /* Enhanced popup styling */
         .leaflet-popup-content-wrapper {
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .leaflet-popup-content {
             margin: 12px;
             line-height: 1.5;
         }
-        
+
         .leaflet-popup-tip {
             background: white;
         }
+
+        .port-label-tooltip {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 2px solid #0d6efd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .port-label-tooltip::before {
+            border-top-color: #0d6efd !important;
+        }
     </style>
 </head>
+
 <body>
     <!-- Placeholders for dynamic content like navbar and sidebar -->
     <div id="navbar-placeholder"></div>
@@ -146,7 +163,8 @@
         <div id="sidebar-placeholder"></div>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2 text-white">
                     <i class="bi bi-gear-wide-connected me-2"></i>
                     Optimized Route Planner (Multi-Port)
@@ -189,7 +207,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-4">
                     <div class="col-12 text-center">
                         <button type="button" class="btn btn-primary btn-lg" id="run-optimization">
@@ -205,12 +223,12 @@
                 <div class="col-12">
                     <div class="card shadow">
                         <div class="card-header py-3">
-                             <h6 class="m-0 font-weight-bold text-primary">
-                                 <i class="bi bi-map me-2"></i>Interactive Nautical Map with Marine Zones
-                             </h6>
-                             <small class="text-muted">
-                                 Showing EEZ boundaries, territorial seas, wind patterns, and wave height data.
-                             </small>
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-map me-2"></i>Interactive Nautical Map with Marine Zones
+                            </h6>
+                            <small class="text-muted">
+                                Showing EEZ boundaries, territorial seas, wind patterns, and wave height data.
+                            </small>
                         </div>
                         <div class="card-body p-0 position-relative">
                             <div id="nautical-map"></div>
@@ -288,27 +306,45 @@
                             </h6>
                         </div>
                         <div class="card-body">
-                            <p class="card-text">Our system uses a sophisticated process to provide you with an accurate and optimized route plan. Here's a breakdown of the data and methods we use:</p>
+                            <p class="card-text">Our system uses a sophisticated process to provide you with an accurate
+                                and optimized route plan. Here's a breakdown of the data and methods we use:</p>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
                                     <h6 class="mb-1"><i class="bi bi-cpu me-2"></i>The Optimization Algorithm</h6>
-                                    <small>We employ a <strong>Genetic Algorithm (GA)</strong> to solve this complex routing challenge, which is a version of the classic Traveling Salesperson Problem (TSP). Inspired by natural selection, the GA intelligently searches through a vast number of possible route combinations to find the most efficient sequence of ports, saving you from having to test them all manually.</small>
+                                    <small>We employ a <strong>Genetic Algorithm (GA)</strong> to solve this complex
+                                        routing challenge, which is a version of the classic Traveling Salesperson
+                                        Problem (TSP). Inspired by natural selection, the GA intelligently searches
+                                        through a vast number of possible route combinations to find the most efficient
+                                        sequence of ports, saving you from having to test them all manually.</small>
                                 </li>
                                 <li class="list-group-item">
                                     <h6 class="mb-1"><i class="bi bi-rulers me-2"></i>Distance Calculation</h6>
-                                    <small>To ensure accuracy, our system doesn't just measure straight lines. It uses the <strong>Haversine formula</strong>, which calculates the great-circle distance (the shortest path on a sphere) between ports using their precise latitude and longitude coordinates.</small>
+                                    <small>To ensure accuracy, our system doesn't just measure straight lines. It uses
+                                        the <strong>Haversine formula</strong>, which calculates the great-circle
+                                        distance (the shortest path on a sphere) between ports using their precise
+                                        latitude and longitude coordinates.</small>
                                 </li>
                                 <li class="list-group-item">
                                     <h6 class="mb-1"><i class="bi bi-clock me-2"></i>Travel Time Calculation</h6>
-                                    <small>Travel time is calculated by dividing the total distance by an average vessel speed. This speed is derived from the specific <strong>fuel consumption curve</strong> data you provided for the selected vessel, ensuring the estimate is tailored to that ship's performance characteristics.</small>
+                                    <small>Travel time is calculated by dividing the total distance by an average vessel
+                                        speed. This speed is derived from the specific <strong>fuel consumption
+                                            curve</strong> data you provided for the selected vessel, ensuring the
+                                        estimate is tailored to that ship's performance characteristics.</small>
                                 </li>
                                 <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-fuel-pump me-2"></i>Fuel Consumption Calculation</h6>
-                                    <small>Fuel usage is determined by multiplying the total distance by a fuel rate (e.g., tons per kilometer). This rate is also extracted from the vessel's unique <strong>fuel consumption curve</strong>, which directly links the ship's speed to its rate of fuel burn.</small>
+                                    <h6 class="mb-1"><i class="bi bi-fuel-pump me-2"></i>Fuel Consumption Calculation
+                                    </h6>
+                                    <small>Fuel usage is determined by multiplying the total distance by a fuel rate
+                                        (e.g., tons per kilometer). This rate is also extracted from the vessel's unique
+                                        <strong>fuel consumption curve</strong>, which directly links the ship's speed
+                                        to its rate of fuel burn.</small>
                                 </li>
                                 <li class="list-group-item">
                                     <h6 class="mb-1"><i class="bi bi-cloud me-2"></i>CO₂ Emissions Calculation</h6>
-                                    <small>This is a direct calculation: the total fuel consumed is multiplied by the specific <strong>CO₂ factor</strong> associated with the vessel's designated fuel type (e.g., Heavy Fuel Oil, Marine Gas Oil). This provides an accurate estimate of the voyage's carbon footprint.</small>
+                                    <small>This is a direct calculation: the total fuel consumed is multiplied by the
+                                        specific <strong>CO₂ factor</strong> associated with the vessel's designated
+                                        fuel type (e.g., Heavy Fuel Oil, Marine Gas Oil). This provides an accurate
+                                        estimate of the voyage's carbon footprint.</small>
                                 </li>
                             </ul>
                         </div>
@@ -316,7 +352,7 @@
                 </div>
             </div>
 
-             <!-- Saved Results Table -->
+            <!-- Saved Results Table -->
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card shadow">
@@ -383,5 +419,5 @@
     <!-- Main application logic -->
     <script type="module" src="js/optimized-route-planner.js"></script>
 </body>
-</html>
 
+</html>
