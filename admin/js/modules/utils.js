@@ -21,8 +21,8 @@ export function showAlert(message, type = 'info') {
     setTimeout(() => {
         const alert = container.querySelector('.alert');
         if (alert) {
-          const bsAlert = new bootstrap.Alert(alert);
-          bsAlert.close();
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
         }
     }, 5000);
 }
