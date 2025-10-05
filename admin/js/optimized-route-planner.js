@@ -221,7 +221,16 @@ async function handleRunOptimization() {
         // 7. Update UI with results
         updateComparisonTable(standardMetrics, optimizedMetrics, originalRoutePorts, orderedPorts);
         drawOptimizedRoute(orderedPorts, result.route_geometry);
-        lastOptimizationResult = { standardMetrics, optimizedMetrics, standardRoutePorts: originalRoutePorts, optimizedRoutePorts: orderedPorts };
+        displayEtaDetails(result.eta_details, orderedPorts);
+
+        // This line was fixed to remove the duplicate assignment
+        lastOptimizationResult = { 
+            standardMetrics, 
+            optimizedMetrics, 
+            standardRoutePorts: originalRoutePorts, 
+            optimizedRoutePorts: orderedPorts,
+            etaDetails: result.eta_details
+        };
         
         const vesselSelect = document.getElementById('vessel-name');
         const vesselName = vesselSelect.options[vesselSelect.selectedIndex].text;
@@ -251,17 +260,13 @@ async function handleRunOptimization() {
 // --- UI and MAP UPDATE FUNCTIONS ---
 /**
  * Populates the comparison table with standard vs. optimized route metrics.
- * @param {object} standardMetrics - The calculated metrics for the original route.
- * @param {object} optimizedMetrics - The calculated metrics for the optimized route.
- * @param {Array<object>} standardRoutePorts - The original sequence of ports.
- * @param {Array<object>} optimizedRoutePorts - The optimized sequence of ports.
  */
 function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts) {
     const formatImprovement = (standard, optimized) => {
         if (standard === 0) return 'N/A';
         const improvement = ((standard - optimized) / standard) * 100;
         const color = improvement >= 0 ? 'success' : 'danger';
-        const sign = improvement >= 0 ? '' : ''; // No need for '+' sign
+        const sign = improvement >= 0 ? '' : '';
         return `<span class="badge bg-${color}">${sign}${improvement.toFixed(1)}% savings</span>`;
     };
 
@@ -282,9 +287,57 @@ function updateComparisonTable(standardMetrics, optimizedMetrics, standardRouteP
 }
 
 /**
+ * NEW FUNCTION: Renders the detailed ETA breakdown into a table.
+ */
+function displayEtaDetails(etaDetails, orderedPorts) {
+    const container = document.getElementById('eta-details-container');
+    container.innerHTML = '';
+
+    if (!etaDetails || etaDetails.length === 0) {
+        container.innerHTML = '<p class="text-muted">No ETA details were returned from the optimization.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'table table-striped table-hover';
+
+    table.innerHTML = `
+        <thead class="table-light">
+            <tr>
+                <th>Stop</th>
+                <th>Port Name</th>
+                <th>Leg Distance (km)</th>
+                <th>Estimated Arrival Time (ETA)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    etaDetails.forEach((stop, index) => {
+        const row = document.createElement('tr');
+        const portName = orderedPorts[index + 1]?.name || 'Unknown Port';
+        const arrivalTime = new Date(stop.eta).toLocaleString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${portName}</strong></td>
+            <td>${stop.leg_distance_km} km</td>
+            <td>${arrivalTime}</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+}
+
+/**
  * Draws the optimized route (markers and polyline) on the Leaflet map.
- * @param {Array<object>} orderedPorts - The array of port objects in the optimized order.
- * @param {Array<Array<number>>} routeGeometry - The array of lat/lng pairs for the detailed route path.
  */
 function drawOptimizedRoute(orderedPorts, routeGeometry) {
     if (optimizedRouteLayer) map.removeLayer(optimizedRouteLayer);
@@ -306,7 +359,6 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
     }
     const labelText = `${index === 0 ? 'Start' : `Stop ${index}`}: ${port.name}`;
     
-    // Create marker with both tooltip (always visible) and popup (on click)
     const marker = L.marker([port.latitude, port.longitude], markerOptions)
         .bindTooltip(labelText, {
             permanent: true,
@@ -322,7 +374,7 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
     portMarkersLayer = L.layerGroup(markers).addTo(map);
 
     optimizedRouteLayer = L.polyline(routeGeometry, {
-        color: '#0d6efd', // A nice blue color
+        color: '#0d6efd',
         weight: 5,
         opacity: 0.8
     }).addTo(map);
@@ -374,7 +426,6 @@ async function initializeSavedResults() {
 
 /**
  * Renders the saved optimization results into an HTML table.
- * @param {Array<object>} results - The array of result objects from the API.
  */
 function renderSavedResultsTable(results) {
     const tableBody = document.getElementById('saved-results-body');
@@ -439,7 +490,6 @@ function renderSavedResultsTable(results) {
 
 /**
  * Fetches the list of ports from the API and populates a dropdown menu.
- * @param {string} elementId - The ID of the <select> element to populate.
  */
 async function populatePortDropdown(elementId) {
     const selectElement = document.getElementById(elementId);
@@ -732,4 +782,3 @@ function exportResultsToCSV() {
     document.body.removeChild(link);
     toastr.success('CSV data downloaded.', 'Export Complete');
 }
-

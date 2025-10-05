@@ -8,7 +8,7 @@ import os
 from functools import wraps
 import re
 from decimal import Decimal
-from optimization_solver import run_route_optimization  # Removed waypoints and graph_edges import
+from optimization_solver import run_route_optimization
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -37,29 +37,21 @@ class Port(db.Model):
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     port_congestion_index = db.Column(db.Numeric(5, 2), nullable=False, default=0.0)
-    
-    # Box 2: Port Profile columns
-    harbor_size = db.Column(db.String(1), nullable=True)  # L/M/S/V
-    harbor_type = db.Column(db.String(2), nullable=True)  # CB/CN/CT/etc
-    max_vessel_length = db.Column(db.Numeric(8, 2), nullable=True)  # meters
-    max_vessel_beam = db.Column(db.Numeric(8, 2), nullable=True)  # meters
-    max_vessel_draft = db.Column(db.Numeric(8, 2), nullable=True)  # meters
+    harbor_size = db.Column(db.String(1), nullable=True)
+    harbor_type = db.Column(db.String(2), nullable=True)
+    max_vessel_length = db.Column(db.Numeric(8, 2), nullable=True)
+    max_vessel_beam = db.Column(db.Numeric(8, 2), nullable=True)
+    max_vessel_draft = db.Column(db.Numeric(8, 2), nullable=True)
     first_port_of_entry = db.Column(db.Boolean, nullable=True, default=False)
-    
-    # Box 4: Operational Data columns
-    channel_depth = db.Column(db.Numeric(8, 2), nullable=True)  # meters
-    anchorage_depth = db.Column(db.Numeric(8, 2), nullable=True)  # meters
-    cargo_pier_depth = db.Column(db.Numeric(8, 2), nullable=True)  # meters
-    shelter_afforded = db.Column(db.String(1), nullable=True)  # E/G/F/P/N
+    channel_depth = db.Column(db.Numeric(8, 2), nullable=True)
+    anchorage_depth = db.Column(db.Numeric(8, 2), nullable=True)
+    cargo_pier_depth = db.Column(db.Numeric(8, 2), nullable=True)
+    shelter_afforded = db.Column(db.String(1), nullable=True)
     good_holding_ground = db.Column(db.Boolean, nullable=True)
     turning_area = db.Column(db.Boolean, nullable=True)
-    
-    # Box 3: Facilities (JSON) - updated list
     facilities = db.Column(db.JSON, nullable=True)
-    
-    # Entrance restrictions and quarantine (JSON for grouped data)
-    entrance_restrictions = db.Column(db.JSON, nullable=True)  # {tide, swell, ice}
-    quarantine = db.Column(db.JSON, nullable=True)  # {pratique, sanitation}
+    entrance_restrictions = db.Column(db.JSON, nullable=True)
+    quarantine = db.Column(db.JSON, nullable=True)
 
 class FuelType(db.Model):
     __tablename__ = 'fuel_types'
@@ -180,24 +172,18 @@ def get_ports(current_user):
         'latitude': f"{p.latitude:.4f}",
         'longitude': f"{p.longitude:.4f}",
         'portCongestionIndex': str(p.port_congestion_index),
-        
-        # Box 2 data
         'harborSize': p.harbor_size,
         'harborType': p.harbor_type,
         'maxVesselLength': float(p.max_vessel_length) if p.max_vessel_length else None,
         'maxVesselBeam': float(p.max_vessel_beam) if p.max_vessel_beam else None,
         'maxVesselDraft': float(p.max_vessel_draft) if p.max_vessel_draft else None,
         'firstPortOfEntry': p.first_port_of_entry,
-        
-        # Box 4 data
         'channelDepth': float(p.channel_depth) if p.channel_depth else None,
         'anchorageDepth': float(p.anchorage_depth) if p.anchorage_depth else None,
         'cargoPierDepth': float(p.cargo_pier_depth) if p.cargo_pier_depth else None,
         'shelterAfforded': p.shelter_afforded,
         'goodHoldingGround': p.good_holding_ground,
         'turningArea': p.turning_area,
-        
-        # JSON fields
         'facilities': p.facilities if p.facilities else {},
         'entranceRestrictions': p.entrance_restrictions if p.entrance_restrictions else {},
         'quarantine': p.quarantine if p.quarantine else {}
@@ -213,24 +199,18 @@ def add_port(current_user):
         latitude=data['latitude'],
         longitude=data['longitude'],
         port_congestion_index=data['portCongestionIndex'],
-        
-        # Box 2 fields
         harbor_size=data.get('harborSize'),
         harbor_type=data.get('harborType'),
         max_vessel_length=data.get('maxVesselLength'),
         max_vessel_beam=data.get('maxVesselBeam'),
         max_vessel_draft=data.get('maxVesselDraft'),
         first_port_of_entry=data.get('firstPortOfEntry', False),
-        
-        # Box 4 fields
         channel_depth=data.get('channelDepth'),
         anchorage_depth=data.get('anchorageDepth'),
         cargo_pier_depth=data.get('cargoPierDepth'),
         shelter_afforded=data.get('shelterAfforded'),
         good_holding_ground=data.get('goodHoldingGround'),
         turning_area=data.get('turningArea'),
-        
-        # JSON fields
         facilities=data.get('facilities', {}),
         entrance_restrictions=data.get('entranceRestrictions', {}),
         quarantine=data.get('quarantine', {})
@@ -250,24 +230,18 @@ def update_port(current_user, port_id):
     port.latitude = data['latitude']
     port.longitude = data['longitude']
     port.port_congestion_index = data['portCongestionIndex']
-    
-    # Box 2 fields
     port.harbor_size = data.get('harborSize')
     port.harbor_type = data.get('harborType')
     port.max_vessel_length = data.get('maxVesselLength')
     port.max_vessel_beam = data.get('maxVesselBeam')
     port.max_vessel_draft = data.get('maxVesselDraft')
     port.first_port_of_entry = data.get('firstPortOfEntry', False)
-    
-    # Box 4 fields
     port.channel_depth = data.get('channelDepth')
     port.anchorage_depth = data.get('anchorageDepth')
     port.cargo_pier_depth = data.get('cargoPierDepth')
     port.shelter_afforded = data.get('shelterAfforded')
     port.good_holding_ground = data.get('goodHoldingGround')
     port.turning_area = data.get('turningArea')
-    
-    # JSON fields
     port.facilities = data.get('facilities', {})
     port.entrance_restrictions = data.get('entranceRestrictions', {})
     port.quarantine = data.get('quarantine', {})
@@ -444,27 +418,35 @@ def get_profile_stats(current_user):
     return jsonify(stats)
 
 # --- Route Optimization Endpoint ---
-# REMOVED: /api/waypoints endpoint (no longer needed)
-
+# This is the function we corrected
 @app.route('/api/optimize', methods=['POST'])
 @token_required
 def optimize_route(current_user):
     data = request.get_json()
-    coordinates = data.get('route')
-    ship_id = data.get('shipId')
-
-    if not all([coordinates, ship_id]):
-        return jsonify({"error": "Invalid data: Route and shipId are required."}), 400
     
-    ship = CruiseShip.query.get(ship_id)
-    if not ship:
-        return jsonify({"error": "Selected ship not found."}), 404
+    # Debugging line to see what the server receives
+    print(f"DEBUG: Received payload: {data}")
 
     try:
+        # Get data using keys that match the JavaScript payload
+        coordinates = data.get('coords') 
+        ship_id = data.get('selectedShipId')
+        start_datetime_str = data.get('start_datetime_str')
+        port_stay_hours = data.get('port_stay_hours', 24)
+
+        if not all([coordinates, ship_id, start_datetime_str]):
+            return jsonify({"error": "Invalid data: Route, shipId, and start time are required."}), 400
+        
+        ship = CruiseShip.query.get(ship_id)
+        if not ship:
+            return jsonify({"error": "Selected ship not found."}), 404
+
         result = run_route_optimization(
             coords_list=coordinates,
             fuel_curve=ship.fuel_consumption_curve,
             co2_factor=ship.fuel_type.co2_factor,
+            start_datetime_str=start_datetime_str,
+            port_stay_hours=port_stay_hours
         )
         return jsonify(result)
     except Exception as e:

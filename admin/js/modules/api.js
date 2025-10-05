@@ -48,7 +48,6 @@ function isTokenExpired(token) {
 async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
     const token = localStorage.getItem('nauticalflow-token');
     
-    // NEW: Check token expiration BEFORE making the request
     if (requiresAuth && token && isTokenExpired(token)) {
         console.log('Token expired before request, logging out...');
         localStorage.removeItem('nauticalflow-token');
@@ -71,7 +70,6 @@ async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
 
     if (!response.ok) {
         if (response.status === 401 && requiresAuth) {
-            // Token is invalid or expired according to server
             console.log('401 Unauthorized - clearing session...');
             localStorage.removeItem('nauticalflow-token');
             localStorage.removeItem('nauticalflow-display-name');
@@ -79,12 +77,10 @@ async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
             window.location.href = '../index.html';
             throw new Error('Session expired');
         }
-        // Attempt to parse error message from the server, otherwise use status text.
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         throw new Error(errorData.error || 'An unspecified API error occurred');
     }
 
-    // Handle responses with no content (e.g., 204 from a DELETE request)
     if (response.status === 204 || response.headers.get("content-length") === "0") {
         return null;
     }
@@ -93,28 +89,18 @@ async function fetchWithAuth(endpoint, options = {}, requiresAuth = true) {
 }
 
 // --- Authentication Functions ---
-/**
- * Logs a user in and returns user data and a token.
- * @param {object} credentials - The user's login credentials {username, password}.
- * @returns {Promise<object>} The server's response, typically including a token.
- */
 export function loginUser(credentials) {
     return fetchWithAuth('/login', {
         method: 'POST',
         body: JSON.stringify(credentials)
-    }, false); // Auth is not required for the login endpoint itself
+    }, false);
 }
 
-/**
- * Signs up a new user.
- * @param {object} userData - The data for the new user {displayName, username, password}.
- * @returns {Promise<object>} The server's confirmation message.
- */
 export function signupUser(userData) {
     return fetchWithAuth('/signup', {
         method: 'POST',
         body: JSON.stringify(userData)
-    }, false); // Auth is not required for the signup endpoint
+    }, false);
 }
 
 // --- Port Functions (CRUD) ---
@@ -199,17 +185,26 @@ export function changeUserPassword(passwordData) {
 }
 
 // --- Optimization Functions ---
+// This is the function we corrected
 /**
  * Sends route data to the backend to run the optimization algorithm.
- * @param {Array<Array<number>>} routeCoords - The list of [lat, lon] coordinates.
- * @param {number} shipId - The ID of the selected ship.
+ * @param {Array<Array<number>>} coords - The list of [lat, lon] coordinates.
+ * @param {number} selectedShipId - The ID of the selected ship.
  * @returns {Promise<object>} The optimization result object.
  */
-export function runOptimization(routeCoords, shipId) {
+export function runOptimization(coords, selectedShipId) {
+    
+    // Get the current time and format it for the backend
+    const startTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    // The payload now uses the correct keys and includes the new ETA data
     const payload = {
-        route: routeCoords,
-        shipId: shipId
+        coords: coords,
+        selectedShipId: selectedShipId,
+        start_datetime_str: startTime,
+        port_stay_hours: 24 // Using a default of 24 hours
     };
+
     return fetchWithAuth('/optimize', {
         method: 'POST',
         body: JSON.stringify(payload)
