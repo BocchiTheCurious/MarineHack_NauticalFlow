@@ -12,11 +12,14 @@ greenlet==3.2.4
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
+numpy
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pycparser==2.22
+pygad
 python-jose==3.5.0
 rsa==4.9.1
+searoute
 six==1.17.0
 SQLAlchemy==2.0.42
 typing_extensions==4.14.1

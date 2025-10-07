@@ -4,6 +4,7 @@ node_modules/
 # Environment files
 .env
 .env.local
+.venv
 
 # IDE files
 .vscode/
@@ -22,3 +23,6 @@ Thumbs.db
 
 # Cache directories
 .cache/
+
+# Python cache files
+__pycache__/

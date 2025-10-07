@@ -69,7 +69,8 @@ function setupPortSelectionListeners() {
             route.departure = {
                 name: selectedOption.value,
                 latitude: parseFloat(selectedOption.dataset.latitude),
-                longitude: parseFloat(selectedOption.dataset.longitude)
+                longitude: parseFloat(selectedOption.dataset.longitude),
+                country: selectedOption.dataset.country || 'Unknown' // Add country
             };
             console.log("Departure Port set:", route.departure);
             departureSelect.disabled = true; // Disable dropdown after selection
@@ -88,7 +89,8 @@ function setupPortSelectionListeners() {
             const newPort = {
                 name: selectedOption.value,
                 latitude: parseFloat(selectedOption.dataset.latitude),
-                longitude: parseFloat(selectedOption.dataset.longitude)
+                longitude: parseFloat(selectedOption.dataset.longitude),
+                country: selectedOption.dataset.country || 'Unknown' // Add country
             };
             // Prevent adding a duplicate port
             const isDuplicate = route.departure.name === newPort.name || route.arrivals.some(p => p.name === newPort.name);
@@ -184,12 +186,10 @@ function renderRouteBadges() {
  * and then displays the results on the map and in the comparison table.
  */
 async function handleRunOptimization() {
-    // 1. Get UI elements and current selections
     const runBtn = document.getElementById('run-optimization');
     const originalBtnText = runBtn.innerHTML;
     const selectedShipId = document.getElementById('vessel-name').value;
 
-    // 2. Updated validation logic with specific Toastr alerts
     if (!route.departure || !selectedShipId || route.arrivals.length < 2) {
         let errorMessage = "Please ensure you have selected the following:<ul>";
         if (!route.departure) errorMessage += "<li>A departure port</li>";
@@ -200,36 +200,46 @@ async function handleRunOptimization() {
         return;
     }
 
-    // 3. Update UI to show a loading state
     runBtn.disabled = true;
     runBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Optimizing...';
 
-    // 4. Prepare the data for the API
     const originalRoutePorts = [route.departure, ...route.arrivals];
     const coordinates = originalRoutePorts.map(port => [port.latitude, port.longitude]);
+    
+    // Include port names and countries for congestion calculation
+    const portNames = originalRoutePorts.map(port => port.name);
+    const portCountries = originalRoutePorts.map(port => port.country || 'Unknown');
 
     try {
-        // 5. Call the API.
-        const result = await runOptimization(coordinates, selectedShipId);
+        // Modified API call with additional data
+        const result = await runOptimization(coordinates, selectedShipId, portNames, portCountries);
         toastr.success('Optimization complete!', 'Success');
 
-        // 6. Process the result
         const standardMetrics = result.standard_metrics;
         const optimizedMetrics = result.optimized_metrics;
         const orderedPorts = [route.departure, ...result.best_route_indices.map(index => route.arrivals[index - 1])];
         
-        // 7. Update UI with results
-        updateComparisonTable(standardMetrics, optimizedMetrics, originalRoutePorts, orderedPorts);
+        // Include congestion data in UI update
+        updateComparisonTable(
+            standardMetrics, 
+            optimizedMetrics, 
+            originalRoutePorts, 
+            orderedPorts,
+            result.standard_congestion,  // NEW
+            result.optimized_congestion   // NEW
+        );
+        
         drawOptimizedRoute(orderedPorts, result.route_geometry);
         displayEtaDetails(result.eta_details, orderedPorts);
 
-        // This line was fixed to remove the duplicate assignment
         lastOptimizationResult = { 
             standardMetrics, 
             optimizedMetrics, 
             standardRoutePorts: originalRoutePorts, 
             optimizedRoutePorts: orderedPorts,
-            etaDetails: result.eta_details
+            etaDetails: result.eta_details,
+            standardCongestion: result.standard_congestion,     // NEW
+            optimizedCongestion: result.optimized_congestion    // NEW
         };
         
         const vesselSelect = document.getElementById('vessel-name');
@@ -242,7 +252,6 @@ async function handleRunOptimization() {
             timeSaved: `${(standardMetrics.travel_time_hours - optimizedMetrics.travel_time_hours).toFixed(1)} hrs`
         };
 
-        // 8. Save result and refresh saved results table
         await saveOptimizationResult(resultToSave);
         toastr.info('Optimization result has been saved.', 'Result Saved');
         await initializeSavedResults();
@@ -251,7 +260,6 @@ async function handleRunOptimization() {
         console.error("Optimization failed:", error);
         toastr.error(`Optimization failed: ${error.message}`, 'API Error');
     } finally {
-        // 9. Always restore the button to its original state
         runBtn.disabled = false;
         runBtn.innerHTML = originalBtnText;
     }
@@ -261,7 +269,7 @@ async function handleRunOptimization() {
 /**
  * Populates the comparison table with standard vs. optimized route metrics.
  */
-function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts) {
+function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts, standardCongestion, optimizedCongestion) {
     const formatImprovement = (standard, optimized) => {
         if (standard === 0) return 'N/A';
         const improvement = ((standard - optimized) / standard) * 100;
@@ -284,6 +292,13 @@ function updateComparisonTable(standardMetrics, optimizedMetrics, standardRouteP
     document.getElementById('standard-distance').textContent = standardMetrics.distance_km.toFixed(2);
     document.getElementById('optimized-distance').textContent = optimizedMetrics.distance_km.toFixed(2);
     document.getElementById('distance-improvement').innerHTML = formatImprovement(standardMetrics.distance_km, optimizedMetrics.distance_km);
+    
+    // Add congestion row
+    if (standardCongestion && optimizedCongestion) {
+        document.getElementById('standard-congestion').textContent = `${standardCongestion.total_hours.toFixed(2)} hrs (${standardCongestion.total_days.toFixed(1)} days)`;
+        document.getElementById('optimized-congestion').textContent = `${optimizedCongestion.total_hours.toFixed(2)} hrs (${optimizedCongestion.total_days.toFixed(1)} days)`;
+        document.getElementById('congestion-improvement').innerHTML = formatImprovement(standardCongestion.total_hours, optimizedCongestion.total_hours);
+    }
 }
 
 /**
@@ -505,6 +520,7 @@ async function populatePortDropdown(elementId) {
             option.value = port.name;
             option.dataset.latitude = port.latitude;
             option.dataset.longitude = port.longitude;
+            option.dataset.country = port.country; // Add country for congestion calculation
             option.textContent = port.name;
             selectElement.appendChild(option);
         });
@@ -687,6 +703,7 @@ function addMarineZonesLegend() {
                     <h6 style="margin: 0 0 8px 0; font-weight: bold; color: #333;">Marine Zones & Weather</h6>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #42B7B7; margin-right: 8px;"></span><span>200 NM</span></div>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #C2DADA; margin-right: 8px;"></span><span>Territorial Sea (12 NM)</span></div>
+                    <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #E57373; margin-right: 8px;"></span><span>Overlapping Claim</span></div>
                     <hr>
                     <h6 style="margin: 8px 0; font-weight: bold; color: #333;">Cyclone Alert Levels</h6>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></span><span>Red - High Danger</span></div>
