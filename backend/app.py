@@ -9,7 +9,6 @@ from functools import wraps
 import re
 from decimal import Decimal
 from optimization_solver import run_route_optimization
-from congestion_processor import load_congestion_data, calculate_route_congestion_impact
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -19,9 +18,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:chen@localhost/na
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(32)
 db = SQLAlchemy(app)
-
-# Load congestion data at startup
-CONGESTION_DATA = load_congestion_data()
 
 # --- Database Models ---
 class User(db.Model):
@@ -421,32 +417,6 @@ def get_profile_stats(current_user):
     }
     return jsonify(stats)
 
-# --- Congestion Data Endpoint ---
-@app.route('/api/congestion-data', methods=['GET'])
-@token_required
-def get_congestion_data(current_user):
-    """
-    Returns the loaded congestion data (2023, All ships) as a JSON object.
-    Includes country names and their median time in port (in days and hours).
-    """
-    congestion_response = []
-    for country, days in CONGESTION_DATA.items():
-        congestion_response.append({
-            'country': country,
-            'median_days': round(days, 4),
-            'median_hours': round(days * 24, 2)
-        })
-    
-    # Sort by congestion level (highest first)
-    congestion_response.sort(key=lambda x: x['median_days'], reverse=True)
-    
-    return jsonify({
-        'year': 2023,
-        'category': 'All ships',
-        'total_economies': len(congestion_response),
-        'data': congestion_response
-    })
-
 # --- Route Optimization Endpoint ---
 # This is the function we corrected
 @app.route('/api/optimize', methods=['POST'])
@@ -461,8 +431,6 @@ def optimize_route(current_user):
         ship_id = data.get('selectedShipId')
         start_datetime_str = data.get('start_datetime_str')
         port_stay_hours = data.get('port_stay_hours', 24)
-        port_names = data.get('port_names', [])  # NEW: Get port names and countries
-        port_countries = data.get('port_countries', [])  # NEW
 
         if not all([coordinates, ship_id, start_datetime_str]):
             return jsonify({"error": "Invalid data: Route, shipId, and start time are required."}), 400
@@ -478,20 +446,6 @@ def optimize_route(current_user):
             start_datetime_str=start_datetime_str,
             port_stay_hours=port_stay_hours
         )
-        
-        # NEW: Calculate congestion impact for both routes
-        standard_ports = [{'name': port_names[i], 'country': port_countries[i]} 
-                         for i in range(len(port_names))]
-        
-        optimized_order = [0] + result['best_route_indices']
-        optimized_ports = [{'name': port_names[i], 'country': port_countries[i]} 
-                          for i in optimized_order]
-        
-        standard_congestion = calculate_route_congestion_impact(standard_ports, CONGESTION_DATA)
-        optimized_congestion = calculate_route_congestion_impact(optimized_ports, CONGESTION_DATA)
-        
-        result['standard_congestion'] = standard_congestion
-        result['optimized_congestion'] = optimized_congestion
         
         return jsonify(result)
     except Exception as e:

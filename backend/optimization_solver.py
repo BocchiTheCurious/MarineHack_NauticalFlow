@@ -4,6 +4,144 @@ import pygad
 from decimal import Decimal
 import searoute as sr
 from datetime import datetime, timedelta
+import csv
+import os
+
+# --- Congestion Data Functions ---
+
+def load_congestion_data():
+    """
+    Loads congestion data from US_PortCalls.csv.
+    Filters for 2023 data and "All ships" category.
+    Returns a dictionary mapping country names to median time in port (days).
+    """
+    congestion_map = {}
+    csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'US_PortCalls.csv')
+    
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                year = row.get('Year', '').strip()
+                economy_label = row.get('Economy Label', '').strip()
+                median_time = row.get('Median time in port (days)', '').strip()
+                commercial_market = row.get('CommercialMarket Label', '').strip()
+                
+                # Filter for 2023 data and "Container ships" category (closest to cruise ship operations)
+                if year == '2023' and economy_label and median_time and commercial_market == 'Container ships':
+                    try:
+                        time_value = float(median_time)
+                        # Store the congestion value per country (from 2023 data)
+                        congestion_map[economy_label] = time_value
+                    except ValueError:
+                        continue
+        
+        print(f"Loaded 2023 congestion data for {len(congestion_map)} economies (Container ships - fast turnaround)")
+        return congestion_map
+    
+    except Exception as e:
+        print(f"Error loading congestion data: {e}")
+        return {}
+
+def get_port_congestion_hours(port_country, congestion_data):
+    """
+    Returns estimated congestion delay in hours for a given port country.
+    Converts median days to hours.
+    Falls back to "World" data if specific country not found.
+    """
+    if not congestion_data:
+        return 0
+    
+    median_days = None
+    
+    # Try exact match first
+    if port_country in congestion_data:
+        median_days = congestion_data[port_country]
+    else:
+        # Try partial match (case-insensitive)
+        port_country_lower = port_country.lower()
+        for country_name, days in congestion_data.items():
+            country_name_lower = country_name.lower()
+            # Check if either string contains the other
+            if port_country_lower in country_name_lower or country_name_lower in port_country_lower:
+                median_days = days
+                break
+    
+    # If still no match, use World data as default
+    if median_days is None:
+        median_days = congestion_data.get('World', 0)
+    
+    if median_days:
+        # Convert days to hours (median time represents avg waiting)
+        return round(median_days * 24, 2)
+    
+    return 0  # Return 0 if no data available at all
+
+def calculate_route_congestion_impact(ports_list, congestion_data):
+    """
+    Calculates total congestion delay for a route with multiple penalty factors.
+    
+    Applies compounding penalties based on:
+    1. Sequential congestion (visiting busy ports back-to-back)
+    2. Cumulative voyage fatigue (longer voyages = more delays)
+    
+    Formula: base_congestion + sequential_penalty + cumulative_penalty
+    
+    Args:
+        ports_list: List of port objects with 'country' attribute
+        congestion_data: Dictionary from load_congestion_data()
+    
+    Returns:
+        Dictionary with total hours and per-port breakdown
+    """
+    total_congestion_hours = 0
+    port_congestion_details = []
+    cumulative_congestion = 0  # Track total delays so far
+    
+    for idx, port in enumerate(ports_list):
+        country = port.get('country', 'Unknown')
+        port_name = port.get('name', 'Unknown')
+        
+        # Get base congestion for this port
+        base_hours = get_port_congestion_hours(country, congestion_data)
+        
+        # Start with base congestion
+        adjusted_hours = base_hours
+        penalties = {'sequential': 0, 'cumulative': 0}
+        
+        if idx > 0:
+            # PENALTY 1: Sequential Penalty (35% of previous port's delay)
+            # Vessels arriving late hit peak congestion windows
+            previous_port = ports_list[idx - 1]
+            previous_congestion = get_port_congestion_hours(previous_port.get('country', 'Unknown'), congestion_data)
+            sequential_penalty = previous_congestion * 0.35
+            adjusted_hours += sequential_penalty
+            penalties['sequential'] = sequential_penalty
+            
+            # PENALTY 2: Cumulative Voyage Fatigue (5% of all prior delays)
+            # Longer voyages accumulate scheduling inefficiencies
+            cumulative_penalty = cumulative_congestion * 0.05
+            adjusted_hours += cumulative_penalty
+            penalties['cumulative'] = cumulative_penalty
+        
+        total_congestion_hours += adjusted_hours
+        cumulative_congestion += adjusted_hours  # Add to running total
+        
+        port_congestion_details.append({
+            'port_name': port_name,
+            'country': country,
+            'congestion_hours': round(adjusted_hours, 2),
+            'congestion_days': round(adjusted_hours / 24, 2),
+            'base_congestion': round(base_hours, 2),
+            'sequential_penalty': round(penalties['sequential'], 2),
+            'cumulative_penalty': round(penalties['cumulative'], 2)
+        })
+    
+    return {
+        'total_hours': round(total_congestion_hours, 2),
+        'total_days': round(total_congestion_hours / 24, 2),
+        'port_details': port_congestion_details
+    }
 
 # --- Utility Functions ---
 
@@ -127,6 +265,14 @@ def get_route_metrics(route_indices, dist_matrix, fuel_curve, co2_factor):
 def run_route_optimization(coords_list, fuel_curve, co2_factor, start_datetime_str, port_stay_hours=24):
     """
     Optimizes route using Genetic Algorithm with pre-calculated searoute distances.
+    Optimizes for fuel efficiency only.
+    
+    Args:
+        coords_list: List of port coordinates
+        fuel_curve: Vessel fuel consumption curve
+        co2_factor: CO2 emission factor for fuel type
+        start_datetime_str: Starting datetime string
+        port_stay_hours: Hours to stay at each port (default 24)
     """
     port_coords = np.array(coords_list, dtype=float)
     customer_ids = np.arange(1, len(port_coords))
@@ -150,6 +296,7 @@ def run_route_optimization(coords_list, fuel_curve, co2_factor, start_datetime_s
     print("Distance matrix pre-calculation complete. Starting genetic algorithm...")
 
     def fitness_func(ga_instance, solution, solution_idx):
+        """Fitness function optimizing fuel consumption only."""
         route_indices = customer_ids[np.argsort(solution)].tolist()
         metrics = get_route_metrics(route_indices, dist, fuel_curve, co2_factor)
         return 1.0 / (metrics["fuel_liters"] + 1e-6)

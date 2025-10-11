@@ -14,6 +14,11 @@ let waveHeightLayer = null; // To hold the wave height data layer
 let cycloneLayer = null; // To hold the cyclone data layer
 let lastOptimizationResult = null; // To store the latest results for export
 
+// AIS Ship Movement Variables
+let aisData = null;
+let vesselLayers = [];
+let vesselTrackLayers = [];
+
 // The main route object to store departure and arrival ports
 const route = {
     departure: null,
@@ -50,6 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     populatePortDropdown('departure-port');
     populatePortDropdown('add-destination-port');
     populateVesselDropdown();
+    
+    // Load AIS ship movement data
+    loadAISShipData();
 });
 
 // --- PORT SELECTION LOGIC ---
@@ -206,27 +214,21 @@ async function handleRunOptimization() {
     const originalRoutePorts = [route.departure, ...route.arrivals];
     const coordinates = originalRoutePorts.map(port => [port.latitude, port.longitude]);
     
-    // Include port names and countries for congestion calculation
-    const portNames = originalRoutePorts.map(port => port.name);
-    const portCountries = originalRoutePorts.map(port => port.country || 'Unknown');
-
     try {
-        // Modified API call with additional data
-        const result = await runOptimization(coordinates, selectedShipId, portNames, portCountries);
+        // Send optimization request
+        const result = await runOptimization(coordinates, selectedShipId);
         toastr.success('Optimization complete!', 'Success');
 
         const standardMetrics = result.standard_metrics;
         const optimizedMetrics = result.optimized_metrics;
         const orderedPorts = [route.departure, ...result.best_route_indices.map(index => route.arrivals[index - 1])];
         
-        // Include congestion data in UI update
+        // Update comparison table
         updateComparisonTable(
             standardMetrics, 
             optimizedMetrics, 
             originalRoutePorts, 
-            orderedPorts,
-            result.standard_congestion,  // NEW
-            result.optimized_congestion   // NEW
+            orderedPorts
         );
         
         drawOptimizedRoute(orderedPorts, result.route_geometry);
@@ -237,9 +239,7 @@ async function handleRunOptimization() {
             optimizedMetrics, 
             standardRoutePorts: originalRoutePorts, 
             optimizedRoutePorts: orderedPorts,
-            etaDetails: result.eta_details,
-            standardCongestion: result.standard_congestion,     // NEW
-            optimizedCongestion: result.optimized_congestion    // NEW
+            etaDetails: result.eta_details
         };
         
         const vesselSelect = document.getElementById('vessel-name');
@@ -269,7 +269,7 @@ async function handleRunOptimization() {
 /**
  * Populates the comparison table with standard vs. optimized route metrics.
  */
-function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts, standardCongestion, optimizedCongestion) {
+function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts) {
     const formatImprovement = (standard, optimized) => {
         if (standard === 0) return 'N/A';
         const improvement = ((standard - optimized) / standard) * 100;
@@ -292,13 +292,6 @@ function updateComparisonTable(standardMetrics, optimizedMetrics, standardRouteP
     document.getElementById('standard-distance').textContent = standardMetrics.distance_km.toFixed(2);
     document.getElementById('optimized-distance').textContent = optimizedMetrics.distance_km.toFixed(2);
     document.getElementById('distance-improvement').innerHTML = formatImprovement(standardMetrics.distance_km, optimizedMetrics.distance_km);
-    
-    // Add congestion row
-    if (standardCongestion && optimizedCongestion) {
-        document.getElementById('standard-congestion').textContent = `${standardCongestion.total_hours.toFixed(2)} hrs (${standardCongestion.total_days.toFixed(1)} days)`;
-        document.getElementById('optimized-congestion').textContent = `${optimizedCongestion.total_hours.toFixed(2)} hrs (${optimizedCongestion.total_days.toFixed(1)} days)`;
-        document.getElementById('congestion-improvement').innerHTML = formatImprovement(standardCongestion.total_hours, optimizedCongestion.total_hours);
-    }
 }
 
 /**
@@ -402,16 +395,19 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
  * Initializes the Leaflet map, sets its properties, and loads all map layers.
  */
 function initializeMap() {
-    const seaBounds = L.latLngBounds(
-        L.latLng(-12, 90),
-        L.latLng(25, 135)
+    // USA region bounds
+    const usaBounds = L.latLngBounds(
+        L.latLng(24, -125),   // Southwest corner
+        L.latLng(50, -65)     // Northeast corner
     );
+    
+    // Initialize map with USA view
     map = L.map('nautical-map', {
-        center: [5, 110],
-        zoom: 5,
-        minZoom: 5,
-        maxZoom: 8,
-        maxBounds: seaBounds,
+        center: [37, -95],    // Center of USA
+        zoom: 2,              // USA view zoom level
+        minZoom: 2,           // Prevent zooming out too far
+        maxZoom: 18,          // Allow detailed zoom
+        maxBounds: usaBounds,
         maxBoundsViscosity: 1.0
     });
 
@@ -421,9 +417,129 @@ function initializeMap() {
     L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
         attribution: '© OpenSeaMap'
     }).addTo(map);
-
+    
     loadMarineZones();
     addMarineZonesLegend();
+}
+
+// --- AIS SHIP MOVEMENT VISUALIZATION ---
+/**
+ * Vessel type colors for AIS ship markers
+ */
+const vesselColors = {
+    'cargo': '#FF6B6B',
+    'tanker': '#4ECDC4',
+    'passenger': '#45B7D1',
+    'fishing': '#FFA07A',
+    'tug': '#98D8C8',
+    'default': '#00d4ff'
+};
+
+/**
+ * Load AIS ship movement data from JSON file
+ */
+async function loadAISShipData() {
+    try {
+        const response = await fetch('../data/ais_processed.json');
+        if (!response.ok) {
+            console.warn('AIS data not available. Ship movements will not be displayed.');
+            return;
+        }
+        aisData = await response.json();
+        console.log('✓ Loaded AIS ship data:', aisData.metadata);
+        
+    } catch (error) {
+        console.warn('Failed to load AIS ship data:', error);
+    }
+}
+
+/**
+ * Get color for vessel based on type
+ */
+function getVesselColor(vesselType) {
+    const type = vesselType.toLowerCase();
+    for (const [key, color] of Object.entries(vesselColors)) {
+        if (type.includes(key)) {
+            return color;
+        }
+    }
+    return vesselColors.default;
+}
+
+/**
+ * Display or hide ship movements on the map
+ */
+function toggleShipMovements(show) {
+    if (show && aisData) {
+        displayShipMovements();
+    } else {
+        clearShipMovements();
+    }
+}
+
+/**
+ * Display all ship movements on the map
+ */
+function displayShipMovements() {
+    if (!aisData || !aisData.vessels) return;
+    
+    clearShipMovements();
+    
+    aisData.vessels.forEach(vessel => {
+        if (vessel.positions.length === 0) return;
+        
+        const color = getVesselColor(vessel.type);
+        
+        // Draw track if vessel has multiple positions
+        if (vessel.positions.length > 1) {
+            const trackPoints = vessel.positions.map(pos => [pos.lat, pos.lon]);
+            const track = L.polyline(trackPoints, {
+                color: color,
+                weight: 2,
+                opacity: 0.4
+            }).addTo(map);
+            vesselTrackLayers.push(track);
+        }
+        
+        // Add vessel marker at last position
+        const lastPos = vessel.positions[vessel.positions.length - 1];
+        const marker = L.circleMarker([lastPos.lat, lastPos.lon], {
+            radius: 5,
+            fillColor: color,
+            color: '#fff',
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+        
+        // Create popup with vessel information
+        const popupContent = `
+            <div style="font-size: 12px;">
+                <h4 style="margin: 0 0 8px 0; color: #00d4ff;">${vessel.name}</h4>
+                <p style="margin: 3px 0;"><strong>MMSI:</strong> ${vessel.mmsi}</p>
+                <p style="margin: 3px 0;"><strong>Type:</strong> ${vessel.type}</p>
+                <p style="margin: 3px 0;"><strong>Speed:</strong> ${lastPos.sog.toFixed(1)} knots</p>
+                <p style="margin: 3px 0;"><strong>Course:</strong> ${lastPos.cog.toFixed(1)}°</p>
+                <p style="margin: 3px 0;"><strong>Position:</strong> ${lastPos.lat.toFixed(4)}°, ${lastPos.lon.toFixed(4)}°</p>
+                <p style="margin: 3px 0;"><strong>Time:</strong> ${lastPos.time}</p>
+            </div>
+        `;
+        marker.bindPopup(popupContent);
+        
+        vesselLayers.push(marker);
+    });
+    
+    console.log(`✓ Displayed ${vesselLayers.length} ships with ${vesselTrackLayers.length} tracks`);
+}
+
+/**
+ * Clear all ship movements from the map
+ */
+function clearShipMovements() {
+    vesselLayers.forEach(layer => map.removeLayer(layer));
+    vesselTrackLayers.forEach(layer => map.removeLayer(layer));
+    vesselLayers = [];
+    vesselTrackLayers = [];
 }
 
 /**
@@ -713,12 +829,15 @@ function addMarineZonesLegend() {
                     <hr>
                     <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="wind-layer-toggle" checked style="margin-right: 8px;"><label for="wind-layer-toggle">Wind</label></div>
                     <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="wave-height-layer-toggle" checked style="margin-right: 8px;"><label for="wave-height-layer-toggle">Wave Height</label></div>
-                    <div style="display: flex; align-items: center;"><input type="checkbox" id="cyclone-layer-toggle" checked style="margin-right: 8px;"><label for="cyclone-layer-toggle">Cyclones</label></div>
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="cyclone-layer-toggle" checked style="margin-right: 8px;"><label for="cyclone-layer-toggle">Cyclones</label></div>
+                    <hr>
+                    <div style="display: flex; align-items: center;"><input type="checkbox" id="ship-movement-toggle" style="margin-right: 8px;"><label for="ship-movement-toggle">🚢 Ships</label></div>
                 </div>`;
             L.DomEvent.disableClickPropagation(container);
             container.querySelector('#wind-layer-toggle').addEventListener('change', e => map.hasLayer(windLayer) ? map.removeLayer(windLayer) : map.addLayer(windLayer));
             container.querySelector('#wave-height-layer-toggle').addEventListener('change', e => map.hasLayer(waveHeightLayer) ? map.removeLayer(waveHeightLayer) : map.addLayer(waveHeightLayer));
             container.querySelector('#cyclone-layer-toggle').addEventListener('change', e => map.hasLayer(cycloneLayer) ? map.removeLayer(cycloneLayer) : map.addLayer(cycloneLayer));
+            container.querySelector('#ship-movement-toggle').addEventListener('change', e => toggleShipMovements(e.target.checked));
             return container;
         }
     });

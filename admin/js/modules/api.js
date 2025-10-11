@@ -185,28 +185,23 @@ export function changeUserPassword(passwordData) {
 }
 
 // --- Optimization Functions ---
-// This is the function we corrected
 /**
  * Sends route data to the backend to run the optimization algorithm.
  * @param {Array<Array<number>>} coords - The list of [lat, lon] coordinates.
  * @param {number} selectedShipId - The ID of the selected ship.
- * @param {Array<string>} portNames - The list of port names (for congestion calculation).
- * @param {Array<string>} portCountries - The list of port countries (for congestion calculation).
  * @returns {Promise<object>} The optimization result object.
  */
-export function runOptimization(coords, selectedShipId, portNames = [], portCountries = []) {
+export function runOptimization(coords, selectedShipId) {
     
     // Get the current time and format it for the backend
     const startTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    // The payload now uses the correct keys and includes the new ETA data and congestion info
+    // The payload includes route coordinates and vessel info
     const payload = {
         coords: coords,
         selectedShipId: selectedShipId,
         start_datetime_str: startTime,
-        port_stay_hours: 24, // Using a default of 24 hours
-        port_names: portNames,      // NEW: For congestion calculation
-        port_countries: portCountries // NEW: For congestion calculation
+        port_stay_hours: 24 // Using a default of 24 hours
     };
 
     return fetchWithAuth('/optimize', {
@@ -244,15 +239,6 @@ export function deleteOptimizationResult(resultId) {
     return fetchWithAuth(`/optimizations/${resultId}`, {
         method: 'DELETE'
     });
-}
-
-// --- Congestion Data Functions ---
-/**
- * Fetches regional congestion data (2023, All ships) from US_PortCalls.csv
- * @returns {Promise<object>} The congestion data with country-level median port times
- */
-export function getCongestionData() {
-    return fetchWithAuth('/congestion-data');
 }
 
 // --- External APIs: Live Weather Data ---

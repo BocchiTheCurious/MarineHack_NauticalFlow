@@ -1,6 +1,6 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
-import { getPorts, addPort, deletePort, updatePort, getCongestionData } from './modules/api.js';
+import { getPorts, addPort, deletePort, updatePort } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let allPorts = [];
@@ -9,7 +9,6 @@ let portMap;
 let mapMarkers = [];
 let importModal;
 let parsedImportData = [];
-let congestionDataMap = {}; // Store 2023 congestion data from US_PortCalls.csv
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
@@ -30,7 +29,6 @@ async function initializePortDataPage() {
     importModal = new bootstrap.Modal(document.getElementById('importModal'));
 
     initializeMap();
-    await loadCongestionData();
     await loadAndRenderPorts();
 
     document.getElementById('portForm').addEventListener('submit', handleSavePort);
@@ -286,10 +284,6 @@ function renderPortsTable(ports) {
     }
 
     ports.forEach(port => {
-        // Get congestion from dataset based on country
-        const congestionDays = getCongestionForPort(port.country);
-        const congestionHours = (congestionDays * 24).toFixed(1);
-        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>P${String(port.id).padStart(3, '0')}</td>
@@ -297,7 +291,7 @@ function renderPortsTable(ports) {
             <td>${port.country}</td>
             <td>${parseFloat(port.latitude).toFixed(4)}</td>
             <td>${parseFloat(port.longitude).toFixed(4)}</td>
-            <td>${congestionDays.toFixed(2)} days (${congestionHours}h)</td>
+            <td>${parseFloat(port.portCongestionIndex).toFixed(2)}%</td>
             <td>
                 <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Port" data-bs-toggle="modal" data-bs-target="#portModal" data-port-id="${port.id}"><i class="bi bi-pencil-square"></i></button>
                 <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port" data-port-id="${port.id}"><i class="bi bi-trash"></i></button>
@@ -356,54 +350,6 @@ function initializeMap() {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 18
     }).addTo(portMap);
-}
-
-async function loadCongestionData() {
-    try {
-        const response = await getCongestionData();
-        console.log(`Loaded congestion data for ${response.total_economies} economies (${response.year})`);
-        
-        // Create a map for easy lookup: country -> median_days
-        response.data.forEach(item => {
-            congestionDataMap[item.country.toLowerCase()] = item.median_days;
-        });
-        
-        console.log('Congestion data map created:', Object.keys(congestionDataMap).length, 'countries');
-    } catch (error) {
-        console.error('Failed to load congestion data:', error);
-        toastr.warning('Could not load regional congestion data. Using default values.', 'Warning');
-    }
-}
-
-function getCongestionForPort(country) {
-    // Get congestion days for a port's country, fallback to World if not found
-    let congestionDays = 0;
-    
-    if (country) {
-        const countryKey = country.toLowerCase();
-        
-        // Try exact match first
-        if (congestionDataMap[countryKey]) {
-            congestionDays = congestionDataMap[countryKey];
-        } else {
-            // Try partial match
-            const matchedKey = Object.keys(congestionDataMap).find(key => 
-                key.includes(countryKey) || countryKey.includes(key)
-            );
-            
-            if (matchedKey) {
-                congestionDays = congestionDataMap[matchedKey];
-            } else {
-                // Fallback to World average
-                congestionDays = congestionDataMap['world'] || 0.99;
-            }
-        }
-    } else {
-        // No country info, use World average
-        congestionDays = congestionDataMap['world'] || 0.99;
-    }
-    
-    return congestionDays;
 }
 
 function renderMapMarkers(ports) {
@@ -578,6 +524,17 @@ function updateFacilities(port) {
 
 function updateOperationalData(port) {
     const operationalBox = document.getElementById('bentoCongestion');
+    const congestion = parseFloat(port.portCongestionIndex);
+
+    let congestionLevel = 'Low';
+    let congestionClass = 'congestion-low';
+    if (congestion > 70) {
+        congestionLevel = 'High';
+        congestionClass = 'congestion-high';
+    } else if (congestion > 40) {
+        congestionLevel = 'Medium';
+        congestionClass = 'congestion-medium';
+    }
 
     // Helper function
     const displayValue = (value, suffix = '') => {
@@ -609,46 +566,21 @@ function updateOperationalData(port) {
     if (quarantine.sanitation) quarantineBadges.push('<span class="badge bg-success">Sanitation</span>');
     const quarantineHTML = quarantineBadges.length > 0 ? quarantineBadges.join(' ') : '<span class="text-muted fst-italic">Unknown</span>';
 
-    // Congestion calculation from US_PortCalls.csv (2023 data)
-    const congestionDays = getCongestionForPort(port.country);
-    
-    // Convert days to percentage (scale 0-3 days to 0-100%)
-    const congestionIndex = Math.min((congestionDays / 3) * 100, 100);
-    const congestionHours = (congestionDays * 24).toFixed(1);
-    
-    const congestionLevel = congestionDays > 1.2 ? 'high' : congestionDays > 0.8 ? 'medium' : 'low';
-    const congestionClass = congestionDays > 1.2 ? 'congestion-high' : congestionDays > 0.8 ? 'congestion-medium' : 'congestion-low';
-    const congestionLabel = congestionDays > 1.2 ? 'High' : congestionDays > 0.8 ? 'Medium' : 'Low';
-    const congestionColor = congestionDays > 1.2 ? '#dc3545' : congestionDays > 0.8 ? '#ffc107' : '#28a745';
-
     operationalBox.innerHTML = `
         <h6 class="mb-3"><i class="bi bi-speedometer2 me-2"></i>Operational Data</h6>
         
-        <!-- Port Congestion Section -->
+        <!-- Congestion Section -->
         <div class="mb-3 pb-3 border-bottom">
-            <small class="text-muted d-block mb-2">PORT CONGESTION (2023 DATA)</small>
+            <small class="text-muted d-block mb-2">PORT CONGESTION</small>
             <div class="congestion-indicator">
                 <div class="congestion-bar">
-                    <div class="congestion-fill ${congestionClass}" style="width: ${congestionIndex}%"></div>
+                    <div class="congestion-fill ${congestionClass}" style="width: ${congestion}%"></div>
                 </div>
-                <div class="congestion-value" style="color: ${congestionColor}">
-                    ${congestionIndex.toFixed(0)}%
-                </div>
-            </div>
-            <div class="mt-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <small class="text-muted">Level:</small>
-                    <strong style="color: ${congestionColor}">${congestionLabel}</strong>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <small class="text-muted">Median Time:</small>
-                    <strong>${congestionDays.toFixed(2)} days (${congestionHours}h)</strong>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">Source:</small>
-                    <small class="fst-italic">UNCTADstat Data centre</small>
+                <div class="congestion-value text-${congestionLevel === 'High' ? 'danger' : congestionLevel === 'Medium' ? 'warning' : 'success'}">
+                    ${congestion.toFixed(0)}%
                 </div>
             </div>
+            <small class="text-muted">Level: <strong>${congestionLevel}</strong></small>
         </div>
         
         <!-- Depths Section -->

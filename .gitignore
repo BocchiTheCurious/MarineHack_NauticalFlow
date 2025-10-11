@@ -26,3 +26,6 @@ Thumbs.db
 
 # Python cache files
 __pycache__/
+
+# Test files
+test/
