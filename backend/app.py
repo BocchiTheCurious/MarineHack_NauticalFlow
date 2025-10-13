@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # --- Database Configuration ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:chen@localhost/nauticalflow'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:syed@localhost/nauticalflow'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(32)
 db = SQLAlchemy(app)
