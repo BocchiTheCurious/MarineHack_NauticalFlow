@@ -14,6 +14,11 @@ let waveHeightLayer = null; // To hold the wave height data layer
 let cycloneLayer = null; // To hold the cyclone data layer
 let lastOptimizationResult = null; // To store the latest results for export
 
+// AIS Ship Movement Variables
+let aisData = null;
+let vesselLayers = [];
+let vesselTrackLayers = [];
+
 // The main route object to store departure and arrival ports
 const route = {
     departure: null,
@@ -50,6 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     populatePortDropdown('departure-port');
     populatePortDropdown('add-destination-port');
     populateVesselDropdown();
+    
+    // Load AIS ship movement data
+    loadAISShipData();
 });
 
 // --- PORT SELECTION LOGIC ---
@@ -69,7 +77,8 @@ function setupPortSelectionListeners() {
             route.departure = {
                 name: selectedOption.value,
                 latitude: parseFloat(selectedOption.dataset.latitude),
-                longitude: parseFloat(selectedOption.dataset.longitude)
+                longitude: parseFloat(selectedOption.dataset.longitude),
+                country: selectedOption.dataset.country || 'Unknown' // Add country
             };
             console.log("Departure Port set:", route.departure);
             departureSelect.disabled = true; // Disable dropdown after selection
@@ -88,7 +97,8 @@ function setupPortSelectionListeners() {
             const newPort = {
                 name: selectedOption.value,
                 latitude: parseFloat(selectedOption.dataset.latitude),
-                longitude: parseFloat(selectedOption.dataset.longitude)
+                longitude: parseFloat(selectedOption.dataset.longitude),
+                country: selectedOption.dataset.country || 'Unknown' // Add country
             };
             // Prevent adding a duplicate port
             const isDuplicate = route.departure.name === newPort.name || route.arrivals.some(p => p.name === newPort.name);
@@ -184,12 +194,10 @@ function renderRouteBadges() {
  * and then displays the results on the map and in the comparison table.
  */
 async function handleRunOptimization() {
-    // 1. Get UI elements and current selections
     const runBtn = document.getElementById('run-optimization');
     const originalBtnText = runBtn.innerHTML;
     const selectedShipId = document.getElementById('vessel-name').value;
 
-    // 2. Updated validation logic with specific Toastr alerts
     if (!route.departure || !selectedShipId || route.arrivals.length < 2) {
         let errorMessage = "Please ensure you have selected the following:<ul>";
         if (!route.departure) errorMessage += "<li>A departure port</li>";
@@ -200,28 +208,39 @@ async function handleRunOptimization() {
         return;
     }
 
-    // 3. Update UI to show a loading state
     runBtn.disabled = true;
     runBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Optimizing...';
 
-    // 4. Prepare the data for the API
     const originalRoutePorts = [route.departure, ...route.arrivals];
     const coordinates = originalRoutePorts.map(port => [port.latitude, port.longitude]);
-
+    
     try {
-        // 5. Call the API.
+        // Send optimization request
         const result = await runOptimization(coordinates, selectedShipId);
         toastr.success('Optimization complete!', 'Success');
 
-        // 6. Process the result
         const standardMetrics = result.standard_metrics;
         const optimizedMetrics = result.optimized_metrics;
         const orderedPorts = [route.departure, ...result.best_route_indices.map(index => route.arrivals[index - 1])];
         
-        // 7. Update UI with results
-        updateComparisonTable(standardMetrics, optimizedMetrics, originalRoutePorts, orderedPorts);
+        // Update comparison table
+        updateComparisonTable(
+            standardMetrics, 
+            optimizedMetrics, 
+            originalRoutePorts, 
+            orderedPorts
+        );
+        
         drawOptimizedRoute(orderedPorts, result.route_geometry);
-        lastOptimizationResult = { standardMetrics, optimizedMetrics, standardRoutePorts: originalRoutePorts, optimizedRoutePorts: orderedPorts };
+        displayEtaDetails(result.eta_details, orderedPorts);
+
+        lastOptimizationResult = { 
+            standardMetrics, 
+            optimizedMetrics, 
+            standardRoutePorts: originalRoutePorts, 
+            optimizedRoutePorts: orderedPorts,
+            etaDetails: result.eta_details
+        };
         
         const vesselSelect = document.getElementById('vessel-name');
         const vesselName = vesselSelect.options[vesselSelect.selectedIndex].text;
@@ -233,7 +252,6 @@ async function handleRunOptimization() {
             timeSaved: `${(standardMetrics.travel_time_hours - optimizedMetrics.travel_time_hours).toFixed(1)} hrs`
         };
 
-        // 8. Save result and refresh saved results table
         await saveOptimizationResult(resultToSave);
         toastr.info('Optimization result has been saved.', 'Result Saved');
         await initializeSavedResults();
@@ -242,7 +260,6 @@ async function handleRunOptimization() {
         console.error("Optimization failed:", error);
         toastr.error(`Optimization failed: ${error.message}`, 'API Error');
     } finally {
-        // 9. Always restore the button to its original state
         runBtn.disabled = false;
         runBtn.innerHTML = originalBtnText;
     }
@@ -251,17 +268,13 @@ async function handleRunOptimization() {
 // --- UI and MAP UPDATE FUNCTIONS ---
 /**
  * Populates the comparison table with standard vs. optimized route metrics.
- * @param {object} standardMetrics - The calculated metrics for the original route.
- * @param {object} optimizedMetrics - The calculated metrics for the optimized route.
- * @param {Array<object>} standardRoutePorts - The original sequence of ports.
- * @param {Array<object>} optimizedRoutePorts - The optimized sequence of ports.
  */
 function updateComparisonTable(standardMetrics, optimizedMetrics, standardRoutePorts, optimizedRoutePorts) {
     const formatImprovement = (standard, optimized) => {
         if (standard === 0) return 'N/A';
         const improvement = ((standard - optimized) / standard) * 100;
         const color = improvement >= 0 ? 'success' : 'danger';
-        const sign = improvement >= 0 ? '' : ''; // No need for '+' sign
+        const sign = improvement >= 0 ? '' : '';
         return `<span class="badge bg-${color}">${sign}${improvement.toFixed(1)}% savings</span>`;
     };
 
@@ -282,9 +295,57 @@ function updateComparisonTable(standardMetrics, optimizedMetrics, standardRouteP
 }
 
 /**
+ * NEW FUNCTION: Renders the detailed ETA breakdown into a table.
+ */
+function displayEtaDetails(etaDetails, orderedPorts) {
+    const container = document.getElementById('eta-details-container');
+    container.innerHTML = '';
+
+    if (!etaDetails || etaDetails.length === 0) {
+        container.innerHTML = '<p class="text-muted">No ETA details were returned from the optimization.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'table table-striped table-hover';
+
+    table.innerHTML = `
+        <thead class="table-light">
+            <tr>
+                <th>Stop</th>
+                <th>Port Name</th>
+                <th>Leg Distance (km)</th>
+                <th>Estimated Arrival Time (ETA)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    etaDetails.forEach((stop, index) => {
+        const row = document.createElement('tr');
+        const portName = orderedPorts[index + 1]?.name || 'Unknown Port';
+        const arrivalTime = new Date(stop.eta).toLocaleString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${portName}</strong></td>
+            <td>${stop.leg_distance_km} km</td>
+            <td>${arrivalTime}</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    container.appendChild(table);
+}
+
+/**
  * Draws the optimized route (markers and polyline) on the Leaflet map.
- * @param {Array<object>} orderedPorts - The array of port objects in the optimized order.
- * @param {Array<Array<number>>} routeGeometry - The array of lat/lng pairs for the detailed route path.
  */
 function drawOptimizedRoute(orderedPorts, routeGeometry) {
     if (optimizedRouteLayer) map.removeLayer(optimizedRouteLayer);
@@ -306,7 +367,6 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
     }
     const labelText = `${index === 0 ? 'Start' : `Stop ${index}`}: ${port.name}`;
     
-    // Create marker with both tooltip (always visible) and popup (on click)
     const marker = L.marker([port.latitude, port.longitude], markerOptions)
         .bindTooltip(labelText, {
             permanent: true,
@@ -322,7 +382,7 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
     portMarkersLayer = L.layerGroup(markers).addTo(map);
 
     optimizedRouteLayer = L.polyline(routeGeometry, {
-        color: '#0d6efd', // A nice blue color
+        color: '#0d6efd',
         weight: 5,
         opacity: 0.8
     }).addTo(map);
@@ -335,16 +395,19 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
  * Initializes the Leaflet map, sets its properties, and loads all map layers.
  */
 function initializeMap() {
-    const seaBounds = L.latLngBounds(
-        L.latLng(-12, 90),
-        L.latLng(25, 135)
+    // USA region bounds
+    const usaBounds = L.latLngBounds(
+        L.latLng(24, -125),   // Southwest corner
+        L.latLng(50, -65)     // Northeast corner
     );
+    
+    // Initialize map with USA view
     map = L.map('nautical-map', {
-        center: [5, 110],
-        zoom: 5,
-        minZoom: 5,
-        maxZoom: 8,
-        maxBounds: seaBounds,
+        center: [37, -95],    // Center of USA
+        zoom: 2,              // USA view zoom level
+        minZoom: 2,           // Prevent zooming out too far
+        maxZoom: 18,          // Allow detailed zoom
+        maxBounds: usaBounds,
         maxBoundsViscosity: 1.0
     });
 
@@ -354,9 +417,129 @@ function initializeMap() {
     L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
         attribution: '© OpenSeaMap'
     }).addTo(map);
-
+    
     loadMarineZones();
     addMarineZonesLegend();
+}
+
+// --- AIS SHIP MOVEMENT VISUALIZATION ---
+/**
+ * Vessel type colors for AIS ship markers
+ */
+const vesselColors = {
+    'cargo': '#FF6B6B',
+    'tanker': '#4ECDC4',
+    'passenger': '#45B7D1',
+    'fishing': '#FFA07A',
+    'tug': '#98D8C8',
+    'default': '#00d4ff'
+};
+
+/**
+ * Load AIS ship movement data from JSON file
+ */
+async function loadAISShipData() {
+    try {
+        const response = await fetch('../data/ais_processed.json');
+        if (!response.ok) {
+            console.warn('AIS data not available. Ship movements will not be displayed.');
+            return;
+        }
+        aisData = await response.json();
+        console.log('✓ Loaded AIS ship data:', aisData.metadata);
+        
+    } catch (error) {
+        console.warn('Failed to load AIS ship data:', error);
+    }
+}
+
+/**
+ * Get color for vessel based on type
+ */
+function getVesselColor(vesselType) {
+    const type = vesselType.toLowerCase();
+    for (const [key, color] of Object.entries(vesselColors)) {
+        if (type.includes(key)) {
+            return color;
+        }
+    }
+    return vesselColors.default;
+}
+
+/**
+ * Display or hide ship movements on the map
+ */
+function toggleShipMovements(show) {
+    if (show && aisData) {
+        displayShipMovements();
+    } else {
+        clearShipMovements();
+    }
+}
+
+/**
+ * Display all ship movements on the map
+ */
+function displayShipMovements() {
+    if (!aisData || !aisData.vessels) return;
+    
+    clearShipMovements();
+    
+    aisData.vessels.forEach(vessel => {
+        if (vessel.positions.length === 0) return;
+        
+        const color = getVesselColor(vessel.type);
+        
+        // Draw track if vessel has multiple positions
+        if (vessel.positions.length > 1) {
+            const trackPoints = vessel.positions.map(pos => [pos.lat, pos.lon]);
+            const track = L.polyline(trackPoints, {
+                color: color,
+                weight: 2,
+                opacity: 0.4
+            }).addTo(map);
+            vesselTrackLayers.push(track);
+        }
+        
+        // Add vessel marker at last position
+        const lastPos = vessel.positions[vessel.positions.length - 1];
+        const marker = L.circleMarker([lastPos.lat, lastPos.lon], {
+            radius: 5,
+            fillColor: color,
+            color: '#fff',
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+        
+        // Create popup with vessel information
+        const popupContent = `
+            <div style="font-size: 12px;">
+                <h4 style="margin: 0 0 8px 0; color: #00d4ff;">${vessel.name}</h4>
+                <p style="margin: 3px 0;"><strong>MMSI:</strong> ${vessel.mmsi}</p>
+                <p style="margin: 3px 0;"><strong>Type:</strong> ${vessel.type}</p>
+                <p style="margin: 3px 0;"><strong>Speed:</strong> ${lastPos.sog.toFixed(1)} knots</p>
+                <p style="margin: 3px 0;"><strong>Course:</strong> ${lastPos.cog.toFixed(1)}°</p>
+                <p style="margin: 3px 0;"><strong>Position:</strong> ${lastPos.lat.toFixed(4)}°, ${lastPos.lon.toFixed(4)}°</p>
+                <p style="margin: 3px 0;"><strong>Time:</strong> ${lastPos.time}</p>
+            </div>
+        `;
+        marker.bindPopup(popupContent);
+        
+        vesselLayers.push(marker);
+    });
+    
+    console.log(`✓ Displayed ${vesselLayers.length} ships with ${vesselTrackLayers.length} tracks`);
+}
+
+/**
+ * Clear all ship movements from the map
+ */
+function clearShipMovements() {
+    vesselLayers.forEach(layer => map.removeLayer(layer));
+    vesselTrackLayers.forEach(layer => map.removeLayer(layer));
+    vesselLayers = [];
+    vesselTrackLayers = [];
 }
 
 /**
@@ -374,7 +557,6 @@ async function initializeSavedResults() {
 
 /**
  * Renders the saved optimization results into an HTML table.
- * @param {Array<object>} results - The array of result objects from the API.
  */
 function renderSavedResultsTable(results) {
     const tableBody = document.getElementById('saved-results-body');
@@ -439,7 +621,6 @@ function renderSavedResultsTable(results) {
 
 /**
  * Fetches the list of ports from the API and populates a dropdown menu.
- * @param {string} elementId - The ID of the <select> element to populate.
  */
 async function populatePortDropdown(elementId) {
     const selectElement = document.getElementById(elementId);
@@ -455,6 +636,7 @@ async function populatePortDropdown(elementId) {
             option.value = port.name;
             option.dataset.latitude = port.latitude;
             option.dataset.longitude = port.longitude;
+            option.dataset.country = port.country; // Add country for congestion calculation
             option.textContent = port.name;
             selectElement.appendChild(option);
         });
@@ -637,6 +819,7 @@ function addMarineZonesLegend() {
                     <h6 style="margin: 0 0 8px 0; font-weight: bold; color: #333;">Marine Zones & Weather</h6>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #42B7B7; margin-right: 8px;"></span><span>200 NM</span></div>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #C2DADA; margin-right: 8px;"></span><span>Territorial Sea (12 NM)</span></div>
+                    <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #E57373; margin-right: 8px;"></span><span>Overlapping Claim</span></div>
                     <hr>
                     <h6 style="margin: 8px 0; font-weight: bold; color: #333;">Cyclone Alert Levels</h6>
                     <div style="margin-bottom: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></span><span>Red - High Danger</span></div>
@@ -646,12 +829,15 @@ function addMarineZonesLegend() {
                     <hr>
                     <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="wind-layer-toggle" checked style="margin-right: 8px;"><label for="wind-layer-toggle">Wind</label></div>
                     <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="wave-height-layer-toggle" checked style="margin-right: 8px;"><label for="wave-height-layer-toggle">Wave Height</label></div>
-                    <div style="display: flex; align-items: center;"><input type="checkbox" id="cyclone-layer-toggle" checked style="margin-right: 8px;"><label for="cyclone-layer-toggle">Cyclones</label></div>
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;"><input type="checkbox" id="cyclone-layer-toggle" checked style="margin-right: 8px;"><label for="cyclone-layer-toggle">Cyclones</label></div>
+                    <hr>
+                    <div style="display: flex; align-items: center;"><input type="checkbox" id="ship-movement-toggle" style="margin-right: 8px;"><label for="ship-movement-toggle">🚢 Ships</label></div>
                 </div>`;
             L.DomEvent.disableClickPropagation(container);
             container.querySelector('#wind-layer-toggle').addEventListener('change', e => map.hasLayer(windLayer) ? map.removeLayer(windLayer) : map.addLayer(windLayer));
             container.querySelector('#wave-height-layer-toggle').addEventListener('change', e => map.hasLayer(waveHeightLayer) ? map.removeLayer(waveHeightLayer) : map.addLayer(waveHeightLayer));
             container.querySelector('#cyclone-layer-toggle').addEventListener('change', e => map.hasLayer(cycloneLayer) ? map.removeLayer(cycloneLayer) : map.addLayer(cycloneLayer));
+            container.querySelector('#ship-movement-toggle').addEventListener('change', e => toggleShipMovements(e.target.checked));
             return container;
         }
     });
@@ -732,4 +918,3 @@ function exportResultsToCSV() {
     document.body.removeChild(link);
     toastr.success('CSV data downloaded.', 'Export Complete');
 }
-
