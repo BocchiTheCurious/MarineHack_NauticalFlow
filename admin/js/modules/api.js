@@ -296,3 +296,30 @@ export async function getWeatherData(latitude, longitude) {
         throw error; // Re-throw the error to be handled by the calling function
     }
 }
+
+// --- Port Review Functions ---
+
+export function getPortReviews(portId) {
+    return fetchWithAuth(`/ports/${portId}/reviews`);
+}
+
+export function getPortReviewsSummary(portId) {
+    return fetchWithAuth(`/ports/${portId}/reviews/summary`);
+}
+
+export function getMyPortReview(portId) {
+    return fetchWithAuth(`/ports/${portId}/reviews/my-review`);
+}
+
+export function addPortReview(portId, reviewData) {
+    return fetchWithAuth(`/ports/${portId}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify(reviewData)
+    });
+}
+
+export function deletePortReview(portId, reviewId) {
+    return fetchWithAuth(`/ports/${portId}/reviews/${reviewId}`, {
+        method: 'DELETE'
+    });
+}

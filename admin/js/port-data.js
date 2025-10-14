@@ -1,6 +1,8 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
 import { getPorts, addPort, deletePort, updatePort } from './modules/api.js';
+// Import review functions
+import { getPortReviews, getPortReviewsSummary, getMyPortReview, addPortReview, deletePortReview } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let allPorts = [];
@@ -9,6 +11,8 @@ let portMap;
 let mapMarkers = [];
 let importModal;
 let parsedImportData = [];
+let reviewModal;
+let allReviewsModal;
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
@@ -27,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializePortDataPage() {
     portModal = new bootstrap.Modal(document.getElementById('portModal'));
     importModal = new bootstrap.Modal(document.getElementById('importModal'));
+    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal')); 
+    allReviewsModal = new bootstrap.Modal(document.getElementById('allReviewsModal')); 
+
 
     initializeMap();
     await loadAndRenderPorts();
@@ -51,6 +58,14 @@ async function initializePortDataPage() {
     document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
 
     console.log('CSV Import listeners attached!');
+
+    // NEW: Review form listeners
+    document.getElementById('reviewForm').addEventListener('submit', handleSubmitReview);
+    document.getElementById('reviewComment').addEventListener('input', updateCharCount);
+    document.getElementById('reviewSortOrder').addEventListener('change', handleReviewSortChange);
+
+    // Initialize star rating input
+    initializeStarRating();
 }
 
 // --- NEW: User-Friendly Input Handlers ---
@@ -415,7 +430,11 @@ function updateBentoGrid(port) {
 
     // Box 4: Operational Data 
     updateOperationalData(port);
-      setTimeout(() => {
+
+    // Box 5: Reviews & Ratings (NEW)
+    updateReviews(port);
+
+    setTimeout(() => {
         if (portMap) {
             portMap.invalidateSize();
         }
@@ -931,3 +950,347 @@ async function confirmImport() {
     document.getElementById('importPreview').classList.add('d-none');
     parsedImportData = [];
 }
+
+// NEW: Update Reviews Box
+async function updateReviews(port) {
+    const reviewsBox = document.getElementById('bentoReviews');
+
+    try {
+        const [summary, reviews, myReview] = await Promise.all([
+            getPortReviewsSummary(port.id),
+            getPortReviews(port.id),
+            getMyPortReview(port.id)
+        ]);
+
+        const avgRating = summary.averageRating || 0;
+        const totalReviews = summary.totalReviews || 0;
+        const recentReviews = reviews.slice(0, 3);
+
+        // Generate star display
+        const starDisplay = generateStarDisplay(avgRating);
+
+        reviewsBox.innerHTML = `
+            <h6 class="mb-3">
+                <i class="bi bi-star me-2"></i>Port Reviews & Ratings
+            </h6>
+            
+            <div class="row mb-3">
+                <div class="col-md-4 text-center">
+                    <div style="font-size: 3rem; font-weight: bold; color: #0d6efd;">
+                        ${avgRating.toFixed(1)}
+                    </div>
+                    <div class="star-rating justify-content-center mb-2">
+                        ${starDisplay}
+                    </div>
+                    <small class="text-muted">Based on ${totalReviews} review${totalReviews !== 1 ? 's' : ''}</small>
+                </div>
+                
+                <div class="col-md-8">
+                    ${generateRatingDistribution(summary.distribution, totalReviews)}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Recent Reviews</h6>
+                <button class="btn btn-sm btn-primary" onclick="openAddReviewModal(${port.id}, ${myReview.hasReview}, ${myReview.hasReview ? myReview.rating : 0}, '${myReview.hasReview && myReview.comment ? myReview.comment.replace(/'/g, "\\'") : ''}', ${myReview.hasReview ? myReview.id : 0})">
+                    <i class="bi bi-${myReview.hasReview ? 'pencil' : 'plus-circle'} me-1"></i>
+                    ${myReview.hasReview ? 'Edit My Review' : 'Add Review'}
+                </button>
+            </div>
+            
+            ${recentReviews.length > 0 ? recentReviews.map(review => generateReviewCard(review, port.id)).join('') : '<p class="text-muted text-center py-3">No reviews yet. Be the first to review this port!</p>'}
+            
+            ${totalReviews > 3 ? `
+                <button class="btn btn-outline-primary w-100 mt-2" onclick="viewAllReviews(${port.id})">
+                    View All ${totalReviews} Reviews
+                </button>
+            ` : ''}
+        `;
+
+    } catch (error) {
+        console.error('Failed to load reviews:', error);
+        reviewsBox.innerHTML = `
+            <h6 class="mb-3"><i class="bi bi-star me-2"></i>Port Reviews & Ratings</h6>
+            <p class="text-danger">Failed to load reviews</p>
+        `;
+    }
+}
+
+function generateStarDisplay(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    let stars = '';
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="bi bi-star-fill"></i>';
+    }
+    if (hasHalfStar) {
+        stars += '<i class="bi bi-star-half"></i>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="bi bi-star"></i>';
+    }
+    return stars;
+}
+
+function generateRatingDistribution(distribution, total) {
+    if (total === 0) return '<p class="text-muted">No ratings yet</p>';
+
+    let html = '<div class="rating-distribution">';
+    for (let i = 5; i >= 1; i--) {
+        const count = distribution[i] || 0;
+        const percentage = total > 0 ? (count / total) * 100 : 0;
+
+        html += `
+            <div class="rating-bar-row">
+                <span style="min-width: 60px;">${i} <i class="bi bi-star-fill" style="color: #ffc107;"></i></span>
+                <div class="rating-bar">
+                    <div class="rating-bar-fill" style="width: ${percentage}%"></div>
+                </div>
+                <span style="min-width: 30px; text-align: right;">${count}</span>
+            </div>
+        `;
+    }
+    html += '</div>';
+    return html;
+}
+
+function generateReviewCard(review, portId) {
+    const starDisplay = generateStarDisplay(review.rating);
+    const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+
+    const isEdited = review.createdAt !== review.updatedAt;
+
+    return `
+        <div class="review-card">
+            <div class="review-header">
+                <div>
+                    <strong>${review.username}</strong>
+                    <div class="star-rating">
+                        ${starDisplay}
+                    </div>
+                </div>
+                <div class="review-meta">
+                    ${reviewDate}${isEdited ? ' <span class="text-muted">(edited)</span>' : ''}
+                    ${review.isOwner ? `
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteReview(${portId}, ${review.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            ${review.comment ? `<p class="mb-0">${review.comment}</p>` : '<p class="text-muted mb-0 fst-italic">No comment provided</p>'}
+        </div>
+    `;
+}
+
+// Initialize star rating input
+function initializeStarRating() {
+    const stars = document.querySelectorAll('.star-rating-input i');
+
+    stars.forEach(star => {
+        star.addEventListener('click', function () {
+            const rating = parseInt(this.dataset.rating);
+            document.getElementById('reviewRating').value = rating;
+
+            // Update visual state
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+
+            // Clear error
+            document.getElementById('ratingError').style.display = 'none';
+        });
+
+        star.addEventListener('mouseenter', function () {
+            const rating = parseInt(this.dataset.rating);
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('hover-active');
+                }
+            });
+        });
+
+        star.addEventListener('mouseleave', function () {
+            stars.forEach(s => s.classList.remove('hover-active'));
+        });
+    });
+}
+
+// Update character count for review comment
+function updateCharCount() {
+    const comment = document.getElementById('reviewComment').value;
+    const charCount = document.getElementById('commentCharCount');
+    const length = comment.length;
+
+    charCount.textContent = length;
+
+    if (length > 500) {
+        charCount.classList.add('text-danger');
+        document.getElementById('reviewComment').value = comment.substring(0, 500);
+        charCount.textContent = 500;
+    } else {
+        charCount.classList.remove('text-danger');
+    }
+}
+
+// Open Add/Edit Review Modal
+window.openAddReviewModal = function (portId, hasReview, rating, comment, reviewId) {
+    const modalTitle = document.getElementById('reviewModalLabel');
+    const form = document.getElementById('reviewForm');
+
+    form.reset();
+    document.getElementById('reviewPortId').value = portId;
+    document.getElementById('reviewId').value = hasReview ? reviewId : '';
+
+    modalTitle.textContent = hasReview ? 'Edit Your Review' : 'Add Your Review';
+
+    // Reset stars
+    const stars = document.querySelectorAll('.star-rating-input i');
+    stars.forEach(s => s.classList.remove('active'));
+
+    if (hasReview) {
+        document.getElementById('reviewRating').value = rating;
+        document.getElementById('reviewComment').value = comment || '';
+
+        // Set stars
+        stars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.add('active');
+            }
+        });
+
+        updateCharCount();
+    } else {
+        document.getElementById('reviewRating').value = '';
+        document.getElementById('commentCharCount').textContent = '0';
+    }
+
+    reviewModal.show();
+    initializeTooltips();
+};
+
+// Handle review form submission
+async function handleSubmitReview(event) {
+    event.preventDefault();
+
+    const portId = document.getElementById('reviewPortId').value;
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+
+    // Validation
+    if (!rating) {
+        document.getElementById('ratingError').style.display = 'block';
+        return;
+    }
+
+    const reviewData = {
+        rating: parseInt(rating),
+        comment: comment || null
+    };
+
+    try {
+        await addPortReview(portId, reviewData);
+        reviewModal.hide();
+        toastr.success('Review submitted successfully!');
+
+        // Refresh reviews for current port
+        const currentPort = allPorts.find(p => p.id == portId);
+        if (currentPort) {
+            updateReviews(currentPort);
+        }
+    } catch (error) {
+        toastr.error('Failed to submit review. Please try again.');
+    }
+}
+
+// View All Reviews
+let currentReviewPortId = null;
+let allReviewsData = [];
+
+window.viewAllReviews = async function (portId) {
+    currentReviewPortId = portId;
+
+    try {
+        allReviewsData = await getPortReviews(portId);
+        const port = allPorts.find(p => p.id === portId);
+
+        document.getElementById('allReviewsModalLabel').innerHTML =
+            `<i class="bi bi-star me-2"></i>All Reviews - ${port ? port.name : 'Port'}`;
+
+        renderAllReviews(allReviewsData);
+        allReviewsModal.show();
+    } catch (error) {
+        toastr.error('Failed to load reviews');
+    }
+};
+
+// Handle review sort order change
+function handleReviewSortChange() {
+    const sortOrder = document.getElementById('reviewSortOrder').value;
+    let sortedReviews = [...allReviewsData];
+
+    switch (sortOrder) {
+        case 'newest':
+            sortedReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+        case 'oldest':
+            sortedReviews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            break;
+        case 'highest':
+            sortedReviews.sort((a, b) => b.rating - a.rating);
+            break;
+        case 'lowest':
+            sortedReviews.sort((a, b) => a.rating - b.rating);
+            break;
+    }
+
+    renderAllReviews(sortedReviews);
+}
+
+// Render all reviews in modal
+function renderAllReviews(reviews) {
+    const container = document.getElementById('allReviewsContent');
+
+    if (reviews.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-4">No reviews yet for this port.</p>';
+        return;
+    }
+
+    container.innerHTML = reviews.map(review => generateReviewCard(review, currentReviewPortId)).join('');
+}
+
+window.deleteReview = async function (portId, reviewId) {
+    const result = await Swal.fire({
+        title: 'Delete Review?',
+        text: 'Are you sure you want to delete your review? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await deletePortReview(portId, reviewId);
+            toastr.success('Review deleted successfully');
+            // Refresh the current port's reviews
+            const currentPort = allPorts.find(p => p.id === portId);
+            if (currentPort) {
+                updateReviews(currentPort);
+            }
+        } catch (error) {
+            toastr.error('Failed to delete review');
+        }
+    }
+};

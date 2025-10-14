@@ -79,6 +79,20 @@ class OptimizationResult(db.Model):
     co2Reduced = db.Column(db.String(50), nullable=False)
     timeSaved = db.Column(db.String(50), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+class PortReview(db.Model):
+    __tablename__ = 'port_reviews'
+    id = db.Column(db.Integer, primary_key=True)
+    port_id = db.Column(db.Integer, db.ForeignKey('ports.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    port = db.relationship('Port', backref='reviews')
+    user = db.relationship('User', backref='port_reviews')
 
 # --- Database Initialization ---
 with app.app_context():
@@ -483,6 +497,130 @@ def delete_optimization(current_user, result_id):
     db.session.delete(result)
     db.session.commit()
     return jsonify({'message': 'Result deleted successfully'})
+
+# --- Port Review Endpoints ---
+@app.route('/api/ports/<int:port_id>/reviews', methods=['GET'])
+@token_required
+def get_port_reviews(current_user, port_id):
+    """Get all reviews for a specific port"""
+    reviews = PortReview.query.filter_by(port_id=port_id).order_by(PortReview.created_at.desc()).all()
+    
+    return jsonify([{
+        'id': r.id,
+        'portId': r.port_id,
+        'userId': r.user_id,
+        'username': r.user.display_name,
+        'rating': r.rating,
+        'comment': r.comment,
+        'createdAt': r.created_at.isoformat(),
+        'updatedAt': r.updated_at.isoformat(),
+        'isOwner': r.user_id == current_user.id
+    } for r in reviews])
+
+@app.route('/api/ports/<int:port_id>/reviews/summary', methods=['GET'])
+@token_required
+def get_port_reviews_summary(current_user, port_id):
+    """Get review summary statistics for a port"""
+    from sqlalchemy import func
+    
+    summary = db.session.query(
+        func.avg(PortReview.rating).label('average'),
+        func.count(PortReview.id).label('total')
+    ).filter_by(port_id=port_id).first()
+    
+    # Get rating distribution
+    distribution = db.session.query(
+        PortReview.rating,
+        func.count(PortReview.id).label('count')
+    ).filter_by(port_id=port_id).group_by(PortReview.rating).all()
+    
+    rating_dist = {i: 0 for i in range(1, 6)}
+    for rating, count in distribution:
+        rating_dist[rating] = count
+    
+    return jsonify({
+        'averageRating': float(summary.average) if summary.average else 0,
+        'totalReviews': summary.total or 0,
+        'distribution': rating_dist
+    })
+
+@app.route('/api/ports/<int:port_id>/reviews', methods=['POST'])
+@token_required
+def add_port_review(current_user, port_id):
+    """Add or update a review for a port"""
+    data = request.get_json()
+    rating = data.get('rating')
+    comment = data.get('comment', '').strip()
+    
+    # Validation
+    if not rating or rating < 1 or rating > 5:
+        return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+    
+    # Check if port exists
+    port = Port.query.get_or_404(port_id)
+    
+    # Check if user already reviewed this port
+    existing_review = PortReview.query.filter_by(
+        port_id=port_id, 
+        user_id=current_user.id
+    ).first()
+    
+    if existing_review:
+        # Update existing review
+        existing_review.rating = rating
+        existing_review.comment = comment if comment else None
+        existing_review.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'message': 'Review updated successfully'}), 200
+    
+    # Create new review
+    now = datetime.utcnow()
+    new_review = PortReview(
+        port_id=port_id,
+        user_id=current_user.id,
+        rating=rating,
+        comment=comment if comment else None,
+        created_at=now,
+        updated_at=now 
+    )
+    db.session.add(new_review)
+    db.session.commit()
+    return jsonify({'message': 'Review added successfully'}), 201
+
+@app.route('/api/ports/<int:port_id>/reviews/<int:review_id>', methods=['DELETE'])
+@token_required
+def delete_port_review(current_user, port_id, review_id):
+    """Delete a review (only by owner)"""
+    review = PortReview.query.filter_by(
+        id=review_id, 
+        port_id=port_id, 
+        user_id=current_user.id
+    ).first_or_404()
+    
+    db.session.delete(review)
+    db.session.commit()
+    return jsonify({'message': 'Review deleted successfully'})
+
+@app.route('/api/ports/<int:port_id>/reviews/my-review', methods=['GET'])
+@token_required
+def get_my_port_review(current_user, port_id):
+    """Get current user's review for a specific port"""
+    review = PortReview.query.filter_by(
+        port_id=port_id, 
+        user_id=current_user.id
+    ).first()
+    
+    if not review:
+        return jsonify({'hasReview': False})
+    
+    return jsonify({
+        'hasReview': True,
+        'id': review.id,
+        'rating': review.rating,
+        'comment': review.comment,
+        'createdAt': review.created_at.isoformat(),
+        'updatedAt': review.updated_at.isoformat()
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

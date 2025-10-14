@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,17 +20,17 @@
             background: white;
             border-radius: 0.35rem;
             padding: 25px;
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             transition: transform 0.3s, box-shadow 0.3s;
             margin-bottom: 20px;
             height: 100%;
         }
-        
+
         .stats-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }
-        
+
         .stats-icon {
             width: 60px;
             height: 60px;
@@ -40,18 +41,18 @@
             font-size: 24px;
             margin-bottom: 15px;
         }
-        
+
         .stats-value {
             font-size: 2rem;
             font-weight: 700;
             margin: 10px 0;
         }
-        
+
         .stats-label {
             color: #6c757d;
             font-size: 0.9rem;
         }
-        
+
         canvas {
             max-height: 400px;
         }
@@ -96,8 +97,112 @@
             border-radius: 20px;
             font-size: 0.85rem;
         }
+
+        .bento-grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto auto;
+            /* Added third row */
+            gap: 1rem;
+            padding: 1rem;
+            min-height: 500px;
+        }
+
+        /* Asymmetric Grid Layout - Updated */
+        .bento-map {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+        }
+
+        .bento-info {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        .bento-facilities {
+            grid-column: 3 / 4;
+            grid-row: 1 / 2;
+        }
+
+        .bento-congestion {
+            grid-column: 2 / 4;
+            grid-row: 2 / 3;
+        }
+
+        /* NEW: Box 5 - Reviews */
+        .bento-reviews {
+            grid-column: 1 / 4;
+            grid-row: 3 / 4;
+        }
+
+        /* Star rating styles */
+        .star-rating {
+            display: inline-flex;
+            gap: 0.25rem;
+            font-size: 1.25rem;
+        }
+
+        .star-rating i {
+            color: #ffc107;
+        }
+
+        .star-rating i.bi-star {
+            color: #dee2e6;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .rating-distribution {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .rating-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
     </style>
 </head>
+
 <body>
 
     <div id="loading-overlay" class="loading-overlay">
@@ -109,7 +214,8 @@
         <div id="sidebar-placeholder"></div>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2 text-white">
                     <i class="bi bi-graph-up me-2"></i>
                     Analytics Dashboard
@@ -149,7 +255,8 @@
             <div class="row">
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="stats-card">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                             <i class="bi bi-compass"></i>
                         </div>
                         <div class="stats-value text-primary" id="totalRoutes">247</div>
@@ -159,7 +266,8 @@
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="stats-card">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                             <i class="bi bi-send"></i>
                         </div>
                         <div class="stats-value text-danger" id="totalVessels">18</div>
@@ -169,7 +277,8 @@
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="stats-card">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                             <i class="bi bi-geo-alt"></i>
                         </div>
                         <div class="stats-value text-info" id="totalPorts">342</div>
@@ -179,7 +288,8 @@
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="stats-card">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
                             <i class="bi bi-fuel-pump"></i>
                         </div>
                         <div class="stats-value text-success" id="totalFuelTypes">5</div>
@@ -332,7 +442,7 @@
 
             const ctx = document.getElementById('optimizationTrendsChart').getContext('2d');
             if (optimizationChart) optimizationChart.destroy();
-            
+
             optimizationChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -380,7 +490,7 @@
 
             const ctx = document.getElementById('fuelTypeChart').getContext('2d');
             if (fuelTypeChart) fuelTypeChart.destroy();
-            
+
             fuelTypeChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -411,7 +521,7 @@
 
             const ctx = document.getElementById('weeklyActivityChart').getContext('2d');
             if (weeklyActivityChart) weeklyActivityChart.destroy();
-            
+
             weeklyActivityChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -452,7 +562,7 @@
 
             const ctx = document.getElementById('vesselUsageChart').getContext('2d');
             if (vesselUsageChart) vesselUsageChart.destroy();
-            
+
             vesselUsageChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -488,7 +598,7 @@
         // 5. Recent Optimizations Table
         function loadRecentOptimizations() {
             const tbody = document.getElementById('recentOptimizationsTable');
-            
+
             tbody.innerHTML = hardcodedData.optimizations.map(item => {
                 const date = new Date(item.timestamp);
                 return `
@@ -515,10 +625,11 @@
         }
 
         // Hide loading overlay and initialize
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             document.getElementById('loading-overlay').style.display = 'none';
             loadAllData();
         });
     </script>
 </body>
+
 </html>

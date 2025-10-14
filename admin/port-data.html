@@ -31,7 +31,8 @@
         .bento-grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: auto auto;
+            grid-template-rows: auto auto auto;
+
             gap: 1rem;
             padding: 1rem;
             min-height: 500px;
@@ -68,6 +69,76 @@
         .bento-congestion {
             grid-column: 2 / 4;
             grid-row: 2 / 3;
+        }
+
+        .bento-reviews {
+            grid-column: 1 / 4;
+            grid-row: 3 / 4;
+        }
+
+        .star-rating {
+            display: inline-flex;
+            gap: 0.25rem;
+            font-size: 1.25rem;
+        }
+
+        .star-rating i {
+            color: #ffc107;
+        }
+
+        .star-rating i.bi-star {
+            color: #dee2e6;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .rating-distribution {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .rating-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ff9800);
         }
 
         /* Placeholder styling */
@@ -190,6 +261,36 @@
             font-weight: bold;
             min-width: 60px;
         }
+
+        /* Star Rating Input */
+        .star-rating-input {
+            display: inline-flex;
+            gap: 0.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .star-rating-input i {
+            color: #dee2e6;
+            transition: color 0.2s ease;
+        }
+
+        .star-rating-input i:hover,
+        .star-rating-input i.active {
+            color: #ffc107;
+        }
+
+        .star-rating-input i.hover-active {
+            color: #ffc107;
+        }
+
+        #commentCharCount {
+            font-weight: bold;
+        }
+
+        #commentCharCount.text-danger {
+            color: #dc3545 !important;
+        }
     </style>
 
 </head>
@@ -254,6 +355,15 @@
                                 <p class="text-muted mt-2">Operational Data</p>
                             </div>
                         </div>
+
+                        <!-- Box 5: Reviews & Ratings (Dynamic) -->
+                        <div class="bento-box bento-reviews" id="bentoReviews">
+                            <div class="placeholder-content">
+                                <i class="bi bi-star text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2">Reviews will appear here</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -762,6 +872,89 @@
                             <button type="button" class="btn btn-primary" id="confirmImportBtn" disabled>
                                 <i class="bi bi-cloud-upload me-1"></i>Import Selected Ports
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Review Modal -->
+            <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="reviewModalLabel">Add Your Review</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="reviewForm">
+                                <input type="hidden" id="reviewPortId">
+                                <input type="hidden" id="reviewId">
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Your Rating <span class="text-danger">*</span>
+                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                            title="Rate your overall experience at this port (1 = Poor, 5 = Excellent)"></i>
+                                    </label>
+                                    <div class="star-rating-input">
+                                        <i class="bi bi-star-fill" data-rating="1"></i>
+                                        <i class="bi bi-star-fill" data-rating="2"></i>
+                                        <i class="bi bi-star-fill" data-rating="3"></i>
+                                        <i class="bi bi-star-fill" data-rating="4"></i>
+                                        <i class="bi bi-star-fill" data-rating="5"></i>
+                                    </div>
+                                    <input type="hidden" id="reviewRating" required>
+                                    <div class="invalid-feedback" id="ratingError">Please select a rating</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="reviewComment" class="form-label">
+                                        Your Review (Optional)
+                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                            title="Share your experience with other cruise operators"></i>
+                                    </label>
+                                    <textarea class="form-control" id="reviewComment" rows="4"
+                                        placeholder="Share your experience with facilities, services, efficiency, etc."></textarea>
+                                    <div class="form-text">
+                                        <span id="commentCharCount">0</span>/500 characters
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="reviewForm" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Submit Review
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View All Reviews Modal -->
+            <div class="modal fade" id="allReviewsModal" tabindex="-1" aria-labelledby="allReviewsModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="allReviewsModalLabel">
+                                <i class="bi bi-star me-2"></i>All Reviews
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <select class="form-select" id="reviewSortOrder">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="highest">Highest Rating</option>
+                                    <option value="lowest">Lowest Rating</option>
+                                </select>
+                            </div>
+                            <div id="allReviewsContent">
+                                <!-- Reviews will be loaded here -->
+                            </div>
                         </div>
                     </div>
                 </div>
