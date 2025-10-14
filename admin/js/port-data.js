@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializePortDataPage() {
     portModal = new bootstrap.Modal(document.getElementById('portModal'));
     importModal = new bootstrap.Modal(document.getElementById('importModal'));
-    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal')); 
-    allReviewsModal = new bootstrap.Modal(document.getElementById('allReviewsModal')); 
+    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    allReviewsModal = new bootstrap.Modal(document.getElementById('allReviewsModal'));
 
 
     initializeMap();
@@ -511,34 +511,121 @@ function updateFacilities(port) {
     const facilities = port.facilities || {};
 
     const facilityList = [
-        { key: 'potableWater', label: 'Potable Water', icon: 'droplet' },
-        { key: 'provisions', label: 'Provisions', icon: 'basket' },
-        { key: 'pilotService', label: 'Pilot Service', icon: 'compass' },
-        { key: 'tugService', label: 'Tugboat Service', icon: 'life-preserver' },
-        { key: 'medicalFacilities', label: 'Medical Facilities', icon: 'heart-pulse' },
-        { key: 'garbageDisposal', label: 'Garbage Disposal', icon: 'trash' },
-        { key: 'ballastDisposal', label: 'Ballast Disposal', icon: 'water' },
-        { key: 'repairFacilities', label: 'Repair Facilities', icon: 'tools' }
+        {
+            key: 'potableWater',
+            label: 'Potable Water',
+            icon: 'droplet',
+            image: '../assets/img/potablewater.jpg',
+            description: 'Fresh drinking water supply for your cruise ship. Essential for passenger consumption, galley operations, and onboard facilities. Meets international health and safety standards for maritime use.'
+        },
+        {
+            key: 'provisions',
+            label: 'Provisions',
+            icon: 'basket',
+            image: '../assets/img/provisions.jpeg',
+            description: 'Complete food and supply services for cruise operations. Includes fresh produce, frozen goods, beverages, and specialty items for passenger dining. Suppliers coordinate with ship stores to ensure timely delivery before departure.'
+        },
+        {
+            key: 'pilotService',
+            label: 'Pilot Service',
+            icon: 'compass',
+            image: '../assets/img/pilotservice.webp',
+            description: 'Expert local pilots guide your cruise ship safely through harbor channels and port approaches. Required for safe navigation in unfamiliar waters. Available 24/7 for arrivals and departures.'
+        },
+        {
+            key: 'tugService',
+            label: 'Tugboat Service',
+            icon: 'life-preserver',
+            image: '../assets/img/tugboatservice.jpeg',
+            description: 'Powerful tugboats assist cruise ships with precise docking and undocking maneuvers. Critical for large vessels in tight berths and adverse weather conditions. Ensures passenger safety during port operations.'
+        },
+        {
+            key: 'medicalFacilities',
+            label: 'Medical Facilities',
+            icon: 'heart-pulse',
+            image: '../assets/img/medicalfacilities.webp',
+            description: 'Shore-based medical services for cruise passengers and crew. Provides emergency care, medical evacuations, pharmacy supplies, and crew health certifications. Available for both routine and urgent medical situations during port calls.'
+        },
+        {
+            key: 'garbageDisposal',
+            label: 'Garbage Disposal',
+            icon: 'trash',
+            image: '../assets/img/garbagedisposal.jpeg',
+            description: 'Proper waste management for cruise ship refuse in compliance with environmental regulations. Handles passenger and galley waste, recyclables, and hazardous materials. Provides required documentation for international compliance.'
+        },
+        {
+            key: 'ballastDisposal',
+            label: 'Ballast Disposal',
+            icon: 'water',
+            image: '../assets/img/ballastdisposal.jpeg',
+            description: 'Safe discharge facility for cruise ship ballast water. Prevents spread of invasive marine species between regions. Meets international ballast water management standards and provides compliance certificates.'
+        },
+        {
+            key: 'repairFacilities',
+            label: 'Repair Facilities',
+            icon: 'tools',
+            image: '../assets/img/repairfacilities.jpeg',
+            description: 'Emergency and scheduled maintenance services for cruise vessels. Includes engine repairs, hull work, electrical systems, and safety equipment servicing. Minimizes downtime to keep cruise schedules on track.'
+        }
     ];
 
     let html = '<h6 class="mb-3"><i class="bi bi-buildings me-2"></i>Port Facilities</h6>';
-    html += '<div class="facilities-grid">';
 
-    facilityList.forEach(facility => {
+    // Add scrollable container with single column
+    html += '<div class="facilities-list" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">';
+
+    facilityList.forEach((facility, index) => {
         const available = facilities[facility.key] === true;
         const statusClass = available ? 'facility-available' : 'facility-unavailable';
-        const icon = available ? 'check-circle-fill' : 'x-circle';
+        const statusIcon = available ? 'check-circle-fill' : 'x-circle';
+        const expandedClass = available ? 'show' : ''; // Auto-expand available facilities
+        const chevronClass = available ? 'bi-chevron-down' : 'bi-chevron-right';
 
         html += `
-            <div class="facility-item ${statusClass}">
-                <i class="bi bi-${icon}"></i>
-                <span>${facility.label}</span>
+            <div class="facility-item-wrapper mb-2 ${statusClass}">
+                <div class="facility-header" data-bs-toggle="collapse" data-bs-target="#facility-${facility.key}-${port.id}" style="cursor: pointer; padding: 0.75rem; background: white; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${statusIcon} me-2" style="font-size: 1.2rem;"></i>
+                        <span style="font-weight: 500;">${facility.label}</span>
+                    </div>
+                    <i class="bi ${chevronClass} chevron-icon" style="transition: transform 0.3s ease;"></i>
+                </div>
+                
+                <div class="collapse ${expandedClass}" id="facility-${facility.key}-${port.id}">
+                    <div class="facility-content p-3" style="background: #f8f9fa; border-radius: 0 0 8px 8px;">
+                        <div class="row">
+                            <div class="col-6">
+                                <img src="${facility.image}" alt="${facility.label}" class="img-fluid rounded" style="width: 250px; height: 250px; object-fit: cover;">
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-0" style="font-size: 0.9rem; line-height: 1.6;">${facility.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     });
 
     html += '</div>';
     facilitiesBox.innerHTML = html;
+
+    // Add event listeners for chevron rotation
+    document.querySelectorAll('.facility-header').forEach(header => {
+        header.addEventListener('click', function () {
+            const chevron = this.querySelector('.chevron-icon');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+            // Toggle chevron direction
+            if (chevron.classList.contains('bi-chevron-right')) {
+                chevron.classList.remove('bi-chevron-right');
+                chevron.classList.add('bi-chevron-down');
+            } else {
+                chevron.classList.remove('bi-chevron-down');
+                chevron.classList.add('bi-chevron-right');
+            }
+        });
+    });
 }
 
 function updateOperationalData(port) {

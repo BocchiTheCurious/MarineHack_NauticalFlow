@@ -191,34 +191,88 @@
         }
 
         /* Facilities Grid */
-        .facilities-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-top: 1rem;
+        /* Facility Accordion Animations */
+        .facility-item-wrapper {
+            transition: all 0.3s ease;
         }
 
-        .facility-item {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem;
-            background: white;
-            border-radius: 8px;
-            font-size: 0.9rem;
+        .facility-header {
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .facility-item i {
-            margin-right: 0.5rem;
-            font-size: 1.2rem;
+        .facility-header:hover {
+            background-color: #f8f9fa !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .facility-available {
-            color: #198754;
+        .chevron-icon {
+            transition: transform 0.3s ease;
         }
 
-        .facility-unavailable {
-            color: #6c757d;
-            opacity: 0.5;
+        .facility-header[aria-expanded="true"] .chevron-icon {
+            transform: rotate(0deg);
+        }
+
+        .facility-header[aria-expanded="false"] .chevron-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* Smooth collapse animation */
+        .facility-content {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .collapse {
+            transition: height 0.3s ease-in-out;
+        }
+
+        /* Custom scrollbar for facilities list */
+        .facilities-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .facilities-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .facilities-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .facilities-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Facility status colors - refined */
+        .facility-available .facility-header {
+            border-left: 4px solid #28a745;
+        }
+
+        .facility-unavailable .facility-header {
+            border-left: 4px solid #dc3545;
+            opacity: 0.6;
+        }
+
+        .facility-unavailable .facility-header:hover {
+            opacity: 0.8;
+        }
+
+        /* Image container styling */
+        .facility-content img {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .facility-content img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Description text styling */
+        .facility-content p {
+            text-align: justify;
+            color: #495057;
         }
 
         /* Congestion Chart */
