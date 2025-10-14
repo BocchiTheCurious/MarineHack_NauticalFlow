@@ -277,10 +277,10 @@
     </style>
 </head>
 <body>
-<!-- 
+
     <div id="loading-overlay" class="loading-overlay">
         <img src="../assets/img/loader-icon.svg" alt="Loading..." class="loader-icon">
-    </div> -->
+    </div>
 
     <div id="navbar-placeholder"></div>
     <div class="d-flex">
@@ -760,3 +760,56 @@
                                 <i class="bi bi-patch-question"></i>
                                 Is my data secure?
                             </div>
+                            <p class="faq-answer">
+                                Yes, we take data security seriously. All data is encrypted in transit and at rest. We use industry-standard 
+                                authentication protocols and regularly backup all information. Your vessel and route data remains private and confidential.
+                            </p>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="bi bi-patch-question"></i>
+                                What happens if I delete a vessel that's used in saved optimizations?
+                            </div>
+                            <p class="faq-answer">
+                                Historical optimization records will retain the vessel name, but you won't be able to use that vessel for new 
+                                optimizations. We recommend archiving vessels instead of deleting them if they have historical data.
+                            </p>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <i class="bi bi-patch-question"></i>
+                                How often is port and weather data updated?
+                            </div>
+                            <p class="faq-answer">
+                                Port data is updated manually as needed. Weather data is refreshed every 6 hours from our API sources, 
+                                ensuring you always have current information for route planning decisions.
+                            </p>
+                        </div>
+
+                        <div class="info-box success">
+                            <div class="info-box-title">
+                                <i class="bi bi-headset"></i> Need More Help?
+                            </div>
+                            <p class="mb-2">Can't find the answer you're looking for? Our support team is here to help!</p>
+                            <p class="mb-0">
+                                <strong>Email:</strong> support@nauticalflow.com<br>
+                                <strong>Phone:</strong> +1 (555) 123-4567<br>
+                                <strong>Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM EST
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- The JavaScript file that will handle the logic for this page -->
+    <script type="module" src="js/user-manual.js"></script>
+</body>
+</html>
