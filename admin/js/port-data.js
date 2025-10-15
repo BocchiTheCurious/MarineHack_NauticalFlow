@@ -59,6 +59,10 @@ async function initializePortDataPage() {
 
     console.log('CSV Import listeners attached!');
 
+    document.getElementById('download-template-btn').addEventListener('click', downloadCSVTemplate);
+
+    document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+
     // NEW: Review form listeners
     document.getElementById('reviewForm').addEventListener('submit', handleSubmitReview);
     document.getElementById('reviewComment').addEventListener('input', updateCharCount);
@@ -66,6 +70,317 @@ async function initializePortDataPage() {
 
     // Initialize star rating input
     initializeStarRating();
+}
+
+function downloadCSVTemplate() {
+    // Define the CSV headers matching the system's expected columns
+    const headers = [
+        'portName',
+        'countryName',
+        'latitude',
+        'longitude',
+        'harborSize',
+        'harborType',
+        'maxVesselLength',
+        'maxVesselBeam',
+        'maxVesselDraft',
+        'firstPortOfEntry',
+        'chDepth',
+        'anDepth',
+        'cpDepth',
+        'shelter',
+        'goodHoldingGround',
+        'turningArea',
+        'suWater',
+        'suProvisions',
+        'ptAvailable',
+        'tugsAssist',
+        'medFacilities',
+        'garbageDisposal',
+        'dirtyBallast',
+        'repairCode',
+        'erTide',
+        'erSwell',
+        'erIce',
+        'qtPratique',
+        'qtSanitation'
+    ];
+
+    // Create sample data rows with instructions
+    const sampleData = [
+        [
+            'Port of Miami',
+            'United States',
+            '25.7743',
+            '-80.1937',
+            'L',
+            'CB',
+            '350',
+            '50',
+            '15',
+            'Y',
+            '12',
+            '10',
+            '11',
+            'E',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'N',
+            'N',
+            'N',
+            'Y',
+            'Y'
+        ],
+        [
+            'Port of Barcelona',
+            'Spain',
+            '41.3851',
+            '2.1734',
+            'L',
+            'CB',
+            '400',
+            '60',
+            '16',
+            'Y',
+            '14',
+            '12',
+            '13',
+            'G',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'N',
+            'Y',
+            'N',
+            'Y',
+            'Y'
+        ]
+    ];
+
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+
+    // Add sample rows
+    sampleData.forEach(row => {
+        csvContent += row.join(',') + '\n';
+    });
+
+    // Add instruction rows (commented out)
+    csvContent += '\n# INSTRUCTIONS:\n';
+    csvContent += '# portName: Full name of the port\n';
+    csvContent += '# countryName: Country where port is located\n';
+    csvContent += '# latitude: Decimal degrees (e.g., 25.7743)\n';
+    csvContent += '# longitude: Decimal degrees (e.g., -80.1937)\n';
+    csvContent += '# harborSize: L=Large, M=Medium, S=Small, V=Very Small\n';
+    csvContent += '# harborType: CB=Coastal Breakwater, CN=Coastal Natural, OR=Open Roadstead, RB=River Basin, etc.\n';
+    csvContent += '# maxVesselLength/Beam/Draft: In meters\n';
+    csvContent += '# firstPortOfEntry: Y=Yes, N=No\n';
+    csvContent += '# chDepth: Channel depth in meters\n';
+    csvContent += '# anDepth: Anchorage depth in meters\n';
+    csvContent += '# cpDepth: Cargo pier depth in meters\n';
+    csvContent += '# shelter: E=Excellent, G=Good, F=Fair, P=Poor, N=None\n';
+    csvContent += '# goodHoldingGround/turningArea: Y=Yes, N=No\n';
+    csvContent += '# Facilities (suWater, suProvisions, ptAvailable, tugsAssist, medFacilities, garbageDisposal, dirtyBallast): Y=Yes, N=No\n';
+    csvContent += '# repairCode: Y=Yes, N=No (repair facilities available)\n';
+    csvContent += '# Entrance Restrictions (erTide, erSwell, erIce): Y=Yes, N=No\n';
+    csvContent += '# Quarantine (qtPratique, qtSanitation): Y=Yes, N=No\n';
+    csvContent += '# \n';
+    csvContent += '# Delete these instruction rows and sample data before importing your own data\n';
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'port_import_template.csv');
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toastr.success('CSV template downloaded successfully!', 'Download Complete');
+}
+
+async function exportToExcel() {
+    try {
+        showLoader();
+
+        // Fetch all ports from database
+        const ports = await getPorts();
+
+        if (ports.length === 0) {
+            hideLoader();
+            showAlert('No ports to export', 'warning');
+            return;
+        }
+
+        // Helper function to convert boolean to Y/N
+        const toYN = (val) => {
+            if (val === true) return 'Y';
+            if (val === false) return 'N';
+            return '';
+        };
+
+        // Prepare data for export
+        const exportData = ports.map(port => ({
+            'Port ID': `P${String(port.id).padStart(3, '0')}`,
+            'portName': port.name,
+            'countryName': port.country,
+            'latitude': port.latitude,
+            'longitude': port.longitude,
+            'Port Congestion Index': port.portCongestionIndex,
+            'harborSize': port.harborSize || '',
+            'harborType': port.harborType || '',
+            'maxVesselLength': port.maxVesselLength || '',
+            'maxVesselBeam': port.maxVesselBeam || '',
+            'maxVesselDraft': port.maxVesselDraft || '',
+            'firstPortOfEntry': toYN(port.firstPortOfEntry),
+            'chDepth': port.channelDepth || '',
+            'anDepth': port.anchorageDepth || '',
+            'cpDepth': port.cargoPierDepth || '',
+            'shelter': port.shelterAfforded || '',
+            'goodHoldingGround': toYN(port.goodHoldingGround),
+            'turningArea': toYN(port.turningArea),
+            'suWater': toYN(port.facilities?.potableWater),
+            'suProvisions': toYN(port.facilities?.provisions),
+            'ptAvailable': toYN(port.facilities?.pilotService),
+            'tugsAssist': toYN(port.facilities?.tugService),
+            'medFacilities': toYN(port.facilities?.medicalFacilities),
+            'garbageDisposal': toYN(port.facilities?.garbageDisposal),
+            'dirtyBallast': toYN(port.facilities?.ballastDisposal),
+            'repairCode': toYN(port.facilities?.repairFacilities),
+            'erTide': toYN(port.entranceRestrictions?.tide),
+            'erSwell': toYN(port.entranceRestrictions?.swell),
+            'erIce': toYN(port.entranceRestrictions?.ice),
+            'qtPratique': toYN(port.quarantine?.pratique),
+            'qtSanitation': toYN(port.quarantine?.sanitation)
+        }));
+
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(exportData);
+
+        // Set column widths
+        const columnWidths = [
+            { wch: 10 },  // Port ID
+            { wch: 30 },  // portName
+            { wch: 20 },  // countryName
+            { wch: 12 },  // latitude
+            { wch: 12 },  // longitude
+            { wch: 18 },  // Port Congestion Index
+            { wch: 12 },  // harborSize
+            { wch: 12 },  // harborType
+            { wch: 18 },  // maxVesselLength
+            { wch: 16 },  // maxVesselBeam
+            { wch: 16 },  // maxVesselDraft
+            { wch: 16 },  // firstPortOfEntry
+            { wch: 12 },  // chDepth
+            { wch: 12 },  // anDepth
+            { wch: 12 },  // cpDepth
+            { wch: 10 },  // shelter
+            { wch: 18 },  // goodHoldingGround
+            { wch: 14 },  // turningArea
+            { wch: 12 },  // suWater
+            { wch: 14 },  // suProvisions
+            { wch: 14 },  // ptAvailable
+            { wch: 12 },  // tugsAssist
+            { wch: 14 },  // medFacilities
+            { wch: 16 },  // garbageDisposal
+            { wch: 14 },  // dirtyBallast
+            { wch: 12 },  // repairCode
+            { wch: 10 },  // erTide
+            { wch: 10 },  // erSwell
+            { wch: 10 },  // erIce
+            { wch: 12 },  // qtPratique
+            { wch: 14 }   // qtSanitation
+        ];
+        ws['!cols'] = columnWidths;
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Ports');
+
+        // Create a second sheet with instructions
+        const instructions = [
+            ['NauticalFlow Port Data Export'],
+            [''],
+            ['COLUMN DESCRIPTIONS:'],
+            ['Port ID', 'Unique identifier for each port in the system'],
+            ['portName', 'Full name of the port'],
+            ['countryName', 'Country where the port is located'],
+            ['latitude', 'Latitude in decimal degrees'],
+            ['longitude', 'Longitude in decimal degrees'],
+            ['Port Congestion Index', 'Average wait time percentage (0-100)'],
+            ['harborSize', 'L=Large, M=Medium, S=Small, V=Very Small'],
+            ['harborType', 'CB=Coastal Breakwater, CN=Coastal Natural, OR=Open Roadstead, RB=River Basin, etc.'],
+            ['maxVesselLength', 'Maximum vessel length in meters'],
+            ['maxVesselBeam', 'Maximum vessel beam in meters'],
+            ['maxVesselDraft', 'Maximum vessel draft in meters'],
+            ['firstPortOfEntry', 'Y=Yes, N=No - Has customs and immigration'],
+            ['chDepth', 'Channel depth in meters'],
+            ['anDepth', 'Anchorage depth in meters'],
+            ['cpDepth', 'Cargo pier depth in meters'],
+            ['shelter', 'E=Excellent, G=Good, F=Fair, P=Poor, N=None'],
+            ['goodHoldingGround', 'Y=Yes, N=No - Secure anchorage'],
+            ['turningArea', 'Y=Yes, N=No - Space for vessel turning'],
+            ['suWater', 'Y=Yes, N=No - Potable water available'],
+            ['suProvisions', 'Y=Yes, N=No - Provisions available'],
+            ['ptAvailable', 'Y=Yes, N=No - Pilot service available'],
+            ['tugsAssist', 'Y=Yes, N=No - Tugboat service available'],
+            ['medFacilities', 'Y=Yes, N=No - Medical facilities available'],
+            ['garbageDisposal', 'Y=Yes, N=No - Garbage disposal available'],
+            ['dirtyBallast', 'Y=Yes, N=No - Ballast disposal available'],
+            ['repairCode', 'Y=Yes, N=No - Repair facilities available'],
+            ['erTide', 'Y=Yes, N=No - Tide restrictions'],
+            ['erSwell', 'Y=Yes, N=No - Swell restrictions'],
+            ['erIce', 'Y=Yes, N=No - Ice restrictions'],
+            ['qtPratique', 'Y=Yes, N=No - Pratique services'],
+            ['qtSanitation', 'Y=Yes, N=No - Sanitation services'],
+            [''],
+            ['IMPORT INSTRUCTIONS:'],
+            ['1. To import this data back, remove the "Port ID" and "Port Congestion Index" columns'],
+            ['2. Save as CSV format'],
+            ['3. Use the Import CSV function in NauticalFlow'],
+            [''],
+            ['Export Date:', new Date().toLocaleString()],
+            ['Total Ports:', ports.length]
+        ];
+
+        const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+        wsInstructions['!cols'] = [{ wch: 25 }, { wch: 60 }];
+        XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filename = `NauticalFlow_Ports_${timestamp}.xlsx`;
+
+        // Write file
+        XLSX.writeFile(wb, filename);
+
+        hideLoader();
+        toastr.success(`Successfully exported ${ports.length} ports to Excel!`, 'Export Complete');
+
+    } catch (error) {
+        hideLoader();
+        console.error('Export error:', error);
+        showAlert('Failed to export data to Excel', 'danger');
+    }
 }
 
 // --- NEW: User-Friendly Input Handlers ---
@@ -778,6 +1093,10 @@ function handleCSVFileSelect(event) {
     console.log('File selected:', file.name);
     showLoader();
 
+    // Reset error display
+    document.getElementById('importErrors').classList.add('d-none');
+    document.getElementById('errorList').innerHTML = '';
+
     Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -786,10 +1105,39 @@ function handleCSVFileSelect(event) {
             console.log('CSV parsed, total rows:', results.data.length);
             console.log('First row sample:', results.data[0]);
 
+            // Validate all rows and collect errors
+            const allErrors = [];
+            results.data.forEach((row, index) => {
+                const rowErrors = validatePortRow(row, index);
+                allErrors.push(...rowErrors);
+            });
+
+            // Display errors if any
+            if (allErrors.length > 0) {
+                const errorList = document.getElementById('errorList');
+                errorList.innerHTML = '<ul class="mb-0">' +
+                    allErrors.map(err => `<li>${err}</li>`).join('') +
+                    '</ul>';
+                document.getElementById('importErrors').classList.remove('d-none');
+            }
+
+            // Process data (will skip invalid rows)
             parsedImportData = processWPIData(results.data);
             console.log('Processed ports:', parsedImportData.length);
-            console.log('First processed port:', parsedImportData[0]);
 
+            if (parsedImportData.length === 0) {
+                showAlert('No valid ports found in CSV file. Please check the errors above and correct your data.', 'warning');
+                return;
+            }
+
+            if (parsedImportData.length < results.data.length) {
+                showAlert(
+                    `${parsedImportData.length} valid ports found out of ${results.data.length} rows. Invalid rows were skipped.`,
+                    'warning'
+                );
+            }
+
+            console.log('First processed port:', parsedImportData[0]);
             displayImportPreview(parsedImportData);
         },
         error: function (error) {
@@ -800,49 +1148,175 @@ function handleCSVFileSelect(event) {
     });
 }
 
+function validatePortRow(row, rowIndex) {
+    const errors = [];
+    const rowNum = rowIndex + 2; // +2 because: +1 for header, +1 for 0-based index
+
+    // Required fields validation
+    if (!row.portName || row.portName.trim() === '') {
+        errors.push(`Row ${rowNum}: Port name is required`);
+    }
+
+    if (!row.countryName || row.countryName.trim() === '') {
+        errors.push(`Row ${rowNum}: Country name is required`);
+    }
+
+    // Coordinate validation
+    if (!row.latitude || row.latitude.trim() === '') {
+        errors.push(`Row ${rowNum}: Latitude is required`);
+    } else {
+        const lat = parseFloat(row.latitude);
+        if (isNaN(lat)) {
+            errors.push(`Row ${rowNum}: Invalid latitude format "${row.latitude}" (use decimal degrees)`);
+        } else if (lat < -90 || lat > 90) {
+            errors.push(`Row ${rowNum}: Latitude must be between -90 and 90 (got ${lat})`);
+        }
+    }
+
+    if (!row.longitude || row.longitude.trim() === '') {
+        errors.push(`Row ${rowNum}: Longitude is required`);
+    } else {
+        const lon = parseFloat(row.longitude);
+        if (isNaN(lon)) {
+            errors.push(`Row ${rowNum}: Invalid longitude format "${row.longitude}" (use decimal degrees)`);
+        } else if (lon < -180 || lon > 180) {
+            errors.push(`Row ${rowNum}: Longitude must be between -180 and 180 (got ${lon})`);
+        }
+    }
+
+    // Harbor size validation
+    if (row.harborSize && !['L', 'M', 'S', 'V', ''].includes(row.harborSize.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid harbor size "${row.harborSize}" (use L, M, S, or V)`);
+    }
+
+    // Harbor type validation
+    const validHarborTypes = ['CB', 'CN', 'CT', 'LC', 'OR', 'RB', 'RN', 'RT', 'TH'];
+    if (row.harborType && !validHarborTypes.includes(row.harborType.toUpperCase()) && row.harborType !== '') {
+        errors.push(`Row ${rowNum}: Invalid harbor type "${row.harborType}" (use CB, CN, CT, LC, OR, RB, RN, RT, or TH)`);
+    }
+
+    // Shelter validation
+    const validShelter = ['E', 'G', 'F', 'P', 'N'];
+    if (row.shelter && !validShelter.includes(row.shelter.toUpperCase()) && row.shelter !== '') {
+        errors.push(`Row ${rowNum}: Invalid shelter value "${row.shelter}" (use E, G, F, P, or N)`);
+    }
+
+    // Y/N field validation
+    const ynFields = [
+        { key: 'firstPortOfEntry', label: 'First Port of Entry' },
+        { key: 'goodHoldingGround', label: 'Good Holding Ground' },
+        { key: 'turningArea', label: 'Turning Area' },
+        { key: 'suWater', label: 'Potable Water' },
+        { key: 'suProvisions', label: 'Provisions' },
+        { key: 'ptAvailable', label: 'Pilot Service' },
+        { key: 'tugsAssist', label: 'Tug Service' },
+        { key: 'medFacilities', label: 'Medical Facilities' },
+        { key: 'garbageDisposal', label: 'Garbage Disposal' },
+        { key: 'dirtyBallast', label: 'Ballast Disposal' },
+        { key: 'repairCode', label: 'Repair Facilities' },
+        { key: 'erTide', label: 'Tide Restriction' },
+        { key: 'erSwell', label: 'Swell Restriction' },
+        { key: 'erIce', label: 'Ice Restriction' },
+        { key: 'qtPratique', label: 'Pratique' },
+        { key: 'qtSanitation', label: 'Sanitation' }
+    ];
+
+    ynFields.forEach(field => {
+        if (row[field.key] && row[field.key].trim() !== '') {
+            const val = row[field.key].trim().toUpperCase();
+            if (!['Y', 'N'].includes(val)) {
+                errors.push(`Row ${rowNum}: ${field.label} must be Y or N (got "${row[field.key]}")`);
+            }
+        }
+    });
+
+    // Numeric field validation
+    const numericFields = [
+        { key: 'maxVesselLength', label: 'Max Vessel Length', min: 0, max: 500 },
+        { key: 'maxVesselBeam', label: 'Max Vessel Beam', min: 0, max: 100 },
+        { key: 'maxVesselDraft', label: 'Max Vessel Draft', min: 0, max: 30 },
+        { key: 'chDepth', label: 'Channel Depth', min: 0, max: 50 },
+        { key: 'anDepth', label: 'Anchorage Depth', min: 0, max: 50 },
+        { key: 'cpDepth', label: 'Cargo Pier Depth', min: 0, max: 50 }
+    ];
+
+    numericFields.forEach(field => {
+        if (row[field.key] && row[field.key].trim() !== '') {
+            const val = parseFloat(row[field.key]);
+            if (isNaN(val)) {
+                errors.push(`Row ${rowNum}: ${field.label} must be a number (got "${row[field.key]}")`);
+            } else if (val < field.min || val > field.max) {
+                errors.push(`Row ${rowNum}: ${field.label} must be between ${field.min} and ${field.max} (got ${val})`);
+            }
+        }
+    });
+
+    return errors;
+}
+
 function processWPIData(data) {
     const processed = [];
 
     data.forEach((row, index) => {
-        // Skip rows with missing essential data - UPDATED COLUMN NAMES
+        // Skip rows with missing essential data - validation already handled
         if (!row.portName || !row.latitude || !row.longitude) return;
 
-        // Parse coordinates - they're in DMS format like "21°02'00\"N"
-        const lat = parseCoordinate(row.latitude);
-        const lon = parseCoordinate(row.longitude);
-        if (lat === null || lon === null) return;
+        // Parse coordinates - handle both DMS and decimal formats
+        let lat, lon;
+
+        if (typeof row.latitude === 'string' && row.latitude.includes('°')) {
+            lat = parseCoordinate(row.latitude);
+            lon = parseCoordinate(row.longitude);
+        } else {
+            lat = parseFloat(row.latitude);
+            lon = parseFloat(row.longitude);
+        }
+
+        // Validate coordinates - skip if invalid
+        if (lat === null || lon === null || isNaN(lat) || isNaN(lon)) return;
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return;
 
         // Helper to convert WPI Y/N/U to boolean
-        const toBool = (val) => val === 'Y' ? true : val === 'N' ? false : null;
+        const toBool = (val) => {
+            if (typeof val === 'string') {
+                val = val.trim().toUpperCase();
+            }
+            return val === 'Y' ? true : val === 'N' ? false : null;
+        };
 
-        // Helper to parse numeric values
-        const toNum = (val) => val && !isNaN(parseFloat(val)) ? parseFloat(val) : null;
+        // Helper to parse numeric values with validation
+        const toNum = (val, min = 0, max = 1000) => {
+            if (!val) return null;
+            const num = parseFloat(val);
+            if (isNaN(num) || num < min || num > max) return null;
+            return num;
+        };
 
         const portData = {
-            // Basic info - UPDATED COLUMN NAMES
+            // Basic info
             name: row.portName.trim(),
-            country: row.countryName || 'Unknown',
+            country: row.countryName ? row.countryName.trim() : 'Unknown',
             latitude: lat,
             longitude: lon,
             portCongestionIndex: 50,
 
-            // Box 2: Port Profile - UPDATED COLUMN NAMES
-            harborSize: row.harborSize || null,
+            // Port Profile
+            harborSize: row.harborSize && ['L', 'M', 'S', 'V'].includes(row.harborSize.toUpperCase()) ? row.harborSize.toUpperCase() : null,
             harborType: row.harborType || null,
-            maxVesselLength: toNum(row.maxVesselLength),
-            maxVesselBeam: toNum(row.maxVesselBeam),
-            maxVesselDraft: toNum(row.maxVesselDraft),
+            maxVesselLength: toNum(row.maxVesselLength, 0, 500),
+            maxVesselBeam: toNum(row.maxVesselBeam, 0, 100),
+            maxVesselDraft: toNum(row.maxVesselDraft, 0, 30),
             firstPortOfEntry: toBool(row.firstPortOfEntry),
 
-            // Box 4: Operational Data - UPDATED COLUMN NAMES
-            channelDepth: toNum(row.chDepth),
-            anchorageDepth: toNum(row.anDepth),
-            cargoPierDepth: toNum(row.cpDepth),
-            shelterAfforded: row.shelter || null,
+            // Operational Data
+            channelDepth: toNum(row.chDepth, 0, 50),
+            anchorageDepth: toNum(row.anDepth, 0, 50),
+            cargoPierDepth: toNum(row.cpDepth, 0, 50),
+            shelterAfforded: row.shelter && ['E', 'G', 'F', 'P', 'N'].includes(row.shelter.toUpperCase()) ? row.shelter.toUpperCase() : null,
             goodHoldingGround: toBool(row.goodHoldingGround),
             turningArea: toBool(row.turningArea),
 
-            // Box 3: Facilities - UPDATED COLUMN NAMES
+            // Facilities
             facilities: {
                 potableWater: toBool(row.suWater),
                 provisions: toBool(row.suProvisions),
@@ -851,17 +1325,17 @@ function processWPIData(data) {
                 medicalFacilities: toBool(row.medFacilities),
                 garbageDisposal: toBool(row.garbageDisposal),
                 ballastDisposal: toBool(row.dirtyBallast),
-                repairFacilities: row.repairCode && row.repairCode !== 'N' ? true : false
+                repairFacilities: row.repairCode && toBool(row.repairCode)
             },
 
-            // Entrance restrictions - UPDATED COLUMN NAMES
+            // Entrance restrictions
             entranceRestrictions: {
                 tide: toBool(row.erTide),
                 swell: toBool(row.erSwell),
                 ice: toBool(row.erIce)
             },
 
-            // Quarantine - UPDATED COLUMN NAMES
+            // Quarantine
             quarantine: {
                 pratique: toBool(row.qtPratique),
                 sanitation: toBool(row.qtSanitation)

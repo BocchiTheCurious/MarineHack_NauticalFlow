@@ -429,6 +429,12 @@
                     <div class="d-flex gap-2">
                         <input type="text" id="port-search-input" class="form-control form-control-sm"
                             placeholder="Search ports..." style="width: 200px;">
+                        <button class="btn btn-sm btn-outline-info" id="download-template-btn">
+                            <i class="bi bi-download me-1"></i>Download Template
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" id="export-excel-btn">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export to Excel
+                        </button>
                         <button class="btn btn-sm btn-outline-success" id="import-ports-btn" data-bs-toggle="modal"
                             data-bs-target="#importModal">
                             <i class="bi bi-file-earmark-arrow-up me-1"></i>Import CSV
@@ -896,6 +902,20 @@
                                 <div class="form-text">Upload a CSV file from World Port Index</div>
                             </div>
 
+                            <!-- ADD THIS ERROR SECTION -->
+                            <div id="importErrors" class="d-none">
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Validation
+                                        Errors Found</h6>
+                                    <p class="mb-2">The following rows contain errors and will be skipped:</p>
+                                    <div id="errorList" class="small" style="max-height: 200px; overflow-y: auto;">
+                                        <!-- Error messages will be inserted here -->
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
+                            </div>
+
                             <div id="importPreview" class="d-none">
                                 <h6 class="mb-3">Preview - Select ports to import:</h6>
                                 <div class="mb-3">
@@ -1027,6 +1047,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <!-- Papa Parse for CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Custom JS -->
     <script type="module" src="js/port-data.js"></script>
 </body>
