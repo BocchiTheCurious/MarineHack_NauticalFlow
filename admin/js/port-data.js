@@ -1097,72 +1097,155 @@ function handleCSVFileSelect(event) {
     document.getElementById('importErrors').classList.add('d-none');
     document.getElementById('errorList').innerHTML = '';
 
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function (results) {
-            hideLoader();
-            console.log('CSV parsed, total rows:', results.data.length);
-            console.log('First row sample:', results.data[0]);
+    // Check file type
+    const fileExtension = file.name.split('.').pop().toLowerCase();
 
-            // Validate all rows and collect errors
-            const allErrors = [];
-            results.data.forEach((row, index) => {
-                const rowErrors = validatePortRow(row, index);
-                allErrors.push(...rowErrors);
-            });
-
-            // Display errors if any
-            if (allErrors.length > 0) {
-                const errorList = document.getElementById('errorList');
-                errorList.innerHTML = '<ul class="mb-0">' +
-                    allErrors.map(err => `<li>${err}</li>`).join('') +
-                    '</ul>';
-                document.getElementById('importErrors').classList.remove('d-none');
+    if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Handle Excel file
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Get first sheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                console.log('Excel parsed, total rows:', jsonData.length);
+                console.log('First row sample:', jsonData[0]);
+                
+                processImportData(jsonData);
+                
+            } catch (error) {
+                hideLoader();
+                console.error('Excel parsing error:', error);
+                showAlert(`Excel parsing error: ${error.message}`, 'danger');
             }
+        };
+        
+        reader.onerror = function() {
+            hideLoader();
+            showAlert('Failed to read Excel file', 'danger');
+        };
+        
+        reader.readAsArrayBuffer(file);
+        
+    } else {
+        // Handle CSV file (existing Papa Parse logic)
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+                console.log('CSV parsed, total rows:', results.data.length);
+                console.log('First row sample:', results.data[0]);
+                
+                processImportData(results.data);
+            },
+            error: function (error) {
+                hideLoader();
+                console.error('CSV parsing error:', error);
+                showAlert(`CSV parsing error: ${error.message}`, 'danger');
+            }
+        });
+    }
+}
 
-            // Process data (will skip invalid rows)
-            parsedImportData = processWPIData(results.data);
-            console.log('Processed ports:', parsedImportData.length);
-
-            if (parsedImportData.length === 0) {
-                showAlert('No valid ports found in CSV file. Please check the errors above and correct your data.', 'warning');
+function processImportData(data) {
+    hideLoader();
+    
+    // Normalize column names (handle both export and template formats)
+    const normalizedData = data.map(row => {
+        const normalized = {};
+        
+        // Map common variations
+        Object.keys(row).forEach(key => {
+            const lowerKey = key.toLowerCase().trim();
+            
+            // Handle different column name formats
+            if (lowerKey === 'port id') {
+                // Skip Port ID from exports - it's auto-generated
                 return;
+            } else if (lowerKey === 'port congestion index') {
+                // Skip congestion index - we set default value
+                return;
+            } else if (lowerKey === 'portname' || lowerKey === 'port name') {
+                normalized['portName'] = row[key];
+            } else if (lowerKey === 'countryname' || lowerKey === 'country name') {
+                normalized['countryName'] = row[key];
+            } else {
+                // Keep original key
+                normalized[key] = row[key];
             }
-
-            if (parsedImportData.length < results.data.length) {
-                showAlert(
-                    `${parsedImportData.length} valid ports found out of ${results.data.length} rows. Invalid rows were skipped.`,
-                    'warning'
-                );
-            }
-
-            console.log('First processed port:', parsedImportData[0]);
-            displayImportPreview(parsedImportData);
-        },
-        error: function (error) {
-            hideLoader();
-            console.error('CSV parsing error:', error);
-            showAlert(`CSV parsing error: ${error.message}`, 'danger');
-        }
+        });
+        
+        return normalized;
     });
+    
+    // Validate all rows and collect errors
+    const allErrors = [];
+    normalizedData.forEach((row, index) => {
+        const rowErrors = validatePortRow(row, index);
+        allErrors.push(...rowErrors);
+    });
+
+    // Display errors if any
+    if (allErrors.length > 0) {
+        const errorList = document.getElementById('errorList');
+        errorList.innerHTML = '<ul class="mb-0">' + 
+            allErrors.map(err => `<li>${err}</li>`).join('') + 
+            '</ul>';
+        document.getElementById('importErrors').classList.remove('d-none');
+    }
+
+    // Process data (will skip invalid rows)
+    parsedImportData = processWPIData(normalizedData);
+    console.log('Processed ports:', parsedImportData.length);
+    
+    if (parsedImportData.length === 0) {
+        showAlert('No valid ports found in file. Please check the errors above and correct your data.', 'warning');
+        return;
+    }
+
+    if (parsedImportData.length < normalizedData.length) {
+        showAlert(
+            `${parsedImportData.length} valid ports found out of ${normalizedData.length} rows. Invalid rows were skipped.`, 
+            'warning'
+        );
+    }
+
+    console.log('First processed port:', parsedImportData[0]);
+    displayImportPreview(parsedImportData);
 }
 
 function validatePortRow(row, rowIndex) {
     const errors = [];
     const rowNum = rowIndex + 2; // +2 because: +1 for header, +1 for 0-based index
 
+    // Helper to safely get string value
+    const getStringValue = (val) => {
+        if (val === null || val === undefined) return '';
+        return String(val).trim();
+    };
+
     // Required fields validation
-    if (!row.portName || row.portName.trim() === '') {
+    const portName = getStringValue(row.portName);
+    if (!portName) {
         errors.push(`Row ${rowNum}: Port name is required`);
     }
-
-    if (!row.countryName || row.countryName.trim() === '') {
+    
+    const countryName = getStringValue(row.countryName);
+    if (!countryName) {
         errors.push(`Row ${rowNum}: Country name is required`);
     }
 
     // Coordinate validation
-    if (!row.latitude || row.latitude.trim() === '') {
+    const latStr = getStringValue(row.latitude);
+    if (!latStr) {
         errors.push(`Row ${rowNum}: Latitude is required`);
     } else {
         const lat = parseFloat(row.latitude);
@@ -1173,7 +1256,8 @@ function validatePortRow(row, rowIndex) {
         }
     }
 
-    if (!row.longitude || row.longitude.trim() === '') {
+    const lonStr = getStringValue(row.longitude);
+    if (!lonStr) {
         errors.push(`Row ${rowNum}: Longitude is required`);
     } else {
         const lon = parseFloat(row.longitude);
@@ -1185,20 +1269,23 @@ function validatePortRow(row, rowIndex) {
     }
 
     // Harbor size validation
-    if (row.harborSize && !['L', 'M', 'S', 'V', ''].includes(row.harborSize.toUpperCase())) {
-        errors.push(`Row ${rowNum}: Invalid harbor size "${row.harborSize}" (use L, M, S, or V)`);
+    const harborSize = getStringValue(row.harborSize);
+    if (harborSize && !['L', 'M', 'S', 'V'].includes(harborSize.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid harbor size "${harborSize}" (use L, M, S, or V)`);
     }
 
     // Harbor type validation
     const validHarborTypes = ['CB', 'CN', 'CT', 'LC', 'OR', 'RB', 'RN', 'RT', 'TH'];
-    if (row.harborType && !validHarborTypes.includes(row.harborType.toUpperCase()) && row.harborType !== '') {
-        errors.push(`Row ${rowNum}: Invalid harbor type "${row.harborType}" (use CB, CN, CT, LC, OR, RB, RN, RT, or TH)`);
+    const harborType = getStringValue(row.harborType);
+    if (harborType && !validHarborTypes.includes(harborType.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid harbor type "${harborType}" (use CB, CN, CT, LC, OR, RB, RN, RT, or TH)`);
     }
 
     // Shelter validation
     const validShelter = ['E', 'G', 'F', 'P', 'N'];
-    if (row.shelter && !validShelter.includes(row.shelter.toUpperCase()) && row.shelter !== '') {
-        errors.push(`Row ${rowNum}: Invalid shelter value "${row.shelter}" (use E, G, F, P, or N)`);
+    const shelter = getStringValue(row.shelter);
+    if (shelter && !validShelter.includes(shelter.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid shelter value "${shelter}" (use E, G, F, P, or N)`);
     }
 
     // Y/N field validation
@@ -1222,8 +1309,9 @@ function validatePortRow(row, rowIndex) {
     ];
 
     ynFields.forEach(field => {
-        if (row[field.key] && row[field.key].trim() !== '') {
-            const val = row[field.key].trim().toUpperCase();
+        const fieldValue = getStringValue(row[field.key]);
+        if (fieldValue) {
+            const val = fieldValue.toUpperCase();
             if (!['Y', 'N'].includes(val)) {
                 errors.push(`Row ${rowNum}: ${field.label} must be Y or N (got "${row[field.key]}")`);
             }
@@ -1241,10 +1329,11 @@ function validatePortRow(row, rowIndex) {
     ];
 
     numericFields.forEach(field => {
-        if (row[field.key] && row[field.key].trim() !== '') {
-            const val = parseFloat(row[field.key]);
+        const fieldValue = row[field.key];
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            const val = parseFloat(fieldValue);
             if (isNaN(val)) {
-                errors.push(`Row ${rowNum}: ${field.label} must be a number (got "${row[field.key]}")`);
+                errors.push(`Row ${rowNum}: ${field.label} must be a number (got "${fieldValue}")`);
             } else if (val < field.min || val > field.max) {
                 errors.push(`Row ${rowNum}: ${field.label} must be between ${field.min} and ${field.max} (got ${val})`);
             }

@@ -892,14 +892,21 @@
                         <div class="modal-body">
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle me-2"></i>
-                                <strong>Expected Format:</strong> World Port Index CSV format. The system will
-                                automatically map relevant columns to port data.
+                                <strong>Supported Formats:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>CSV Template:</strong> Download the template above and fill in your port
+                                        data</li>
+                                    <li><strong>Excel Export:</strong> Upload a previously exported Excel file to
+                                        re-import ports</li>
+                                    <li><strong>World Port Index:</strong> Standard WPI CSV format is also supported
+                                    </li>
+                                </ul>
                             </div>
 
                             <div class="mb-3">
-                                <label for="csvFileInput" class="form-label">Select CSV File</label>
-                                <input type="file" class="form-control" id="csvFileInput" accept=".csv">
-                                <div class="form-text">Upload a CSV file from World Port Index</div>
+                                <label for="csvFileInput" class="form-label">Select CSV or Excel File</label>
+                                <input type="file" class="form-control" id="csvFileInput" accept=".csv,.xlsx,.xls">
+                                <div class="form-text">Upload a CSV file or Excel file (.xlsx)</div>
                             </div>
 
                             <!-- ADD THIS ERROR SECTION -->
@@ -1048,7 +1055,7 @@
     <!-- Papa Parse for CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- SheetJS for Excel export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Custom JS -->
     <script type="module" src="js/port-data.js"></script>
 </body>
