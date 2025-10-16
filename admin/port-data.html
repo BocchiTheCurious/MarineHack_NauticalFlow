@@ -427,8 +427,12 @@
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
                     <div class="d-flex gap-2">
-                        <input type="text" id="port-search-input" class="form-control form-control-sm"
-                            placeholder="Search ports..." style="width: 200px;">
+                        <div style="position: relative;">
+                            <input type="text" id="port-search-input" class="form-control form-control-sm"
+                                style="width: 250px; padding-left: 35px;">
+                            <i class="bi bi-search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+                        </div>
                         <button class="btn btn-sm btn-outline-info" id="download-template-btn">
                             <i class="bi bi-download me-1"></i>Download Template
                         </button>

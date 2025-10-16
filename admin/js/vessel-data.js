@@ -1,10 +1,12 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { getCruiseShips, addCruiseShip, deleteCruiseShip, updateCruiseShip, getFuelTypes } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let shipModal;
 let allShips = [];
+let shipPaginationController = null;  
+let shipSearchController = null;   
 
 // Simplified Archetype data, focused on GT ranges for auto-selection
 const shipArchetypes = {
@@ -41,8 +43,34 @@ async function initializeShipDataPage() {
     try {
         const [ships, fuelTypes] = await Promise.all([ getCruiseShips(), getFuelTypes() ]);
         allShips = ships;
+        
+        // Make table scrollable
+        makeTableScrollable('vessel-data-table', 400);
+        
         renderShipsTable(allShips);
         populateFuelTypeDropdown(fuelTypes);
+        
+        // Initialize search after data is loaded
+        shipSearchController = initializeTableSearch(
+            'ship-search-input',
+            allShips,
+            ['name', 'company', 'fuelTypeName'], // Search in name, company, and fuel type
+            (filteredData) => {
+                renderShipsTable(filteredData);
+            },
+            {
+                debounceDelay: 300,
+                placeholder: 'Search ships by name, company, or fuel type...',
+                showResultCount: true,
+                minCharacters: 0
+            }
+        );
+        
+        // Add clear button to search
+        addSearchClearButton('ship-search-input', () => {
+            renderShipsTable(allShips);
+        });
+        
     } catch (error) {
         toastr.error('Could not load initial page data.', 'Load Failed');
     }
@@ -143,28 +171,80 @@ function handleModalOpen(event) {
 }
 
 async function loadAndRenderShips() {
-    allShips = await getCruiseShips();
-    renderShipsTable(allShips);
+    try {
+        allShips = await getCruiseShips();
+        
+        // Make table scrollable (only once)
+        makeTableScrollable('vessel-data-table', 400);
+        
+        // Update search controller with new data
+        if (shipSearchController) {
+            shipSearchController.setDataset(allShips);
+        }
+        
+        renderShipsTable(allShips);
+    } catch (error) {
+        console.error('Error loading ships:', error);
+        toastr.error('Could not load cruise ships.', 'Load Failed');
+    }
 }
 
 function renderShipsTable(ships) {
     const tableBody = document.querySelector('#vessel-data-table tbody');
-    tableBody.innerHTML = '';
-    ships.forEach(ship => {
-        const row = document.createElement('tr');
-        row.dataset.shipId = ship.id;
-        row.innerHTML = `
-            <td>${ship.name}</td>
-            <td>${ship.company || 'N/A'}</td>
-            <td>${ship.grossTonnage.toLocaleString()}</td>
-            <td>${ship.fuelTypeName}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Ship" data-bs-toggle="modal" data-bs-target="#shipModal" data-ship-id="${ship.id}"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Ship"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    
+    if (ships.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No cruise ships found.</td></tr>';
+        // Destroy pagination if no data
+        if (shipPaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            shipPaginationController = null;
+        }
+        return;
+    }
+
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(ship => {
+            const row = document.createElement('tr');
+            row.dataset.shipId = ship.id;
+            row.innerHTML = `
+                <td>${ship.name}</td>
+                <td>${ship.company || 'N/A'}</td>
+                <td>${ship.grossTonnage.toLocaleString()}</td>
+                <td>${ship.fuelTypeName}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Ship" data-bs-toggle="modal" data-bs-target="#shipModal" data-ship-id="${ship.id}"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Ship"><i class="bi bi-trash"></i></button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination
+    if (!shipPaginationController) {
+        shipPaginationController = initializePagination(
+            'vessel-data-table',
+            ships,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true
+            }
+        );
+    } else {
+        shipPaginationController.setData(ships);
+    }
+
+    // Initial render
+    shipPaginationController.render();
 }
 
 async function handleTableActions(event) {

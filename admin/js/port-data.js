@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader,  initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { getPorts, addPort, deletePort, updatePort } from './modules/api.js';
 // Import review functions
 import { getPortReviews, getPortReviewsSummary, getMyPortReview, addPortReview, deletePortReview } from './modules/api.js';
@@ -13,6 +13,8 @@ let importModal;
 let parsedImportData = [];
 let reviewModal;
 let allReviewsModal;
+let portPaginationController = null;
+let portSearchController = null; 
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
@@ -39,11 +41,32 @@ async function initializePortDataPage() {
     await loadAndRenderPorts();
 
     document.getElementById('portForm').addEventListener('submit', handleSavePort);
-    document.getElementById('port-search-input').addEventListener('input', handleSearch);
     document.querySelector('#port-data-table tbody').addEventListener('click', handleTableActions);
     document.getElementById('portModal').addEventListener('show.bs.modal', handleModalOpen);
     document.getElementById('locodePasteInput').addEventListener('input', handleCoordsPaste);
     document.getElementById('portCongestionIndex').addEventListener('input', handleSliderChange);
+
+    portSearchController = initializeTableSearch(
+        'port-search-input',
+        allPorts,
+        ['name', 'country'], // Search in name and country fields
+        (filteredData) => {
+            renderPortsTable(filteredData);
+            renderMapMarkers(filteredData);
+        },
+        {
+            debounceDelay: 300,
+            placeholder: 'Search ports by name or country...',
+            showResultCount: true,
+            minCharacters: 0
+        }
+    );
+    
+    // Add clear button to search
+    addSearchClearButton('port-search-input', () => {
+        renderPortsTable(allPorts);
+        renderMapMarkers(allPorts);
+    });
 
     // DEBUG: Check if elements exist
     console.log('CSV File Input:', document.getElementById('csvFileInput'));
@@ -597,6 +620,15 @@ function parseLocodeCoordinates(locodeString) {
 async function loadAndRenderPorts() {
     try {
         allPorts = await getPorts();
+        
+        // Make table scrollable (only once)
+        makeTableScrollable('port-data-table', 400);
+        
+        // Update search controller with new data
+        if (portSearchController) {
+            portSearchController.setDataset(allPorts);
+        }
+        
         renderPortsTable(allPorts);
         renderMapMarkers(allPorts);
     } catch (error) {
@@ -606,29 +638,61 @@ async function loadAndRenderPorts() {
 
 function renderPortsTable(ports) {
     const tableBody = document.querySelector('#port-data-table tbody');
-    tableBody.innerHTML = '';
-
+    
     if (ports.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No ports found.</td></tr>';
+        // Destroy pagination if no data
+        if (portPaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            portPaginationController = null;
+        }
         return;
     }
 
-    ports.forEach(port => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>P${String(port.id).padStart(3, '0')}</td>
-            <td>${port.name}</td>
-            <td>${port.country}</td>
-            <td>${parseFloat(port.latitude).toFixed(4)}</td>
-            <td>${parseFloat(port.longitude).toFixed(4)}</td>
-            <td>${parseFloat(port.portCongestionIndex).toFixed(2)}%</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Port" data-bs-toggle="modal" data-bs-target="#portModal" data-port-id="${port.id}"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port" data-port-id="${port.id}"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(port => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>P${String(port.id).padStart(3, '0')}</td>
+                <td>${port.name}</td>
+                <td>${port.country}</td>
+                <td>${parseFloat(port.latitude).toFixed(4)}</td>
+                <td>${parseFloat(port.longitude).toFixed(4)}</td>
+                <td>${parseFloat(port.portCongestionIndex).toFixed(2)}%</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Port" data-bs-toggle="modal" data-bs-target="#portModal" data-port-id="${port.id}"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port" data-port-id="${port.id}"><i class="bi bi-trash"></i></button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination
+    if (!portPaginationController) {
+        portPaginationController = initializePagination(
+            'port-data-table',
+            ports,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true
+            }
+        );
+    } else {
+        portPaginationController.setData(ports);
+    }
+
+    // Initial render
+    portPaginationController.render();
 }
 
 async function handleTableActions(event) {
