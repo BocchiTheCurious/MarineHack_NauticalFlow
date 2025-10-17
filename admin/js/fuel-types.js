@@ -1,10 +1,12 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { getFuelTypes, addFuelType, deleteFuelType, updateFuelType } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let fuelTypeModal;
 let allFuelTypes = [];
+let fuelTypePaginationController = null;  
+let fuelTypeSearchController = null; 
 
 toastr.options = toastr.options = {
     "closeButton": true,
@@ -31,6 +33,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializeFuelTypesPage() {
     fuelTypeModal = new bootstrap.Modal(document.getElementById('fuelTypeModal'));
     await loadAndRenderFuelTypes();
+    
+    // Initialize search
+    fuelTypeSearchController = initializeTableSearch(
+        'fuel-type-search-input',
+        allFuelTypes,
+        ['name', 'co2Factor'], // Search in name and CO2 factor
+        (filteredData) => {
+            renderFuelTypesTable(filteredData);
+        },
+        {
+            debounceDelay: 300,
+            placeholder: 'Search fuel types...',
+            showResultCount: true,
+            minCharacters: 0
+        }
+    );
+    
+    // Add clear button to search
+    addSearchClearButton('fuel-type-search-input', () => {
+        renderFuelTypesTable(allFuelTypes);
+    });
+    
     document.getElementById('fuelTypeForm').addEventListener('submit', handleSaveFuelType);
     document.querySelector('#fuel-types-table tbody').addEventListener('click', handleTableActions);
     document.getElementById('fuelTypeModal').addEventListener('show.bs.modal', handleModalOpen);
@@ -42,6 +66,15 @@ async function initializeFuelTypesPage() {
 async function loadAndRenderFuelTypes() {
     try {
         allFuelTypes = await getFuelTypes();
+        
+        // Make table scrollable (only once)
+        makeTableScrollable('fuel-types-table', 400);
+        
+        // Update search controller with new data
+        if (fuelTypeSearchController) {
+            fuelTypeSearchController.setDataset(allFuelTypes);
+        }
+        
         renderFuelTypesTable(allFuelTypes);
     } catch (error) {
         toastr.error('Could not load fuel types.', 'Load Failed');
@@ -50,19 +83,57 @@ async function loadAndRenderFuelTypes() {
 
 function renderFuelTypesTable(fuelTypes) {
     const tableBody = document.querySelector('#fuel-types-table tbody');
-    tableBody.innerHTML = '';
-    fuelTypes.forEach(ft => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${ft.name}</td>
-            <td>${ft.co2Factor}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Fuel Type" data-bs-toggle="modal" data-bs-target="#fuelTypeModal" data-fuel-type-id="${ft.id}"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Fuel Type" data-fuel-type-id="${ft.id}"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    
+    if (fuelTypes.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No fuel types found.</td></tr>';
+        // Destroy pagination if no data
+        if (fuelTypePaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            fuelTypePaginationController = null;
+        }
+        return;
+    }
+
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(ft => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${ft.name}</td>
+                <td>${ft.co2Factor}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Fuel Type" data-bs-toggle="modal" data-bs-target="#fuelTypeModal" data-fuel-type-id="${ft.id}"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Fuel Type" data-fuel-type-id="${ft.id}"><i class="bi bi-trash"></i></button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination
+    if (!fuelTypePaginationController) {
+        fuelTypePaginationController = initializePagination(
+            'fuel-types-table',
+            fuelTypes,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true
+            }
+        );
+    } else {
+        fuelTypePaginationController.setData(fuelTypes);
+    }
+
+    // Initial render
+    fuelTypePaginationController.render();
 }
 
 function handleModalOpen(event) {

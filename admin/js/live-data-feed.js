@@ -3,9 +3,115 @@ import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLo
 import { loadLayout } from './modules/layout.js';
 import { getPorts, getWeatherData } from './modules/api.js';
 
+// === SAFETY ASSESSMENT CONFIGURATION ===
+const SAFETY_THRESHOLDS = {
+    waveHeight: {
+        safe: 2.0,      // meters
+        caution: 4.0    // anything above is dangerous
+    },
+    windSpeed: {
+        safe: 40,       // km/h
+        caution: 60     // anything above is dangerous
+    },
+    temperature: {
+        safe: { min: 10, max: 35 }  // °C - extreme temps are concerning
+    }
+};
+
+/**
+ * Assesses the safety level based on a value and thresholds
+ * @param {number} value - The current value to assess
+ * @param {object} thresholds - Object with 'safe' and 'caution' limits
+ * @param {boolean} reverse - If true, lower values are more dangerous
+ * @returns {string} 'safe', 'caution', or 'dangerous'
+ */
+function assessSafetyLevel(value, thresholds, reverse = false) {
+    if (reverse) {
+        if (value >= thresholds.safe) return 'safe';
+        if (value >= thresholds.caution) return 'caution';
+        return 'dangerous';
+    } else {
+        if (value <= thresholds.safe) return 'safe';
+        if (value <= thresholds.caution) return 'caution';
+        return 'dangerous';
+    }
+}
+
+/**
+ * Performs a comprehensive safety assessment of weather conditions
+ * @param {object} weatherData - Current weather data
+ * @returns {object} Safety assessment with overall status, warnings, and details
+ */
+function performSafetyAssessment(weatherData) {
+    const current = weatherData.current;
+
+    // Assess individual parameters
+    const waveStatus = assessSafetyLevel(current.wave_height, SAFETY_THRESHOLDS.waveHeight);
+    const windStatus = assessSafetyLevel(current.wind_speed_10m, SAFETY_THRESHOLDS.windSpeed);
+
+    // Temperature assessment
+    let tempStatus = 'safe';
+    if (current.temperature_2m < SAFETY_THRESHOLDS.temperature.safe.min ||
+        current.temperature_2m > SAFETY_THRESHOLDS.temperature.safe.max) {
+        tempStatus = 'caution';
+    }
+
+    // Determine overall status (worst case wins)
+    const statuses = [waveStatus, windStatus, tempStatus];
+    let overallStatus = 'safe';
+    if (statuses.includes('dangerous')) overallStatus = 'dangerous';
+    else if (statuses.includes('caution')) overallStatus = 'caution';
+
+    // Build warnings array
+    const warnings = [];
+    if (windStatus !== 'safe') {
+        warnings.push({
+            type: 'wind',
+            level: windStatus,
+            message: `Wind speed ${windStatus === 'dangerous' ? 'exceeds' : 'approaching'} safe limits (${current.wind_speed_10m.toFixed(1)}/${SAFETY_THRESHOLDS.windSpeed[windStatus === 'dangerous' ? 'caution' : 'safe']} km/h)`,
+            recommendation: windStatus === 'dangerous'
+                ? 'Operations not recommended. Delay departure until conditions improve.'
+                : 'Exercise caution. Enhanced safety protocols advised for docking operations.'
+        });
+    }
+
+    if (waveStatus !== 'safe') {
+        warnings.push({
+            type: 'wave',
+            level: waveStatus,
+            message: `Wave height ${waveStatus === 'dangerous' ? 'exceeds' : 'above'} safe operational limits (${current.wave_height.toFixed(1)}m/${SAFETY_THRESHOLDS.waveHeight[waveStatus === 'dangerous' ? 'caution' : 'safe']}m)`,
+            recommendation: waveStatus === 'dangerous'
+                ? 'High risk to crew safety. Postpone operations until sea state improves.'
+                : 'Moderate sea conditions. Use tugboat assistance and increase mooring lines.'
+        });
+    }
+
+    if (tempStatus !== 'safe') {
+        const isHot = current.temperature_2m > SAFETY_THRESHOLDS.temperature.safe.max;
+        warnings.push({
+            type: 'temperature',
+            level: tempStatus,
+            message: `${isHot ? 'High' : 'Low'} temperature conditions (${current.temperature_2m.toFixed(1)}°C)`,
+            recommendation: isHot
+                ? 'Heat stress risk. Ensure crew hydration and limit outdoor exposure times.'
+                : 'Cold conditions. Ensure crew has appropriate cold weather gear.'
+        });
+    }
+
+    return {
+        overall: overallStatus,
+        warnings: warnings,
+        details: {
+            wave: { status: waveStatus, value: current.wave_height },
+            wind: { status: windStatus, value: current.wind_speed_10m },
+            temperature: { status: tempStatus, value: current.temperature_2m }
+        }
+    };
+}
+
 let allPorts = [];
 
-document.addEventListener('DOMContentLoaded', async () => { 
+document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
     await loadLayout();
 
@@ -26,11 +132,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializeLiveDataPage() {
     const portSelector = document.getElementById('port-selector');
     const refreshBtn = document.getElementById('refresh-weather-btn');
-    
+
     try {
         allPorts = await getPorts();
         populatePortSelector(allPorts);
-        
+
         if (allPorts.length > 0) {
             // Fetch weather for the initially selected port
             await fetchAndDisplayWeatherForSelectedPort();
@@ -54,11 +160,11 @@ async function initializeLiveDataPage() {
 async function fetchAndDisplayWeatherForSelectedPort() {
     const portSelector = document.getElementById('port-selector');
     const selectedPort = allPorts.find(p => p.id == portSelector.value);
-    
+
     if (selectedPort) {
         const refreshBtn = document.getElementById('refresh-weather-btn');
         const originalBtnText = refreshBtn.innerHTML;
-        
+
         // Disable button and show loading state
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...`;
@@ -88,7 +194,7 @@ async function fetchAndDisplayWeather(lat, lon, portName) {
         console.log('---------------------------------');
 
         updateWeatherCards(weatherData, portName);
-        updateForecastCards(weatherData.hourly);
+        updateForecastCards(weatherData.hourly, weatherData);
     } catch (error) {
         // Log any errors that occur during the fetch
         console.error('Error fetching or displaying weather:', error);
@@ -121,7 +227,10 @@ function populatePortSelector(ports) {
  */
 function updateWeatherCards(data, portName) {
     const weather = data.current;
-    const weatherInfo = getWeatherInfoFromCode(weather.weather_code); 
+    const weatherInfo = getWeatherInfoFromCode(weather.weather_code);
+
+    // Perform safety assessment
+    const safetyAssessment = performSafetyAssessment(data);
 
     // Update Weather Card
     document.getElementById('location-name').textContent = portName;
@@ -130,50 +239,276 @@ function updateWeatherCards(data, portName) {
     document.getElementById('weather-temp').textContent = `${weather.temperature_2m.toFixed(1)} °C`;
     document.getElementById('wind-speed').textContent = `${weather.wind_speed_10m.toFixed(1)} km/h`;
 
+    // Add safety indicator to wind speed
+    const windSafetyIcon = getSafetyIcon(safetyAssessment.details.wind.status);
+    document.getElementById('wind-speed').innerHTML = `${weather.wind_speed_10m.toFixed(1)} km/h ${windSafetyIcon}`;
+
+    // Add safety indicator to temperature
+    const tempSafetyIcon = getSafetyIcon(safetyAssessment.details.temperature.status);
+    document.getElementById('weather-temp').innerHTML = `${weather.temperature_2m.toFixed(1)} °C ${tempSafetyIcon}`;
+
     // Update Wave Card
     document.getElementById('wave-height').textContent = `${weather.wave_height.toFixed(1)} m`;
     document.getElementById('wave-period').textContent = `${weather.wave_period.toFixed(1)} s`;
     document.getElementById('wave-direction').textContent = `${weather.wave_direction.toFixed(0)} °`;
+
+    // Add safety indicators to wave data
+    const waveSafetyIcon = getSafetyIcon(safetyAssessment.details.wave.status);
+    document.getElementById('wave-height').innerHTML = `${weather.wave_height.toFixed(1)} m ${waveSafetyIcon}`;
+
+    const periodSafetyIcon = getSafetyIcon('safe'); // Wave period is informational
+    document.getElementById('wave-period').innerHTML = `${weather.wave_period.toFixed(1)} s ${periodSafetyIcon}`;
+
+    const directionSafetyIcon = getSafetyIcon('safe'); // Direction is informational
+    document.getElementById('wave-direction').innerHTML = `${weather.wave_direction.toFixed(0)} ° ${directionSafetyIcon}`;
+
+    // Update safety status badges on card headers
+    const weatherBadge = document.getElementById('weather-safety-badge');
+    const waveBadge = document.getElementById('wave-safety-badge');
+
+    // Determine weather card status (based on wind and temperature)
+    let weatherCardStatus = 'safe';
+    if (safetyAssessment.details.wind.status === 'dangerous' ||
+        safetyAssessment.details.temperature.status === 'dangerous') {
+        weatherCardStatus = 'dangerous';
+    } else if (safetyAssessment.details.wind.status === 'caution' ||
+        safetyAssessment.details.temperature.status === 'caution') {
+        weatherCardStatus = 'caution';
+    }
+
+    // Update Weather Card badge
+    weatherBadge.className = `badge ${getSafetyStatusClass(weatherCardStatus)} text-white`;
+    weatherBadge.innerHTML = `${getSafetyIcon(weatherCardStatus)} ${getSafetyStatusText(weatherCardStatus)}`;
+
+    // Update Wave Card badge
+    waveBadge.className = `badge ${getSafetyStatusClass(safetyAssessment.details.wave.status)} text-white`;
+    waveBadge.innerHTML = `${getSafetyIcon(safetyAssessment.details.wave.status)} ${getSafetyStatusText(safetyAssessment.details.wave.status)}`;
+
+    // Add educational tooltips
+    addTooltip('weather-temp', 'Safe operating temperature: 10°C - 35°C. Extreme temperatures require additional crew protection.');
+    addTooltip('wind-speed', 'Safe wind speed: < 40 km/h. Higher winds may require tugboat assistance or operation delays.');
+    addTooltip('wave-height', 'Safe wave height: < 2.0m. Higher waves increase risks during docking and crew operations.');
+
+    // Initialize tooltips
+    initializeSafetyTooltips();
+
+    // Update overall safety banner// Update the overall safety assessment banner
+    updateSafetyBanner(safetyAssessment);
+}
+
+
+
+/**
+ * Returns the appropriate emoji/icon for a safety status
+ * @param {string} status - 'safe', 'caution', or 'dangerous'
+ * @returns {string} The icon HTML
+ */
+function getSafetyIcon(status) {
+    const icons = {
+        'safe': '✅',
+        'caution': '⚠️',
+        'dangerous': '🔴'
+    };
+    return icons[status] || '';
 }
 
 /**
- * Updates the forecast section with hourly data.
- * @param {Object} hourlyData - The hourly forecast data from the API.
+ * Returns CSS class for safety status styling
+ * @param {string} status - 'safe', 'caution', or 'dangerous'
+ * @returns {string} The CSS class name
  */
-function updateForecastCards(hourlyData) {
+function getSafetyStatusClass(status) {
+    const classes = {
+        'safe': 'bg-success',
+        'caution': 'bg-warning',
+        'dangerous': 'bg-danger'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+/**
+ * Returns a readable status text
+ * @param {string} status - 'safe', 'caution', or 'dangerous'
+ * @returns {string} Human-readable status
+ */
+function getSafetyStatusText(status) {
+    const texts = {
+        'safe': 'SAFE',
+        'caution': 'CAUTION',
+        'dangerous': 'DANGEROUS'
+    };
+    return texts[status] || 'UNKNOWN';
+}
+
+/**
+ * Updates the overall safety assessment banner with warnings and recommendations
+ * @param {object} safetyAssessment - The complete safety assessment object
+ */
+function updateSafetyBanner(safetyAssessment) {
+    const banner = document.getElementById('safety-assessment-banner');
+    const overallIcon = document.getElementById('safety-overall-icon');
+    const overallStatus = document.getElementById('safety-overall-status');
+    const overallMessage = document.getElementById('safety-overall-message');
+    const warningsContainer = document.getElementById('safety-warnings-container');
+    const warningsList = document.getElementById('safety-warnings-list');
+
+    // Show the banner
+    banner.classList.remove('d-none');
+
+    // Update overall status
+    const statusClass = getSafetyStatusClass(safetyAssessment.overall);
+    const statusText = getSafetyStatusText(safetyAssessment.overall);
+    const statusIcon = getSafetyIcon(safetyAssessment.overall);
+
+    overallStatus.className = `badge ${statusClass} text-white`;
+    overallStatus.innerHTML = `${statusIcon} ${statusText}`;
+
+    // Update icon based on status
+    const iconClasses = {
+        'safe': 'bi-shield-check text-success',
+        'caution': 'bi-shield-exclamation text-warning',
+        'dangerous': 'bi-shield-x text-danger'
+    };
+    overallIcon.className = `bi ${iconClasses[safetyAssessment.overall]} display-4`;
+
+    // Update overall message
+    const messages = {
+        'safe': 'All conditions are within safe operational limits. Normal operations may proceed.',
+        'caution': 'Some conditions require attention. Operations may proceed with enhanced safety protocols.',
+        'dangerous': 'Hazardous conditions detected. Operations are not recommended at this time.'
+    };
+    overallMessage.textContent = messages[safetyAssessment.overall];
+
+    // Handle warnings
+    if (safetyAssessment.warnings.length > 0) {
+        warningsContainer.classList.remove('d-none');
+        warningsList.innerHTML = '';
+
+        safetyAssessment.warnings.forEach((warning, index) => {
+            const warningCard = document.createElement('div');
+            warningCard.className = `alert alert-${warning.level === 'dangerous' ? 'danger' : 'warning'} mb-3`;
+            warningCard.innerHTML = `
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="bi bi-${warning.level === 'dangerous' ? 'exclamation-octagon' : 'exclamation-triangle'}-fill fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading mb-2">
+                            ${getSafetyIcon(warning.level)} 
+                            ${warning.type.charAt(0).toUpperCase() + warning.type.slice(1)} ${warning.level === 'dangerous' ? 'DANGER' : 'WARNING'}
+                        </h6>
+                        <p class="mb-2"><strong>Issue:</strong> ${warning.message}</p>
+                        <p class="mb-0">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            <strong>Recommendation:</strong> ${warning.recommendation}
+                        </p>
+                    </div>
+                </div>
+            `;
+            warningsList.appendChild(warningCard);
+        });
+    } else {
+        warningsContainer.classList.add('d-none');
+    }
+}
+
+/**
+ * Updates the forecast section with hourly data and safety assessments.
+ * @param {Object} hourlyData - The hourly forecast data from the API.
+ * @param {Object} currentData - The current weather data for baseline comparison.
+ */
+function updateForecastCards(hourlyData, currentData) {
     const container = document.getElementById('forecast-container');
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     const forecastRow = document.getElementById('forecast-row');
-    
+
     if (!hourlyData || !hourlyData.time || hourlyData.time.length === 0) {
         forecastRow.classList.add('d-none');
         return;
     }
     forecastRow.classList.remove('d-none');
-    
+
     const forecastHours = [6, 12, 24, 48];
     const currentTime = new Date();
 
     forecastHours.forEach(hourOffset => {
         const forecastTime = new Date(currentTime.getTime() + hourOffset * 60 * 60 * 1000);
         const closestIndex = findClosestTimeIndex(hourlyData.time, forecastTime);
-        
+
         if (closestIndex === -1) return;
 
         const time = new Date(hourlyData.time[closestIndex]);
         const weatherInfo = getWeatherInfoFromCode(hourlyData.weather_code[closestIndex]);
-        
+
+        // Assess safety for this forecast period
+        const forecastSafety = assessForecastSafety(
+            hourlyData.wave_height[closestIndex],
+            hourlyData.wind_speed_10m[closestIndex],
+            hourlyData.temperature_2m[closestIndex]
+        );
+
         const col = document.createElement('div');
-        col.className = 'col-md-3 text-center mb-3';
+        col.className = 'col-md-3 mb-3';
+
+        // Determine border color based on safety status
+        const borderClass = {
+            'safe': 'border-success',
+            'caution': 'border-warning',
+            'dangerous': 'border-danger'
+        }[forecastSafety.overall] || 'border-secondary';
+
         col.innerHTML = `
-            <h6 class="text-muted">+${hourOffset} Hours (${time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})</h6>
-            <i class="bi ${weatherInfo.icon} display-6 ${weatherInfo.color}"></i>
-            <p class="mb-1"><strong>${hourlyData.temperature_2m[closestIndex].toFixed(1)}°C</strong></p>
-            <p class="mb-1">Wind: ${hourlyData.wind_speed_10m[closestIndex].toFixed(1)} km/h</p>
-            <p class="mb-0">Waves: ${hourlyData.wave_height[closestIndex].toFixed(1)}m</p>
+            <div class="card h-100 ${borderClass}" style="border-width: 3px;">
+                <div class="card-header text-center ${getSafetyStatusClass(forecastSafety.overall)} text-white py-2">
+                    <strong>${getSafetyIcon(forecastSafety.overall)} ${getSafetyStatusText(forecastSafety.overall)}</strong>
+                </div>
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-3">+${hourOffset} Hours</h6>
+                    <p class="small text-muted mb-3">${time.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                    <i class="bi ${weatherInfo.icon} display-6 ${weatherInfo.color} mb-3"></i>
+                    <p class="mb-2"><strong>${hourlyData.temperature_2m[closestIndex].toFixed(1)}°C</strong> ${getSafetyIcon(forecastSafety.details.temperature)}</p>
+                    <p class="mb-2 small">Wind: ${hourlyData.wind_speed_10m[closestIndex].toFixed(1)} km/h ${getSafetyIcon(forecastSafety.details.wind)}</p>
+                    <p class="mb-0 small">Waves: ${hourlyData.wave_height[closestIndex].toFixed(1)}m ${getSafetyIcon(forecastSafety.details.wave)}</p>
+                </div>
+            </div>
         `;
         container.appendChild(col);
     });
+}
+
+/**
+ * Assesses safety for a specific forecast period
+ * @param {number} waveHeight - Wave height in meters
+ * @param {number} windSpeed - Wind speed in km/h
+ * @param {number} temperature - Temperature in Celsius
+ * @returns {object} Safety assessment for the forecast period
+ */
+function assessForecastSafety(waveHeight, windSpeed, temperature) {
+    // Assess individual parameters
+    const waveStatus = assessSafetyLevel(waveHeight, SAFETY_THRESHOLDS.waveHeight);
+    const windStatus = assessSafetyLevel(windSpeed, SAFETY_THRESHOLDS.windSpeed);
+
+    // Temperature assessment
+    let tempStatus = 'safe';
+    if (temperature < SAFETY_THRESHOLDS.temperature.safe.min ||
+        temperature > SAFETY_THRESHOLDS.temperature.safe.max) {
+        tempStatus = 'caution';
+    }
+
+    // Determine overall status (worst case wins)
+    const statuses = [waveStatus, windStatus, tempStatus];
+    let overallStatus = 'safe';
+    if (statuses.includes('dangerous')) overallStatus = 'dangerous';
+    else if (statuses.includes('caution')) overallStatus = 'caution';
+
+    return {
+        overall: overallStatus,
+        details: {
+            wave: waveStatus,
+            wind: windStatus,
+            temperature: tempStatus
+        }
+    };
 }
 
 /**
@@ -184,16 +519,19 @@ function showLoadingState(isLoading) {
     const loadingOverlay = document.getElementById('loading-overlay');
     const weatherDataRow = document.getElementById('weather-data-row');
     const forecastRow = document.getElementById('forecast-row');
-    
+    const safetyLegend = document.getElementById('safety-legend');
+
     if (isLoading) {
         loadingOverlay.classList.remove('d-none');
         loadingOverlay.classList.add('d-flex');
         weatherDataRow.classList.add('d-none');
         forecastRow.classList.add('d-none');
+        if (safetyLegend) safetyLegend.classList.add('d-none');
     } else {
         loadingOverlay.classList.add('d-none');
         loadingOverlay.classList.remove('d-flex');
         weatherDataRow.classList.remove('d-none');
+        if (safetyLegend) safetyLegend.classList.remove('d-none');
     }
 }
 
@@ -236,4 +574,30 @@ function getWeatherInfoFromCode(code) {
         95: { icon: "bi-cloud-lightning-rain-fill", color: "text-danger", description: "Thunderstorm" }
     };
     return weatherMap[code] || { icon: "bi-question-circle", color: "", description: "Unknown" };
+}
+
+/**
+ * Initializes Bootstrap tooltips for safety information
+ * This provides educational hover text explaining the safety indicators
+ */
+function initializeSafetyTooltips() {
+    // Add tooltips to safety badges if Bootstrap tooltip is available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
+}
+
+/**
+ * Adds educational tooltips to elements
+ * @param {string} elementId - The ID of the element
+ * @param {string} tooltipText - The tooltip text to display
+ */
+function addTooltip(elementId, tooltipText) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.setAttribute('data-bs-toggle', 'tooltip');
+        element.setAttribute('data-bs-placement', 'top');
+        element.setAttribute('title', tooltipText);
+    }
 }

@@ -1,6 +1,8 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, showLoader, hideLoader,  initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { getPorts, addPort, deletePort, updatePort } from './modules/api.js';
+// Import review functions
+import { getPortReviews, getPortReviewsSummary, getMyPortReview, addPortReview, deletePortReview } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 let allPorts = [];
@@ -9,6 +11,10 @@ let portMap;
 let mapMarkers = [];
 let importModal;
 let parsedImportData = [];
+let reviewModal;
+let allReviewsModal;
+let portPaginationController = null;
+let portSearchController = null; 
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
@@ -27,16 +33,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializePortDataPage() {
     portModal = new bootstrap.Modal(document.getElementById('portModal'));
     importModal = new bootstrap.Modal(document.getElementById('importModal'));
+    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    allReviewsModal = new bootstrap.Modal(document.getElementById('allReviewsModal'));
+
 
     initializeMap();
     await loadAndRenderPorts();
 
     document.getElementById('portForm').addEventListener('submit', handleSavePort);
-    document.getElementById('port-search-input').addEventListener('input', handleSearch);
     document.querySelector('#port-data-table tbody').addEventListener('click', handleTableActions);
     document.getElementById('portModal').addEventListener('show.bs.modal', handleModalOpen);
     document.getElementById('locodePasteInput').addEventListener('input', handleCoordsPaste);
     document.getElementById('portCongestionIndex').addEventListener('input', handleSliderChange);
+
+    portSearchController = initializeTableSearch(
+        'port-search-input',
+        allPorts,
+        ['name', 'country'], // Search in name and country fields
+        (filteredData) => {
+            renderPortsTable(filteredData);
+            renderMapMarkers(filteredData);
+        },
+        {
+            debounceDelay: 300,
+            placeholder: 'Search ports by name or country...',
+            showResultCount: true,
+            minCharacters: 0
+        }
+    );
+    
+    // Add clear button to search
+    addSearchClearButton('port-search-input', () => {
+        renderPortsTable(allPorts);
+        renderMapMarkers(allPorts);
+    });
 
     // DEBUG: Check if elements exist
     console.log('CSV File Input:', document.getElementById('csvFileInput'));
@@ -51,6 +81,329 @@ async function initializePortDataPage() {
     document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
 
     console.log('CSV Import listeners attached!');
+
+    document.getElementById('download-template-btn').addEventListener('click', downloadCSVTemplate);
+
+    document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+
+    // NEW: Review form listeners
+    document.getElementById('reviewForm').addEventListener('submit', handleSubmitReview);
+    document.getElementById('reviewComment').addEventListener('input', updateCharCount);
+    document.getElementById('reviewSortOrder').addEventListener('change', handleReviewSortChange);
+
+    // Initialize star rating input
+    initializeStarRating();
+}
+
+function downloadCSVTemplate() {
+    // Define the CSV headers matching the system's expected columns
+    const headers = [
+        'portName',
+        'countryName',
+        'latitude',
+        'longitude',
+        'harborSize',
+        'harborType',
+        'maxVesselLength',
+        'maxVesselBeam',
+        'maxVesselDraft',
+        'firstPortOfEntry',
+        'chDepth',
+        'anDepth',
+        'cpDepth',
+        'shelter',
+        'goodHoldingGround',
+        'turningArea',
+        'suWater',
+        'suProvisions',
+        'ptAvailable',
+        'tugsAssist',
+        'medFacilities',
+        'garbageDisposal',
+        'dirtyBallast',
+        'repairCode',
+        'erTide',
+        'erSwell',
+        'erIce',
+        'qtPratique',
+        'qtSanitation'
+    ];
+
+    // Create sample data rows with instructions
+    const sampleData = [
+        [
+            'Port of Miami',
+            'United States',
+            '25.7743',
+            '-80.1937',
+            'L',
+            'CB',
+            '350',
+            '50',
+            '15',
+            'Y',
+            '12',
+            '10',
+            '11',
+            'E',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'N',
+            'N',
+            'N',
+            'Y',
+            'Y'
+        ],
+        [
+            'Port of Barcelona',
+            'Spain',
+            '41.3851',
+            '2.1734',
+            'L',
+            'CB',
+            '400',
+            '60',
+            '16',
+            'Y',
+            '14',
+            '12',
+            '13',
+            'G',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'Y',
+            'N',
+            'Y',
+            'N',
+            'Y',
+            'Y'
+        ]
+    ];
+
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+
+    // Add sample rows
+    sampleData.forEach(row => {
+        csvContent += row.join(',') + '\n';
+    });
+
+    // Add instruction rows (commented out)
+    csvContent += '\n# INSTRUCTIONS:\n';
+    csvContent += '# portName: Full name of the port\n';
+    csvContent += '# countryName: Country where port is located\n';
+    csvContent += '# latitude: Decimal degrees (e.g., 25.7743)\n';
+    csvContent += '# longitude: Decimal degrees (e.g., -80.1937)\n';
+    csvContent += '# harborSize: L=Large, M=Medium, S=Small, V=Very Small\n';
+    csvContent += '# harborType: CB=Coastal Breakwater, CN=Coastal Natural, OR=Open Roadstead, RB=River Basin, etc.\n';
+    csvContent += '# maxVesselLength/Beam/Draft: In meters\n';
+    csvContent += '# firstPortOfEntry: Y=Yes, N=No\n';
+    csvContent += '# chDepth: Channel depth in meters\n';
+    csvContent += '# anDepth: Anchorage depth in meters\n';
+    csvContent += '# cpDepth: Cargo pier depth in meters\n';
+    csvContent += '# shelter: E=Excellent, G=Good, F=Fair, P=Poor, N=None\n';
+    csvContent += '# goodHoldingGround/turningArea: Y=Yes, N=No\n';
+    csvContent += '# Facilities (suWater, suProvisions, ptAvailable, tugsAssist, medFacilities, garbageDisposal, dirtyBallast): Y=Yes, N=No\n';
+    csvContent += '# repairCode: Y=Yes, N=No (repair facilities available)\n';
+    csvContent += '# Entrance Restrictions (erTide, erSwell, erIce): Y=Yes, N=No\n';
+    csvContent += '# Quarantine (qtPratique, qtSanitation): Y=Yes, N=No\n';
+    csvContent += '# \n';
+    csvContent += '# Delete these instruction rows and sample data before importing your own data\n';
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'port_import_template.csv');
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toastr.success('CSV template downloaded successfully!', 'Download Complete');
+}
+
+async function exportToExcel() {
+    try {
+        showLoader();
+
+        // Fetch all ports from database
+        const ports = await getPorts();
+
+        if (ports.length === 0) {
+            hideLoader();
+            showAlert('No ports to export', 'warning');
+            return;
+        }
+
+        // Helper function to convert boolean to Y/N
+        const toYN = (val) => {
+            if (val === true) return 'Y';
+            if (val === false) return 'N';
+            return '';
+        };
+
+        // Prepare data for export
+        const exportData = ports.map(port => ({
+            'Port ID': `P${String(port.id).padStart(3, '0')}`,
+            'portName': port.name,
+            'countryName': port.country,
+            'latitude': port.latitude,
+            'longitude': port.longitude,
+            'Port Congestion Index': port.portCongestionIndex,
+            'harborSize': port.harborSize || '',
+            'harborType': port.harborType || '',
+            'maxVesselLength': port.maxVesselLength || '',
+            'maxVesselBeam': port.maxVesselBeam || '',
+            'maxVesselDraft': port.maxVesselDraft || '',
+            'firstPortOfEntry': toYN(port.firstPortOfEntry),
+            'chDepth': port.channelDepth || '',
+            'anDepth': port.anchorageDepth || '',
+            'cpDepth': port.cargoPierDepth || '',
+            'shelter': port.shelterAfforded || '',
+            'goodHoldingGround': toYN(port.goodHoldingGround),
+            'turningArea': toYN(port.turningArea),
+            'suWater': toYN(port.facilities?.potableWater),
+            'suProvisions': toYN(port.facilities?.provisions),
+            'ptAvailable': toYN(port.facilities?.pilotService),
+            'tugsAssist': toYN(port.facilities?.tugService),
+            'medFacilities': toYN(port.facilities?.medicalFacilities),
+            'garbageDisposal': toYN(port.facilities?.garbageDisposal),
+            'dirtyBallast': toYN(port.facilities?.ballastDisposal),
+            'repairCode': toYN(port.facilities?.repairFacilities),
+            'erTide': toYN(port.entranceRestrictions?.tide),
+            'erSwell': toYN(port.entranceRestrictions?.swell),
+            'erIce': toYN(port.entranceRestrictions?.ice),
+            'qtPratique': toYN(port.quarantine?.pratique),
+            'qtSanitation': toYN(port.quarantine?.sanitation)
+        }));
+
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(exportData);
+
+        // Set column widths
+        const columnWidths = [
+            { wch: 10 },  // Port ID
+            { wch: 30 },  // portName
+            { wch: 20 },  // countryName
+            { wch: 12 },  // latitude
+            { wch: 12 },  // longitude
+            { wch: 18 },  // Port Congestion Index
+            { wch: 12 },  // harborSize
+            { wch: 12 },  // harborType
+            { wch: 18 },  // maxVesselLength
+            { wch: 16 },  // maxVesselBeam
+            { wch: 16 },  // maxVesselDraft
+            { wch: 16 },  // firstPortOfEntry
+            { wch: 12 },  // chDepth
+            { wch: 12 },  // anDepth
+            { wch: 12 },  // cpDepth
+            { wch: 10 },  // shelter
+            { wch: 18 },  // goodHoldingGround
+            { wch: 14 },  // turningArea
+            { wch: 12 },  // suWater
+            { wch: 14 },  // suProvisions
+            { wch: 14 },  // ptAvailable
+            { wch: 12 },  // tugsAssist
+            { wch: 14 },  // medFacilities
+            { wch: 16 },  // garbageDisposal
+            { wch: 14 },  // dirtyBallast
+            { wch: 12 },  // repairCode
+            { wch: 10 },  // erTide
+            { wch: 10 },  // erSwell
+            { wch: 10 },  // erIce
+            { wch: 12 },  // qtPratique
+            { wch: 14 }   // qtSanitation
+        ];
+        ws['!cols'] = columnWidths;
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Ports');
+
+        // Create a second sheet with instructions
+        const instructions = [
+            ['NauticalFlow Port Data Export'],
+            [''],
+            ['COLUMN DESCRIPTIONS:'],
+            ['Port ID', 'Unique identifier for each port in the system'],
+            ['portName', 'Full name of the port'],
+            ['countryName', 'Country where the port is located'],
+            ['latitude', 'Latitude in decimal degrees'],
+            ['longitude', 'Longitude in decimal degrees'],
+            ['Port Congestion Index', 'Average wait time percentage (0-100)'],
+            ['harborSize', 'L=Large, M=Medium, S=Small, V=Very Small'],
+            ['harborType', 'CB=Coastal Breakwater, CN=Coastal Natural, OR=Open Roadstead, RB=River Basin, etc.'],
+            ['maxVesselLength', 'Maximum vessel length in meters'],
+            ['maxVesselBeam', 'Maximum vessel beam in meters'],
+            ['maxVesselDraft', 'Maximum vessel draft in meters'],
+            ['firstPortOfEntry', 'Y=Yes, N=No - Has customs and immigration'],
+            ['chDepth', 'Channel depth in meters'],
+            ['anDepth', 'Anchorage depth in meters'],
+            ['cpDepth', 'Cargo pier depth in meters'],
+            ['shelter', 'E=Excellent, G=Good, F=Fair, P=Poor, N=None'],
+            ['goodHoldingGround', 'Y=Yes, N=No - Secure anchorage'],
+            ['turningArea', 'Y=Yes, N=No - Space for vessel turning'],
+            ['suWater', 'Y=Yes, N=No - Potable water available'],
+            ['suProvisions', 'Y=Yes, N=No - Provisions available'],
+            ['ptAvailable', 'Y=Yes, N=No - Pilot service available'],
+            ['tugsAssist', 'Y=Yes, N=No - Tugboat service available'],
+            ['medFacilities', 'Y=Yes, N=No - Medical facilities available'],
+            ['garbageDisposal', 'Y=Yes, N=No - Garbage disposal available'],
+            ['dirtyBallast', 'Y=Yes, N=No - Ballast disposal available'],
+            ['repairCode', 'Y=Yes, N=No - Repair facilities available'],
+            ['erTide', 'Y=Yes, N=No - Tide restrictions'],
+            ['erSwell', 'Y=Yes, N=No - Swell restrictions'],
+            ['erIce', 'Y=Yes, N=No - Ice restrictions'],
+            ['qtPratique', 'Y=Yes, N=No - Pratique services'],
+            ['qtSanitation', 'Y=Yes, N=No - Sanitation services'],
+            [''],
+            ['IMPORT INSTRUCTIONS:'],
+            ['1. To import this data back, remove the "Port ID" and "Port Congestion Index" columns'],
+            ['2. Save as CSV format'],
+            ['3. Use the Import CSV function in NauticalFlow'],
+            [''],
+            ['Export Date:', new Date().toLocaleString()],
+            ['Total Ports:', ports.length]
+        ];
+
+        const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+        wsInstructions['!cols'] = [{ wch: 25 }, { wch: 60 }];
+        XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filename = `NauticalFlow_Ports_${timestamp}.xlsx`;
+
+        // Write file
+        XLSX.writeFile(wb, filename);
+
+        hideLoader();
+        toastr.success(`Successfully exported ${ports.length} ports to Excel!`, 'Export Complete');
+
+    } catch (error) {
+        hideLoader();
+        console.error('Export error:', error);
+        showAlert('Failed to export data to Excel', 'danger');
+    }
 }
 
 // --- NEW: User-Friendly Input Handlers ---
@@ -267,6 +620,15 @@ function parseLocodeCoordinates(locodeString) {
 async function loadAndRenderPorts() {
     try {
         allPorts = await getPorts();
+        
+        // Make table scrollable (only once)
+        makeTableScrollable('port-data-table', 400);
+        
+        // Update search controller with new data
+        if (portSearchController) {
+            portSearchController.setDataset(allPorts);
+        }
+        
         renderPortsTable(allPorts);
         renderMapMarkers(allPorts);
     } catch (error) {
@@ -276,29 +638,61 @@ async function loadAndRenderPorts() {
 
 function renderPortsTable(ports) {
     const tableBody = document.querySelector('#port-data-table tbody');
-    tableBody.innerHTML = '';
-
+    
     if (ports.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No ports found.</td></tr>';
+        // Destroy pagination if no data
+        if (portPaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            portPaginationController = null;
+        }
         return;
     }
 
-    ports.forEach(port => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>P${String(port.id).padStart(3, '0')}</td>
-            <td>${port.name}</td>
-            <td>${port.country}</td>
-            <td>${parseFloat(port.latitude).toFixed(4)}</td>
-            <td>${parseFloat(port.longitude).toFixed(4)}</td>
-            <td>${parseFloat(port.portCongestionIndex).toFixed(2)}%</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Port" data-bs-toggle="modal" data-bs-target="#portModal" data-port-id="${port.id}"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port" data-port-id="${port.id}"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(port => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>P${String(port.id).padStart(3, '0')}</td>
+                <td>${port.name}</td>
+                <td>${port.country}</td>
+                <td>${parseFloat(port.latitude).toFixed(4)}</td>
+                <td>${parseFloat(port.longitude).toFixed(4)}</td>
+                <td>${parseFloat(port.portCongestionIndex).toFixed(2)}%</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit Port" data-bs-toggle="modal" data-bs-target="#portModal" data-port-id="${port.id}"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete Port" data-port-id="${port.id}"><i class="bi bi-trash"></i></button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination
+    if (!portPaginationController) {
+        portPaginationController = initializePagination(
+            'port-data-table',
+            ports,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true
+            }
+        );
+    } else {
+        portPaginationController.setData(ports);
+    }
+
+    // Initial render
+    portPaginationController.render();
 }
 
 async function handleTableActions(event) {
@@ -415,7 +809,11 @@ function updateBentoGrid(port) {
 
     // Box 4: Operational Data 
     updateOperationalData(port);
-      setTimeout(() => {
+
+    // Box 5: Reviews & Ratings (NEW)
+    updateReviews(port);
+
+    setTimeout(() => {
         if (portMap) {
             portMap.invalidateSize();
         }
@@ -492,34 +890,121 @@ function updateFacilities(port) {
     const facilities = port.facilities || {};
 
     const facilityList = [
-        { key: 'potableWater', label: 'Potable Water', icon: 'droplet' },
-        { key: 'provisions', label: 'Provisions', icon: 'basket' },
-        { key: 'pilotService', label: 'Pilot Service', icon: 'compass' },
-        { key: 'tugService', label: 'Tugboat Service', icon: 'life-preserver' },
-        { key: 'medicalFacilities', label: 'Medical Facilities', icon: 'heart-pulse' },
-        { key: 'garbageDisposal', label: 'Garbage Disposal', icon: 'trash' },
-        { key: 'ballastDisposal', label: 'Ballast Disposal', icon: 'water' },
-        { key: 'repairFacilities', label: 'Repair Facilities', icon: 'tools' }
+        {
+            key: 'potableWater',
+            label: 'Potable Water',
+            icon: 'droplet',
+            image: '../assets/img/potablewater.jpg',
+            description: 'Fresh drinking water supply for your cruise ship. Essential for passenger consumption, galley operations, and onboard facilities. Meets international health and safety standards for maritime use.'
+        },
+        {
+            key: 'provisions',
+            label: 'Provisions',
+            icon: 'basket',
+            image: '../assets/img/provisions.jpeg',
+            description: 'Complete food and supply services for cruise operations. Includes fresh produce, frozen goods, beverages, and specialty items for passenger dining. Suppliers coordinate with ship stores to ensure timely delivery before departure.'
+        },
+        {
+            key: 'pilotService',
+            label: 'Pilot Service',
+            icon: 'compass',
+            image: '../assets/img/pilotservice.webp',
+            description: 'Expert local pilots guide your cruise ship safely through harbor channels and port approaches. Required for safe navigation in unfamiliar waters. Available 24/7 for arrivals and departures.'
+        },
+        {
+            key: 'tugService',
+            label: 'Tugboat Service',
+            icon: 'life-preserver',
+            image: '../assets/img/tugboatservice.jpeg',
+            description: 'Powerful tugboats assist cruise ships with precise docking and undocking maneuvers. Critical for large vessels in tight berths and adverse weather conditions. Ensures passenger safety during port operations.'
+        },
+        {
+            key: 'medicalFacilities',
+            label: 'Medical Facilities',
+            icon: 'heart-pulse',
+            image: '../assets/img/medicalfacilities.webp',
+            description: 'Shore-based medical services for cruise passengers and crew. Provides emergency care, medical evacuations, pharmacy supplies, and crew health certifications. Available for both routine and urgent medical situations during port calls.'
+        },
+        {
+            key: 'garbageDisposal',
+            label: 'Garbage Disposal',
+            icon: 'trash',
+            image: '../assets/img/garbagedisposal.jpeg',
+            description: 'Proper waste management for cruise ship refuse in compliance with environmental regulations. Handles passenger and galley waste, recyclables, and hazardous materials. Provides required documentation for international compliance.'
+        },
+        {
+            key: 'ballastDisposal',
+            label: 'Ballast Disposal',
+            icon: 'water',
+            image: '../assets/img/ballastdisposal.jpeg',
+            description: 'Safe discharge facility for cruise ship ballast water. Prevents spread of invasive marine species between regions. Meets international ballast water management standards and provides compliance certificates.'
+        },
+        {
+            key: 'repairFacilities',
+            label: 'Repair Facilities',
+            icon: 'tools',
+            image: '../assets/img/repairfacilities.jpeg',
+            description: 'Emergency and scheduled maintenance services for cruise vessels. Includes engine repairs, hull work, electrical systems, and safety equipment servicing. Minimizes downtime to keep cruise schedules on track.'
+        }
     ];
 
     let html = '<h6 class="mb-3"><i class="bi bi-buildings me-2"></i>Port Facilities</h6>';
-    html += '<div class="facilities-grid">';
 
-    facilityList.forEach(facility => {
+    // Add scrollable container with single column
+    html += '<div class="facilities-list" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">';
+
+    facilityList.forEach((facility, index) => {
         const available = facilities[facility.key] === true;
         const statusClass = available ? 'facility-available' : 'facility-unavailable';
-        const icon = available ? 'check-circle-fill' : 'x-circle';
+        const statusIcon = available ? 'check-circle-fill' : 'x-circle';
+        const expandedClass = available ? 'show' : ''; // Auto-expand available facilities
+        const chevronClass = available ? 'bi-chevron-down' : 'bi-chevron-right';
 
         html += `
-            <div class="facility-item ${statusClass}">
-                <i class="bi bi-${icon}"></i>
-                <span>${facility.label}</span>
+            <div class="facility-item-wrapper mb-2 ${statusClass}">
+                <div class="facility-header" data-bs-toggle="collapse" data-bs-target="#facility-${facility.key}-${port.id}" style="cursor: pointer; padding: 0.75rem; background: white; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${statusIcon} me-2" style="font-size: 1.2rem;"></i>
+                        <span style="font-weight: 500;">${facility.label}</span>
+                    </div>
+                    <i class="bi ${chevronClass} chevron-icon" style="transition: transform 0.3s ease;"></i>
+                </div>
+                
+                <div class="collapse ${expandedClass}" id="facility-${facility.key}-${port.id}">
+                    <div class="facility-content p-3" style="background: #f8f9fa; border-radius: 0 0 8px 8px;">
+                        <div class="row">
+                            <div class="col-6">
+                                <img src="${facility.image}" alt="${facility.label}" class="img-fluid rounded" style="width: 250px; height: 250px; object-fit: cover;">
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-0" style="font-size: 0.9rem; line-height: 1.6;">${facility.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     });
 
     html += '</div>';
     facilitiesBox.innerHTML = html;
+
+    // Add event listeners for chevron rotation
+    document.querySelectorAll('.facility-header').forEach(header => {
+        header.addEventListener('click', function () {
+            const chevron = this.querySelector('.chevron-icon');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+            // Toggle chevron direction
+            if (chevron.classList.contains('bi-chevron-right')) {
+                chevron.classList.remove('bi-chevron-right');
+                chevron.classList.add('bi-chevron-down');
+            } else {
+                chevron.classList.remove('bi-chevron-down');
+                chevron.classList.add('bi-chevron-right');
+            }
+        });
+    });
 }
 
 function updateOperationalData(port) {
@@ -672,71 +1157,319 @@ function handleCSVFileSelect(event) {
     console.log('File selected:', file.name);
     showLoader();
 
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function (results) {
-            hideLoader();
-            console.log('CSV parsed, total rows:', results.data.length);
-            console.log('First row sample:', results.data[0]);
+    // Reset error display
+    document.getElementById('importErrors').classList.add('d-none');
+    document.getElementById('errorList').innerHTML = '';
 
-            parsedImportData = processWPIData(results.data);
-            console.log('Processed ports:', parsedImportData.length);
-            console.log('First processed port:', parsedImportData[0]);
+    // Check file type
+    const fileExtension = file.name.split('.').pop().toLowerCase();
 
-            displayImportPreview(parsedImportData);
-        },
-        error: function (error) {
+    if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Handle Excel file
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Get first sheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                console.log('Excel parsed, total rows:', jsonData.length);
+                console.log('First row sample:', jsonData[0]);
+                
+                processImportData(jsonData);
+                
+            } catch (error) {
+                hideLoader();
+                console.error('Excel parsing error:', error);
+                showAlert(`Excel parsing error: ${error.message}`, 'danger');
+            }
+        };
+        
+        reader.onerror = function() {
             hideLoader();
-            console.error('CSV parsing error:', error);
-            showAlert(`CSV parsing error: ${error.message}`, 'danger');
+            showAlert('Failed to read Excel file', 'danger');
+        };
+        
+        reader.readAsArrayBuffer(file);
+        
+    } else {
+        // Handle CSV file (existing Papa Parse logic)
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+                console.log('CSV parsed, total rows:', results.data.length);
+                console.log('First row sample:', results.data[0]);
+                
+                processImportData(results.data);
+            },
+            error: function (error) {
+                hideLoader();
+                console.error('CSV parsing error:', error);
+                showAlert(`CSV parsing error: ${error.message}`, 'danger');
+            }
+        });
+    }
+}
+
+function processImportData(data) {
+    hideLoader();
+    
+    // Normalize column names (handle both export and template formats)
+    const normalizedData = data.map(row => {
+        const normalized = {};
+        
+        // Map common variations
+        Object.keys(row).forEach(key => {
+            const lowerKey = key.toLowerCase().trim();
+            
+            // Handle different column name formats
+            if (lowerKey === 'port id') {
+                // Skip Port ID from exports - it's auto-generated
+                return;
+            } else if (lowerKey === 'port congestion index') {
+                // Skip congestion index - we set default value
+                return;
+            } else if (lowerKey === 'portname' || lowerKey === 'port name') {
+                normalized['portName'] = row[key];
+            } else if (lowerKey === 'countryname' || lowerKey === 'country name') {
+                normalized['countryName'] = row[key];
+            } else {
+                // Keep original key
+                normalized[key] = row[key];
+            }
+        });
+        
+        return normalized;
+    });
+    
+    // Validate all rows and collect errors
+    const allErrors = [];
+    normalizedData.forEach((row, index) => {
+        const rowErrors = validatePortRow(row, index);
+        allErrors.push(...rowErrors);
+    });
+
+    // Display errors if any
+    if (allErrors.length > 0) {
+        const errorList = document.getElementById('errorList');
+        errorList.innerHTML = '<ul class="mb-0">' + 
+            allErrors.map(err => `<li>${err}</li>`).join('') + 
+            '</ul>';
+        document.getElementById('importErrors').classList.remove('d-none');
+    }
+
+    // Process data (will skip invalid rows)
+    parsedImportData = processWPIData(normalizedData);
+    console.log('Processed ports:', parsedImportData.length);
+    
+    if (parsedImportData.length === 0) {
+        showAlert('No valid ports found in file. Please check the errors above and correct your data.', 'warning');
+        return;
+    }
+
+    if (parsedImportData.length < normalizedData.length) {
+        showAlert(
+            `${parsedImportData.length} valid ports found out of ${normalizedData.length} rows. Invalid rows were skipped.`, 
+            'warning'
+        );
+    }
+
+    console.log('First processed port:', parsedImportData[0]);
+    displayImportPreview(parsedImportData);
+}
+
+function validatePortRow(row, rowIndex) {
+    const errors = [];
+    const rowNum = rowIndex + 2; // +2 because: +1 for header, +1 for 0-based index
+
+    // Helper to safely get string value
+    const getStringValue = (val) => {
+        if (val === null || val === undefined) return '';
+        return String(val).trim();
+    };
+
+    // Required fields validation
+    const portName = getStringValue(row.portName);
+    if (!portName) {
+        errors.push(`Row ${rowNum}: Port name is required`);
+    }
+    
+    const countryName = getStringValue(row.countryName);
+    if (!countryName) {
+        errors.push(`Row ${rowNum}: Country name is required`);
+    }
+
+    // Coordinate validation
+    const latStr = getStringValue(row.latitude);
+    if (!latStr) {
+        errors.push(`Row ${rowNum}: Latitude is required`);
+    } else {
+        const lat = parseFloat(row.latitude);
+        if (isNaN(lat)) {
+            errors.push(`Row ${rowNum}: Invalid latitude format "${row.latitude}" (use decimal degrees)`);
+        } else if (lat < -90 || lat > 90) {
+            errors.push(`Row ${rowNum}: Latitude must be between -90 and 90 (got ${lat})`);
+        }
+    }
+
+    const lonStr = getStringValue(row.longitude);
+    if (!lonStr) {
+        errors.push(`Row ${rowNum}: Longitude is required`);
+    } else {
+        const lon = parseFloat(row.longitude);
+        if (isNaN(lon)) {
+            errors.push(`Row ${rowNum}: Invalid longitude format "${row.longitude}" (use decimal degrees)`);
+        } else if (lon < -180 || lon > 180) {
+            errors.push(`Row ${rowNum}: Longitude must be between -180 and 180 (got ${lon})`);
+        }
+    }
+
+    // Harbor size validation
+    const harborSize = getStringValue(row.harborSize);
+    if (harborSize && !['L', 'M', 'S', 'V'].includes(harborSize.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid harbor size "${harborSize}" (use L, M, S, or V)`);
+    }
+
+    // Harbor type validation
+    const validHarborTypes = ['CB', 'CN', 'CT', 'LC', 'OR', 'RB', 'RN', 'RT', 'TH'];
+    const harborType = getStringValue(row.harborType);
+    if (harborType && !validHarborTypes.includes(harborType.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid harbor type "${harborType}" (use CB, CN, CT, LC, OR, RB, RN, RT, or TH)`);
+    }
+
+    // Shelter validation
+    const validShelter = ['E', 'G', 'F', 'P', 'N'];
+    const shelter = getStringValue(row.shelter);
+    if (shelter && !validShelter.includes(shelter.toUpperCase())) {
+        errors.push(`Row ${rowNum}: Invalid shelter value "${shelter}" (use E, G, F, P, or N)`);
+    }
+
+    // Y/N field validation
+    const ynFields = [
+        { key: 'firstPortOfEntry', label: 'First Port of Entry' },
+        { key: 'goodHoldingGround', label: 'Good Holding Ground' },
+        { key: 'turningArea', label: 'Turning Area' },
+        { key: 'suWater', label: 'Potable Water' },
+        { key: 'suProvisions', label: 'Provisions' },
+        { key: 'ptAvailable', label: 'Pilot Service' },
+        { key: 'tugsAssist', label: 'Tug Service' },
+        { key: 'medFacilities', label: 'Medical Facilities' },
+        { key: 'garbageDisposal', label: 'Garbage Disposal' },
+        { key: 'dirtyBallast', label: 'Ballast Disposal' },
+        { key: 'repairCode', label: 'Repair Facilities' },
+        { key: 'erTide', label: 'Tide Restriction' },
+        { key: 'erSwell', label: 'Swell Restriction' },
+        { key: 'erIce', label: 'Ice Restriction' },
+        { key: 'qtPratique', label: 'Pratique' },
+        { key: 'qtSanitation', label: 'Sanitation' }
+    ];
+
+    ynFields.forEach(field => {
+        const fieldValue = getStringValue(row[field.key]);
+        if (fieldValue) {
+            const val = fieldValue.toUpperCase();
+            if (!['Y', 'N'].includes(val)) {
+                errors.push(`Row ${rowNum}: ${field.label} must be Y or N (got "${row[field.key]}")`);
+            }
         }
     });
+
+    // Numeric field validation
+    const numericFields = [
+        { key: 'maxVesselLength', label: 'Max Vessel Length', min: 0, max: 500 },
+        { key: 'maxVesselBeam', label: 'Max Vessel Beam', min: 0, max: 100 },
+        { key: 'maxVesselDraft', label: 'Max Vessel Draft', min: 0, max: 30 },
+        { key: 'chDepth', label: 'Channel Depth', min: 0, max: 50 },
+        { key: 'anDepth', label: 'Anchorage Depth', min: 0, max: 50 },
+        { key: 'cpDepth', label: 'Cargo Pier Depth', min: 0, max: 50 }
+    ];
+
+    numericFields.forEach(field => {
+        const fieldValue = row[field.key];
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            const val = parseFloat(fieldValue);
+            if (isNaN(val)) {
+                errors.push(`Row ${rowNum}: ${field.label} must be a number (got "${fieldValue}")`);
+            } else if (val < field.min || val > field.max) {
+                errors.push(`Row ${rowNum}: ${field.label} must be between ${field.min} and ${field.max} (got ${val})`);
+            }
+        }
+    });
+
+    return errors;
 }
 
 function processWPIData(data) {
     const processed = [];
 
     data.forEach((row, index) => {
-        // Skip rows with missing essential data - UPDATED COLUMN NAMES
+        // Skip rows with missing essential data - validation already handled
         if (!row.portName || !row.latitude || !row.longitude) return;
 
-        // Parse coordinates - they're in DMS format like "21°02'00\"N"
-        const lat = parseCoordinate(row.latitude);
-        const lon = parseCoordinate(row.longitude);
-        if (lat === null || lon === null) return;
+        // Parse coordinates - handle both DMS and decimal formats
+        let lat, lon;
+
+        if (typeof row.latitude === 'string' && row.latitude.includes('°')) {
+            lat = parseCoordinate(row.latitude);
+            lon = parseCoordinate(row.longitude);
+        } else {
+            lat = parseFloat(row.latitude);
+            lon = parseFloat(row.longitude);
+        }
+
+        // Validate coordinates - skip if invalid
+        if (lat === null || lon === null || isNaN(lat) || isNaN(lon)) return;
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return;
 
         // Helper to convert WPI Y/N/U to boolean
-        const toBool = (val) => val === 'Y' ? true : val === 'N' ? false : null;
+        const toBool = (val) => {
+            if (typeof val === 'string') {
+                val = val.trim().toUpperCase();
+            }
+            return val === 'Y' ? true : val === 'N' ? false : null;
+        };
 
-        // Helper to parse numeric values
-        const toNum = (val) => val && !isNaN(parseFloat(val)) ? parseFloat(val) : null;
+        // Helper to parse numeric values with validation
+        const toNum = (val, min = 0, max = 1000) => {
+            if (!val) return null;
+            const num = parseFloat(val);
+            if (isNaN(num) || num < min || num > max) return null;
+            return num;
+        };
 
         const portData = {
-            // Basic info - UPDATED COLUMN NAMES
+            // Basic info
             name: row.portName.trim(),
-            country: row.countryName || 'Unknown',
+            country: row.countryName ? row.countryName.trim() : 'Unknown',
             latitude: lat,
             longitude: lon,
             portCongestionIndex: 50,
 
-            // Box 2: Port Profile - UPDATED COLUMN NAMES
-            harborSize: row.harborSize || null,
+            // Port Profile
+            harborSize: row.harborSize && ['L', 'M', 'S', 'V'].includes(row.harborSize.toUpperCase()) ? row.harborSize.toUpperCase() : null,
             harborType: row.harborType || null,
-            maxVesselLength: toNum(row.maxVesselLength),
-            maxVesselBeam: toNum(row.maxVesselBeam),
-            maxVesselDraft: toNum(row.maxVesselDraft),
+            maxVesselLength: toNum(row.maxVesselLength, 0, 500),
+            maxVesselBeam: toNum(row.maxVesselBeam, 0, 100),
+            maxVesselDraft: toNum(row.maxVesselDraft, 0, 30),
             firstPortOfEntry: toBool(row.firstPortOfEntry),
 
-            // Box 4: Operational Data - UPDATED COLUMN NAMES
-            channelDepth: toNum(row.chDepth),
-            anchorageDepth: toNum(row.anDepth),
-            cargoPierDepth: toNum(row.cpDepth),
-            shelterAfforded: row.shelter || null,
+            // Operational Data
+            channelDepth: toNum(row.chDepth, 0, 50),
+            anchorageDepth: toNum(row.anDepth, 0, 50),
+            cargoPierDepth: toNum(row.cpDepth, 0, 50),
+            shelterAfforded: row.shelter && ['E', 'G', 'F', 'P', 'N'].includes(row.shelter.toUpperCase()) ? row.shelter.toUpperCase() : null,
             goodHoldingGround: toBool(row.goodHoldingGround),
             turningArea: toBool(row.turningArea),
 
-            // Box 3: Facilities - UPDATED COLUMN NAMES
+            // Facilities
             facilities: {
                 potableWater: toBool(row.suWater),
                 provisions: toBool(row.suProvisions),
@@ -745,17 +1478,17 @@ function processWPIData(data) {
                 medicalFacilities: toBool(row.medFacilities),
                 garbageDisposal: toBool(row.garbageDisposal),
                 ballastDisposal: toBool(row.dirtyBallast),
-                repairFacilities: row.repairCode && row.repairCode !== 'N' ? true : false
+                repairFacilities: row.repairCode && toBool(row.repairCode)
             },
 
-            // Entrance restrictions - UPDATED COLUMN NAMES
+            // Entrance restrictions
             entranceRestrictions: {
                 tide: toBool(row.erTide),
                 swell: toBool(row.erSwell),
                 ice: toBool(row.erIce)
             },
 
-            // Quarantine - UPDATED COLUMN NAMES
+            // Quarantine
             quarantine: {
                 pratique: toBool(row.qtPratique),
                 sanitation: toBool(row.qtSanitation)
@@ -931,3 +1664,347 @@ async function confirmImport() {
     document.getElementById('importPreview').classList.add('d-none');
     parsedImportData = [];
 }
+
+// NEW: Update Reviews Box
+async function updateReviews(port) {
+    const reviewsBox = document.getElementById('bentoReviews');
+
+    try {
+        const [summary, reviews, myReview] = await Promise.all([
+            getPortReviewsSummary(port.id),
+            getPortReviews(port.id),
+            getMyPortReview(port.id)
+        ]);
+
+        const avgRating = summary.averageRating || 0;
+        const totalReviews = summary.totalReviews || 0;
+        const recentReviews = reviews.slice(0, 3);
+
+        // Generate star display
+        const starDisplay = generateStarDisplay(avgRating);
+
+        reviewsBox.innerHTML = `
+            <h6 class="mb-3">
+                <i class="bi bi-star me-2"></i>Port Reviews & Ratings
+            </h6>
+            
+            <div class="row mb-3">
+                <div class="col-md-4 text-center">
+                    <div style="font-size: 3rem; font-weight: bold; color: #0d6efd;">
+                        ${avgRating.toFixed(1)}
+                    </div>
+                    <div class="star-rating justify-content-center mb-2">
+                        ${starDisplay}
+                    </div>
+                    <small class="text-muted">Based on ${totalReviews} review${totalReviews !== 1 ? 's' : ''}</small>
+                </div>
+                
+                <div class="col-md-8">
+                    ${generateRatingDistribution(summary.distribution, totalReviews)}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Recent Reviews</h6>
+                <button class="btn btn-sm btn-primary" onclick="openAddReviewModal(${port.id}, ${myReview.hasReview}, ${myReview.hasReview ? myReview.rating : 0}, '${myReview.hasReview && myReview.comment ? myReview.comment.replace(/'/g, "\\'") : ''}', ${myReview.hasReview ? myReview.id : 0})">
+                    <i class="bi bi-${myReview.hasReview ? 'pencil' : 'plus-circle'} me-1"></i>
+                    ${myReview.hasReview ? 'Edit My Review' : 'Add Review'}
+                </button>
+            </div>
+            
+            ${recentReviews.length > 0 ? recentReviews.map(review => generateReviewCard(review, port.id)).join('') : '<p class="text-muted text-center py-3">No reviews yet. Be the first to review this port!</p>'}
+            
+            ${totalReviews > 3 ? `
+                <button class="btn btn-outline-primary w-100 mt-2" onclick="viewAllReviews(${port.id})">
+                    View All ${totalReviews} Reviews
+                </button>
+            ` : ''}
+        `;
+
+    } catch (error) {
+        console.error('Failed to load reviews:', error);
+        reviewsBox.innerHTML = `
+            <h6 class="mb-3"><i class="bi bi-star me-2"></i>Port Reviews & Ratings</h6>
+            <p class="text-danger">Failed to load reviews</p>
+        `;
+    }
+}
+
+function generateStarDisplay(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    let stars = '';
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="bi bi-star-fill"></i>';
+    }
+    if (hasHalfStar) {
+        stars += '<i class="bi bi-star-half"></i>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="bi bi-star"></i>';
+    }
+    return stars;
+}
+
+function generateRatingDistribution(distribution, total) {
+    if (total === 0) return '<p class="text-muted">No ratings yet</p>';
+
+    let html = '<div class="rating-distribution">';
+    for (let i = 5; i >= 1; i--) {
+        const count = distribution[i] || 0;
+        const percentage = total > 0 ? (count / total) * 100 : 0;
+
+        html += `
+            <div class="rating-bar-row">
+                <span style="min-width: 60px;">${i} <i class="bi bi-star-fill" style="color: #ffc107;"></i></span>
+                <div class="rating-bar">
+                    <div class="rating-bar-fill" style="width: ${percentage}%"></div>
+                </div>
+                <span style="min-width: 30px; text-align: right;">${count}</span>
+            </div>
+        `;
+    }
+    html += '</div>';
+    return html;
+}
+
+function generateReviewCard(review, portId) {
+    const starDisplay = generateStarDisplay(review.rating);
+    const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+
+    const isEdited = review.createdAt !== review.updatedAt;
+
+    return `
+        <div class="review-card">
+            <div class="review-header">
+                <div>
+                    <strong>${review.username}</strong>
+                    <div class="star-rating">
+                        ${starDisplay}
+                    </div>
+                </div>
+                <div class="review-meta">
+                    ${reviewDate}${isEdited ? ' <span class="text-muted">(edited)</span>' : ''}
+                    ${review.isOwner ? `
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteReview(${portId}, ${review.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            ${review.comment ? `<p class="mb-0">${review.comment}</p>` : '<p class="text-muted mb-0 fst-italic">No comment provided</p>'}
+        </div>
+    `;
+}
+
+// Initialize star rating input
+function initializeStarRating() {
+    const stars = document.querySelectorAll('.star-rating-input i');
+
+    stars.forEach(star => {
+        star.addEventListener('click', function () {
+            const rating = parseInt(this.dataset.rating);
+            document.getElementById('reviewRating').value = rating;
+
+            // Update visual state
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+
+            // Clear error
+            document.getElementById('ratingError').style.display = 'none';
+        });
+
+        star.addEventListener('mouseenter', function () {
+            const rating = parseInt(this.dataset.rating);
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('hover-active');
+                }
+            });
+        });
+
+        star.addEventListener('mouseleave', function () {
+            stars.forEach(s => s.classList.remove('hover-active'));
+        });
+    });
+}
+
+// Update character count for review comment
+function updateCharCount() {
+    const comment = document.getElementById('reviewComment').value;
+    const charCount = document.getElementById('commentCharCount');
+    const length = comment.length;
+
+    charCount.textContent = length;
+
+    if (length > 500) {
+        charCount.classList.add('text-danger');
+        document.getElementById('reviewComment').value = comment.substring(0, 500);
+        charCount.textContent = 500;
+    } else {
+        charCount.classList.remove('text-danger');
+    }
+}
+
+// Open Add/Edit Review Modal
+window.openAddReviewModal = function (portId, hasReview, rating, comment, reviewId) {
+    const modalTitle = document.getElementById('reviewModalLabel');
+    const form = document.getElementById('reviewForm');
+
+    form.reset();
+    document.getElementById('reviewPortId').value = portId;
+    document.getElementById('reviewId').value = hasReview ? reviewId : '';
+
+    modalTitle.textContent = hasReview ? 'Edit Your Review' : 'Add Your Review';
+
+    // Reset stars
+    const stars = document.querySelectorAll('.star-rating-input i');
+    stars.forEach(s => s.classList.remove('active'));
+
+    if (hasReview) {
+        document.getElementById('reviewRating').value = rating;
+        document.getElementById('reviewComment').value = comment || '';
+
+        // Set stars
+        stars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.add('active');
+            }
+        });
+
+        updateCharCount();
+    } else {
+        document.getElementById('reviewRating').value = '';
+        document.getElementById('commentCharCount').textContent = '0';
+    }
+
+    reviewModal.show();
+    initializeTooltips();
+};
+
+// Handle review form submission
+async function handleSubmitReview(event) {
+    event.preventDefault();
+
+    const portId = document.getElementById('reviewPortId').value;
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+
+    // Validation
+    if (!rating) {
+        document.getElementById('ratingError').style.display = 'block';
+        return;
+    }
+
+    const reviewData = {
+        rating: parseInt(rating),
+        comment: comment || null
+    };
+
+    try {
+        await addPortReview(portId, reviewData);
+        reviewModal.hide();
+        toastr.success('Review submitted successfully!');
+
+        // Refresh reviews for current port
+        const currentPort = allPorts.find(p => p.id == portId);
+        if (currentPort) {
+            updateReviews(currentPort);
+        }
+    } catch (error) {
+        toastr.error('Failed to submit review. Please try again.');
+    }
+}
+
+// View All Reviews
+let currentReviewPortId = null;
+let allReviewsData = [];
+
+window.viewAllReviews = async function (portId) {
+    currentReviewPortId = portId;
+
+    try {
+        allReviewsData = await getPortReviews(portId);
+        const port = allPorts.find(p => p.id === portId);
+
+        document.getElementById('allReviewsModalLabel').innerHTML =
+            `<i class="bi bi-star me-2"></i>All Reviews - ${port ? port.name : 'Port'}`;
+
+        renderAllReviews(allReviewsData);
+        allReviewsModal.show();
+    } catch (error) {
+        toastr.error('Failed to load reviews');
+    }
+};
+
+// Handle review sort order change
+function handleReviewSortChange() {
+    const sortOrder = document.getElementById('reviewSortOrder').value;
+    let sortedReviews = [...allReviewsData];
+
+    switch (sortOrder) {
+        case 'newest':
+            sortedReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+        case 'oldest':
+            sortedReviews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            break;
+        case 'highest':
+            sortedReviews.sort((a, b) => b.rating - a.rating);
+            break;
+        case 'lowest':
+            sortedReviews.sort((a, b) => a.rating - b.rating);
+            break;
+    }
+
+    renderAllReviews(sortedReviews);
+}
+
+// Render all reviews in modal
+function renderAllReviews(reviews) {
+    const container = document.getElementById('allReviewsContent');
+
+    if (reviews.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-4">No reviews yet for this port.</p>';
+        return;
+    }
+
+    container.innerHTML = reviews.map(review => generateReviewCard(review, currentReviewPortId)).join('');
+}
+
+window.deleteReview = async function (portId, reviewId) {
+    const result = await Swal.fire({
+        title: 'Delete Review?',
+        text: 'Are you sure you want to delete your review? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await deletePortReview(portId, reviewId);
+            toastr.success('Review deleted successfully');
+            // Refresh the current port's reviews
+            const currentPort = allPorts.find(p => p.id === portId);
+            if (currentPort) {
+                updateReviews(currentPort);
+            }
+        } catch (error) {
+            toastr.error('Failed to delete review');
+        }
+    }
+};

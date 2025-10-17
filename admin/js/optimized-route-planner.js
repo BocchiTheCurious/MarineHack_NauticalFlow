@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate, showLoader, hideLoader } from './modules/utils.js';
 import { getSavedOptimizations, deleteOptimizationResult, getPorts, getCruiseShips, runOptimization, saveOptimizationResult } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
@@ -58,6 +58,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load AIS ship movement data
     loadAISShipData();
+
+    hideLoader();
 });
 
 // --- PORT SELECTION LOGIC ---
