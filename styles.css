@@ -302,6 +302,7 @@ h6 {
     bottom: 0;
     left: 0;
     padding-top: var(--navbar-height);
+    padding-bottom: 1rem;
     z-index: 100;
     width: var(--sidebar-width);
     background: rgba(3, 4, 94, 0.4);
@@ -309,6 +310,30 @@ h6 {
     -webkit-backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.18);
     transition: all var(--transition-speed);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(173, 232, 244, 0.5) rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge, Vivaldi) */
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(173, 232, 244, 0.4);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(173, 232, 244, 0.7);
 }
 
 .sidebar-heading {
@@ -754,40 +779,91 @@ main {
     }
 }
 
+/* === SIDEBAR ADVERTISEMENT === */
 .sidebar-ad {
-    padding: 15px;
-    margin: 10px 0;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem;
+    max-width: 100%;
 }
 
 .ad-placeholder {
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 4px;
+    background: rgba(248, 249, 250, 0.95);
+    border: 2px dashed rgba(222, 226, 230, 0.8);
+    border-radius: var(--border-radius-base);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 250px;
+    padding: 1rem;
+    width: 100%;
+    height: auto;
+    min-height: 180px;
+    max-height: 320px;
+    aspect-ratio: 1 / 2;
     text-align: center;
+    transition: all var(--transition-speed);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.ad-placeholder:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--primary-color);
 }
 
 .ad-placeholder .ad-label {
-    font-size: 11px;
+    font-size: 0.65rem;
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 10px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .ad-placeholder .ad-content {
     color: #adb5bd;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 500;
 }
 
-/* Adjust height for different ad sizes */
-.ad-placeholder:has(.ad-content:contains("300x600")) {
-    min-height: 600px;
+/* Responsive scaling for sidebar ads */
+@media (max-width: 1400px) {
+    .sidebar-ad {
+        padding: 0.5rem 0.75rem;
+        margin: 0.5rem;
+    }
+    
+    .ad-placeholder {
+        min-height: 160px;
+        max-height: 280px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .sidebar-ad {
+        padding: 0.5rem;
+        margin: 0.25rem;
+    }
+    
+    .ad-placeholder {
+        min-height: 140px;
+        max-height: 240px;
+    }
+    
+    .ad-placeholder .ad-label {
+        font-size: 0.6rem;
+    }
+    
+    .ad-placeholder .ad-content {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Hide ad on mobile when sidebar is collapsed */
+    .sidebar-ad {
+        display: none;
+    }
 }
 
 /* Pagination Styles */

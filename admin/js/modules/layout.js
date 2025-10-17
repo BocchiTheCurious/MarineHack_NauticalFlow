@@ -1,3 +1,5 @@
+import { setupLogout } from './auth.js';
+
 /**
  * Fetches and injects the navbar and sidebar components into the page.
  */
@@ -17,9 +19,27 @@ export async function loadLayout() {
         sidebarPlaceholder.outerHTML = sidebarHtml;
     }
 
+    // Set up logout button functionality
+    setupLogout();
+    
+    // Load user display name
+    loadUserDisplayName();
+
     // Initialize underwater effects
     initFloatingParticles();
     initLightRays();
+}
+
+/**
+ * Loads and displays the user's display name in the navbar
+ */
+function loadUserDisplayName() {
+    const displayName = localStorage.getItem('nauticalflow-display-name');
+    const displayNameElement = document.getElementById('user-display-name');
+    
+    if (displayNameElement && displayName) {
+        displayNameElement.textContent = displayName;
+    }
 }
 
 /**

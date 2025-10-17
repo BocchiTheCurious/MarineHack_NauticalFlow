@@ -1,7 +1,7 @@
 // js/modules/api.js
 
 // --- API Configuration & Helper ---
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+export const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 /**
  * Decodes a JWT token without verification (client-side only)
