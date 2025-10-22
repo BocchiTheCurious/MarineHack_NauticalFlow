@@ -309,6 +309,9 @@ h6 {
     -webkit-backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.18);
     transition: all var(--transition-speed);
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .sidebar-heading {
@@ -788,6 +791,24 @@ main {
 /* Adjust height for different ad sizes */
 .ad-placeholder:has(.ad-content:contains("300x600")) {
     min-height: 600px;
+}
+
+/* Custom scrollbar styling */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Pagination Styles */

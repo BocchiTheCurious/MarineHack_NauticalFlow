@@ -383,3 +383,16 @@ export function deletePortReview(portId, reviewId) {
         method: 'DELETE'
     });
 }
+
+// --- Feedback Functions ---
+/**
+ * Submits user feedback to the backend
+ * @param {object} feedbackData - The feedback data object with question responses
+ * @returns {Promise<object>} The server's confirmation response
+ */
+export function submitFeedback(feedbackData) {
+    return fetchWithAuth('/feedback', {
+        method: 'POST',
+        body: JSON.stringify(feedbackData)
+    });
+}

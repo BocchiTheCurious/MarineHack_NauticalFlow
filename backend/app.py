@@ -94,6 +94,26 @@ class PortReview(db.Model):
     port = db.relationship('Port', backref='reviews')
     user = db.relationship('User', backref='port_reviews')
 
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    question_1 = db.Column(db.String(20), nullable=False)  # positive/negative
+    question_2 = db.Column(db.String(20), nullable=False)
+    question_3 = db.Column(db.String(20), nullable=False)
+    question_4 = db.Column(db.String(20), nullable=False)
+    question_5 = db.Column(db.String(20), nullable=False)
+    question_6 = db.Column(db.String(20), nullable=False)
+    question_7 = db.Column(db.String(20), nullable=False)
+    question_8 = db.Column(db.String(20), nullable=False)
+    question_9 = db.Column(db.String(20), nullable=False)
+    question_10 = db.Column(db.String(20), nullable=False)
+    additional_comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='feedbacks')
+
 # --- Database Initialization ---
 with app.app_context():
     db.create_all()
@@ -820,6 +840,89 @@ def get_stats_summary(current_user):
         'totalPorts': total_ports,
         'totalFuelTypes': total_fuel_types
     })
+    
+# --- Feedback Endpoints ---
+@app.route('/api/feedback', methods=['POST'])
+@token_required
+def submit_feedback(current_user):
+    """Submit user feedback"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Validate required fields
+        required_fields = [
+            'question_1', 'question_2', 'question_3', 'question_4', 'question_5',
+            'question_6', 'question_7', 'question_8', 'question_9', 'question_10'
+        ]
+        
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+            if data[field] not in ['positive', 'negative']:
+                return jsonify({'error': f'Invalid value for {field}. Must be "positive" or "negative"'}), 400
+        
+        # Create new feedback entry (user_id comes from authenticated user)
+        new_feedback = Feedback(
+            user_id=current_user.id,
+            question_1=data['question_1'],
+            question_2=data['question_2'],
+            question_3=data['question_3'],
+            question_4=data['question_4'],
+            question_5=data['question_5'],
+            question_6=data['question_6'],
+            question_7=data['question_7'],
+            question_8=data['question_8'],
+            question_9=data['question_9'],
+            question_10=data['question_10'],
+            additional_comments=data.get('additional_comments')
+        )
+        
+        db.session.add(new_feedback)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Feedback submitted successfully',
+            'feedback_id': new_feedback.id
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error submitting feedback: {str(e)}")  # For debugging
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback', methods=['GET'])
+@token_required
+def get_feedback(current_user):
+    """Get all feedback (admin only) or user's own feedback"""
+    try:
+        # For now, return user's own feedback
+        feedbacks = Feedback.query.filter_by(user_id=current_user.id).order_by(Feedback.created_at.desc()).all()
+        
+        feedback_list = []
+        for fb in feedbacks:
+            feedback_list.append({
+                'id': fb.id,
+                'question_1': fb.question_1,
+                'question_2': fb.question_2,
+                'question_3': fb.question_3,
+                'question_4': fb.question_4,
+                'question_5': fb.question_5,
+                'question_6': fb.question_6,
+                'question_7': fb.question_7,
+                'question_8': fb.question_8,
+                'question_9': fb.question_9,
+                'question_10': fb.question_10,
+                'additional_comments': fb.additional_comments,
+                'created_at': fb.created_at.isoformat()
+            })
+        
+        return jsonify(feedback_list), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
