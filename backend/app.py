@@ -622,5 +622,204 @@ def get_my_port_review(current_user, port_id):
         'updatedAt': review.updated_at.isoformat()
     })
 
+# --- Analytics Endpoints ---
+@app.route('/api/analytics/summary', methods=['GET'])
+@token_required
+def get_analytics_summary(current_user):
+    """Get overall analytics summary"""
+    from sqlalchemy import func
+    
+    total_optimizations = OptimizationResult.query.filter_by(user_id=current_user.id).count()
+    
+    # Calculate total fuel and CO2 saved
+    results = OptimizationResult.query.filter_by(user_id=current_user.id).all()
+    
+    total_fuel_saved = 0
+    total_co2_reduced = 0
+    
+    for r in results:
+        # Extract numeric value from strings like "2,340 L"
+        fuel_str = r.fuelSaved.replace(',', '').replace(' L', '').strip()
+        co2_str = r.co2Reduced.replace(' tons', '').strip()
+        
+        try:
+            total_fuel_saved += float(fuel_str)
+            total_co2_reduced += float(co2_str)
+        except ValueError:
+            continue
+    
+    return jsonify({
+        'totalOptimizations': total_optimizations,
+        'totalFuelSaved': f"{total_fuel_saved:,.0f} L",
+        'totalCo2Reduced': f"{total_co2_reduced:.1f} tons"
+    })
+
+@app.route('/api/analytics/trends', methods=['GET'])
+@token_required
+def get_optimization_trends(current_user):
+    """Get monthly optimization trends"""
+    from sqlalchemy import func, extract
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    
+    days = request.args.get('days', 300, type=int)  # Default 10 months
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    # Group by year and month
+    trends = db.session.query(
+        extract('year', OptimizationResult.timestamp).label('year'),
+        extract('month', OptimizationResult.timestamp).label('month'),
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id,
+        OptimizationResult.timestamp >= cutoff_date
+    ).group_by('year', 'month').order_by('year', 'month').all()
+    
+    # Format the results
+    months = []
+    counts = []
+    for year, month, count in trends:
+        month_name = datetime(int(year), int(month), 1).strftime('%b %Y')
+        months.append(month_name)
+        counts.append(count)
+    
+    return jsonify({
+        'labels': months,
+        'counts': counts
+    })
+
+@app.route('/api/analytics/recent', methods=['GET'])
+@token_required
+def get_recent_optimizations_analytics(current_user):
+    """Get recent optimization results"""
+    limit = request.args.get('limit', 10, type=int)
+    
+    results = OptimizationResult.query.filter_by(
+        user_id=current_user.id
+    ).order_by(
+        OptimizationResult.timestamp.desc()
+    ).limit(limit).all()
+    
+    return jsonify([{
+        'timestamp': r.timestamp.isoformat(),
+        'route': r.route,
+        'vessel': r.vessel,
+        'fuelSaved': r.fuelSaved,
+        'co2Reduced': r.co2Reduced,
+        'timeSaved': r.timeSaved
+    } for r in results])
+
+@app.route('/api/analytics/vessel-usage', methods=['GET'])
+@token_required
+def get_vessel_usage_stats(current_user):
+    """Get most used vessels statistics"""
+    from sqlalchemy import func
+    
+    vessel_stats = db.session.query(
+        OptimizationResult.vessel,
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id
+    ).group_by(
+        OptimizationResult.vessel
+    ).order_by(
+        func.count(OptimizationResult.id).desc()
+    ).limit(5).all()
+    
+    return jsonify({
+        'labels': [v[0] for v in vessel_stats],
+        'counts': [v[1] for v in vessel_stats]
+    })
+
+@app.route('/api/analytics/fuel-distribution', methods=['GET'])
+@token_required
+def get_fuel_type_distribution(current_user):
+    """Get fuel type distribution from user's optimizations"""
+    from sqlalchemy import func
+    
+    # Get all vessels used by this user
+    vessel_names = db.session.query(
+        OptimizationResult.vessel
+    ).filter(
+        OptimizationResult.user_id == current_user.id
+    ).distinct().all()
+    
+    vessel_names = [v[0] for v in vessel_names]
+    
+    # Get fuel types for these vessels
+    fuel_distribution = db.session.query(
+        FuelType.name,
+        func.count(CruiseShip.id).label('count')
+    ).join(
+        CruiseShip, CruiseShip.fuel_type_id == FuelType.id
+    ).filter(
+        CruiseShip.name.in_(vessel_names)
+    ).group_by(
+        FuelType.name
+    ).all()
+    
+    return jsonify({
+        'labels': [f[0] for f in fuel_distribution],
+        'counts': [f[1] for f in fuel_distribution]
+    })
+
+@app.route('/api/analytics/weekly-activity', methods=['GET'])
+@token_required
+def get_weekly_activity(current_user):
+    """Get weekly activity for the last N weeks"""
+    from sqlalchemy import func
+    
+    weeks = request.args.get('weeks', 8, type=int)
+    cutoff_date = datetime.utcnow() - timedelta(weeks=weeks)
+    
+    # Calculate week number for grouping
+    weekly_stats = db.session.query(
+        func.date_trunc('week', OptimizationResult.timestamp).label('week'),
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id,
+        OptimizationResult.timestamp >= cutoff_date
+    ).group_by('week').order_by('week').all()
+    
+    labels = []
+    counts = []
+    for i, (week, count) in enumerate(weekly_stats, 1):
+        labels.append(f'Week {i}')
+        counts.append(count)
+    
+    # Fill in missing weeks with zeros if needed
+    while len(labels) < weeks:
+        labels.append(f'Week {len(labels) + 1}')
+        counts.append(0)
+    
+    return jsonify({
+        'labels': labels[:weeks],
+        'counts': counts[:weeks]
+    })
+@app.route('/api/analytics/stats-summary', methods=['GET'])
+@token_required
+def get_stats_summary(current_user):
+    """Get summary statistics for the dashboard stats cards"""
+    from sqlalchemy import func
+    
+    # Count user's optimization results
+    total_routes = OptimizationResult.query.filter_by(user_id=current_user.id).count()
+    
+    # Count total vessels (all vessels in system, not user-specific)
+    total_vessels = CruiseShip.query.count()
+    
+    # Count total ports (all ports in system)
+    total_ports = Port.query.count()
+    
+    # Count total fuel types (all fuel types in system)
+    total_fuel_types = FuelType.query.count()
+    
+    return jsonify({
+        'totalRoutes': total_routes,
+        'totalVessels': total_vessels,
+        'totalPorts': total_ports,
+        'totalFuelTypes': total_fuel_types
+    })
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

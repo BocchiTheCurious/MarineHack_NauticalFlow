@@ -241,6 +241,66 @@ export function deleteOptimizationResult(resultId) {
     });
 }
 
+// --- Analytics Functions ---
+/**
+ * Fetches overall analytics summary (total optimizations, fuel saved, CO2 reduced)
+ * @returns {Promise<object>} Summary statistics
+ */
+export function getAnalyticsSummary() {
+    return fetchWithAuth('/analytics/summary');
+}
+
+/**
+ * Fetches monthly optimization trends
+ * @param {number} days - Number of days to look back (default 300 for ~10 months)
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getOptimizationTrends(days = 300) {
+    return fetchWithAuth(`/analytics/trends?days=${days}`);
+}
+
+/**
+ * Fetches recent optimization results
+ * @param {number} limit - Number of recent results to fetch (default 10)
+ * @returns {Promise<Array>} Array of recent optimization objects
+ */
+export function getRecentOptimizations(limit = 10) {
+    return fetchWithAuth(`/analytics/recent?limit=${limit}`);
+}
+
+/**
+ * Fetches vessel usage statistics (most used vessels)
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getVesselUsageStats() {
+    return fetchWithAuth('/analytics/vessel-usage');
+}
+
+/**
+ * Fetches fuel type distribution from user's optimization history
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getFuelTypeDistribution() {
+    return fetchWithAuth('/analytics/fuel-distribution');
+}
+
+/**
+ * Fetches weekly activity data
+ * @param {number} weeks - Number of weeks to look back (default 8)
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getWeeklyActivity(weeks = 8) {
+    return fetchWithAuth(`/analytics/weekly-activity?weeks=${weeks}`);
+}
+
+/**
+ * Fetches summary statistics for dashboard stats cards
+ * @returns {Promise<object>} Object with totalRoutes, totalVessels, totalPorts, totalFuelTypes
+ */
+export function getStatsSummary() {
+    return fetchWithAuth('/analytics/stats-summary');
+}
+
 // --- External APIs: Live Weather Data ---
 /**
  * Fetches current and hourly marine weather data from the Open-Meteo API.
