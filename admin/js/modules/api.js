@@ -251,12 +251,12 @@ export function getAnalyticsSummary() {
 }
 
 /**
- * Fetches monthly optimization trends
- * @param {number} days - Number of days to look back (default 300 for ~10 months)
- * @returns {Promise<object>} Object with labels and counts arrays
+ * Get monthly optimization trends
+ * @param {number} months - Number of months to retrieve (default: 12)
+ * @returns {Promise<{labels: string[], counts: number[]}>}
  */
-export function getOptimizationTrends(days = 300) {
-    return fetchWithAuth(`/analytics/trends?days=${days}`);
+export function getMonthlyTrends(months = 12) {
+    return fetchWithAuth(`/analytics/monthly-trends?months=${months}`);
 }
 
 /**

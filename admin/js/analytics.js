@@ -2,16 +2,16 @@ import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
 import {
-    getOptimizationTrends,
     getFuelTypeDistribution,
     getWeeklyActivity,
     getVesselUsageStats,
     getRecentOptimizations,
-    getStatsSummary
+    getStatsSummary,
+    getMonthlyTrends 
 } from './modules/api.js';
 
 // Chart instances
-let optimizationChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
+let monthlyTrendsChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
 
 // Pagination and search state
 let allOptimizations = [];
@@ -107,7 +107,7 @@ async function loadAllData() {
         // Load all data in parallel for better performance
         await Promise.all([
             loadStatsCards(),
-            loadOptimizationTrends(),
+            loadMonthlyTrends(),
             loadFuelTypeDistribution(),
             loadWeeklyActivity(),
             loadVesselUsage(),
@@ -124,18 +124,19 @@ async function loadAllData() {
 }
 
 /**
- * Loads and renders the Monthly Optimization Trends line chart.
+ * NEW: Loads and renders the Monthly Optimization Trends chart
+ * This replaces the old optimization trends endpoint
  */
-async function loadOptimizationTrends() {
+async function loadMonthlyTrends() {
     try {
-        const data = await getOptimizationTrends(300); // Last 10 months
+        const data = await getMonthlyTrends(12);  // ✅ Use the imported function
 
         const ctx = document.getElementById('optimizationTrendsChart');
         if (!ctx) return;
 
-        if (optimizationChart) optimizationChart.destroy();
+        if (monthlyTrendsChart) monthlyTrendsChart.destroy();
 
-        optimizationChart = new Chart(ctx.getContext('2d'), {
+        monthlyTrendsChart = new Chart(ctx.getContext('2d'), {
             type: 'line',
             data: {
                 labels: data.labels,
@@ -145,7 +146,12 @@ async function loadOptimizationTrends() {
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -154,37 +160,68 @@ async function loadOptimizationTrends() {
                 plugins: {
                     legend: {
                         position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Routes: ${context.parsed.y}`;
+                            }
+                        }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            precision: 0
+                            precision: 0,
+                            stepSize: 1
                         }
                     }
                 }
             }
         });
     } catch (error) {
-        console.error('Error loading optimization trends:', error);
-        toastr.error('Failed to load optimization trends');
+        console.error('Error loading monthly trends:', error);
+        toastr.error('Failed to load monthly trends');
     }
 }
 
 /**
- * Loads and renders the Fuel Type Distribution doughnut chart.
+ * FIXED: Loads and renders the Fuel Type Distribution doughnut chart
+ * Now shows actual usage frequency instead of distinct ship count
  */
 async function loadFuelTypeDistribution() {
     try {
         const data = await getFuelTypeDistribution();
 
-        const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
-
         const ctx = document.getElementById('fuelTypeChart');
         if (!ctx) return;
 
         if (fuelTypeChart) fuelTypeChart.destroy();
+
+        // Check if there's no data
+        if (!data.labels || data.labels.length === 0) {
+            const canvas = ctx;
+            const parent = canvas.parentElement;
+            
+            const noDataDiv = document.createElement('div');
+            noDataDiv.className = 'text-center text-muted py-5';
+            noDataDiv.innerHTML = '<i class="bi bi-pie-chart fs-1 mb-3 d-block"></i><p>No optimization data available yet</p>';
+            
+            canvas.style.display = 'none';
+            parent.appendChild(noDataDiv);
+            return;
+        }
+
+        ctx.style.display = 'block';
+        
+        const noDataDiv = ctx.parentElement.querySelector('.text-center.text-muted');
+        if (noDataDiv) noDataDiv.remove();
+
+        const colors = [
+            '#667eea', '#f5576c', '#4facfe', '#43e97b', 
+            '#f093fb', '#fa709a', '#fee140', '#30cfd0'
+        ];
 
         fuelTypeChart = new Chart(ctx.getContext('2d'), {
             type: 'doughnut',
@@ -193,8 +230,9 @@ async function loadFuelTypeDistribution() {
                 datasets: [{
                     data: data.counts,
                     backgroundColor: colors.slice(0, data.labels.length),
-                    borderWidth: 2,
-                    borderColor: '#fff'
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 10
                 }]
             },
             options: {
@@ -203,6 +241,38 @@ async function loadFuelTypeDistribution() {
                 plugins: {
                     legend: {
                         position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        return {
+                                            text: `${label}: ${value} uses`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} uses (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }

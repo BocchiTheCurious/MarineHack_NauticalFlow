@@ -673,20 +673,19 @@ def get_analytics_summary(current_user):
         'totalFuelSaved': f"{total_fuel_saved:,.0f} L",
         'totalCo2Reduced': f"{total_co2_reduced:.1f} tons"
     })
-
-@app.route('/api/analytics/trends', methods=['GET'])
+    
+@app.route('/api/analytics/monthly-trends', methods=['GET'])
 @token_required
-def get_optimization_trends(current_user):
-    """Get monthly optimization trends"""
+def get_monthly_optimization_trends(current_user):
+    """Get monthly optimization trends for the last N months"""
     from sqlalchemy import func, extract
-    from datetime import datetime
-    from dateutil.relativedelta import relativedelta
+    from calendar import month_abbr
     
-    days = request.args.get('days', 300, type=int)  # Default 10 months
-    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    months = request.args.get('months', 12, type=int)
+    cutoff_date = datetime.utcnow() - timedelta(days=months * 30)
     
-    # Group by year and month
-    trends = db.session.query(
+    # Get monthly statistics
+    monthly_stats = db.session.query(
         extract('year', OptimizationResult.timestamp).label('year'),
         extract('month', OptimizationResult.timestamp).label('month'),
         func.count(OptimizationResult.id).label('count')
@@ -695,16 +694,33 @@ def get_optimization_trends(current_user):
         OptimizationResult.timestamp >= cutoff_date
     ).group_by('year', 'month').order_by('year', 'month').all()
     
-    # Format the results
-    months = []
+    # Create a complete list of months for the period
+    labels = []
     counts = []
-    for year, month, count in trends:
-        month_name = datetime(int(year), int(month), 1).strftime('%b %Y')
-        months.append(month_name)
+    
+    # Get current month and year
+    now = datetime.utcnow()
+    
+    # Generate labels for the last N months
+    for i in range(months - 1, -1, -1):
+        target_date = now - timedelta(days=i * 30)
+        month_num = target_date.month
+        year = target_date.year
+        
+        # Create label like "Jan 2025"
+        label = f"{month_abbr[month_num]} {year}"
+        labels.append(label)
+        
+        # Find matching count from database
+        count = 0
+        for stat in monthly_stats:
+            if int(stat.year) == year and int(stat.month) == month_num:
+                count = stat.count
+                break
         counts.append(count)
     
     return jsonify({
-        'labels': months,
+        'labels': labels,
         'counts': counts
     })
 
@@ -754,29 +770,30 @@ def get_vessel_usage_stats(current_user):
 @app.route('/api/analytics/fuel-distribution', methods=['GET'])
 @token_required
 def get_fuel_type_distribution(current_user):
-    """Get fuel type distribution from user's optimizations"""
+    """Get fuel type distribution based on actual optimization usage"""
     from sqlalchemy import func
     
-    # Get all vessels used by this user
-    vessel_names = db.session.query(
-        OptimizationResult.vessel
-    ).filter(
-        OptimizationResult.user_id == current_user.id
-    ).distinct().all()
-    
-    vessel_names = [v[0] for v in vessel_names]
-    
-    # Get fuel types for these vessels
+    # Join optimization results with cruise ships and fuel types
+    # Count how many times each fuel type was used in optimizations
     fuel_distribution = db.session.query(
         FuelType.name,
-        func.count(CruiseShip.id).label('count')
+        func.count(OptimizationResult.id).label('count')
     ).join(
-        CruiseShip, CruiseShip.fuel_type_id == FuelType.id
+        CruiseShip, CruiseShip.name == OptimizationResult.vessel
+    ).join(
+        FuelType, FuelType.id == CruiseShip.fuel_type_id
     ).filter(
-        CruiseShip.name.in_(vessel_names)
+        OptimizationResult.user_id == current_user.id
     ).group_by(
         FuelType.name
     ).all()
+    
+    # If no data, return empty arrays
+    if not fuel_distribution:
+        return jsonify({
+            'labels': [],
+            'counts': []
+        })
     
     return jsonify({
         'labels': [f[0] for f in fuel_distribution],
