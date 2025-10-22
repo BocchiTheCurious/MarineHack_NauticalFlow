@@ -61,12 +61,35 @@ class FuelType(db.Model):
 
 class CruiseShip(db.Model):
     __tablename__ = 'cruise_ships'
+    
     id = db.Column(db.Integer, primary_key=True)
+    
+    # CORE IDENTIFICATION
     name = db.Column(db.String(100), nullable=False)
-    company = db.Column(db.String(100), nullable=True)
+    operator = db.Column(db.String(100))  # Renamed from 'company'
+    
+    # CRITICAL SPECS (for fuel calculation)
     gross_tonnage = db.Column(db.Integer, nullable=False)
-    fuel_consumption_curve = db.Column(db.JSON, nullable=True)
+    propulsion_power = db.Column(db.Float, nullable=False)  # MW - REQUIRED
+    cruising_speed = db.Column(db.Float, nullable=False)    # knots - REQUIRED
+    max_speed = db.Column(db.Float, nullable=False)         # knots - REQUIRED
+    length = db.Column(db.Float, nullable=False)            # meters - REQUIRED
+    beam = db.Column(db.Float, nullable=False)              # meters - REQUIRED
+    
+    # FUEL TYPE
     fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
+    
+    # ADDITIONAL INFO
+    year_built = db.Column(db.Integer, nullable=True)
+    passenger_capacity = db.Column(db.Integer, nullable=True)
+    crew = db.Column(db.Integer, nullable=True)  # NEW - CruiseMapper has this
+    engine_type = db.Column(db.String(100), nullable=True)
+    builder = db.Column(db.String(100), nullable=True)  # NEW - CruiseMapper has this
+    
+    fuel_consumption_curve = db.Column(db.JSON, nullable=True)
+    
+    # REMOVED: fuel_consumption_curve (will be calculated on-the-fly)
+    
     fuel_type = db.relationship('FuelType', backref='cruise_ships')
 
 class OptimizationResult(db.Model):
@@ -295,34 +318,67 @@ def delete_port(current_user, port_id):
 @app.route('/api/cruise-ships', methods=['GET'])
 @token_required
 def get_cruise_ships(current_user):
-    ships = CruiseShip.query.order_by(CruiseShip.name).all()
-    results = []
-    for ship in ships:
-        results.append({
-            'id': ship.id,
-            'name': ship.name,
-            'company': ship.company,
-            'grossTonnage': ship.gross_tonnage,
-            'fuelConsumptionCurve': ship.fuel_consumption_curve,
-            'fuelTypeId': ship.fuel_type_id,
-            'fuelTypeName': ship.fuel_type.name
-        })
-    return jsonify(results)
+    ships = CruiseShip.query.all()
+    return jsonify([{
+        'id': ship.id,
+        'name': ship.name,
+        'operator': ship.operator,  # Changed from 'company'
+        'grossTonnage': ship.gross_tonnage,
+        'fuelTypeId': ship.fuel_type_id,
+        'fuelTypeName': ship.fuel_type.name if ship.fuel_type else 'Unknown',
+        
+        # NEW FIELDS
+        'propulsionPower': ship.propulsion_power,
+        'cruisingSpeed': ship.cruising_speed,
+        'maxSpeed': ship.max_speed,
+        'length': ship.length,
+        'beam': ship.beam,
+        'yearBuilt': ship.year_built,
+        'passengerCapacity': ship.passenger_capacity,
+        'crew': ship.crew,
+        'engineType': ship.engine_type,
+        'builder': ship.builder,
+        
+        'fuelConsumptionCurve': ship.fuel_consumption_curve
+    } for ship in ships])
 
 @app.route('/api/cruise-ships', methods=['POST'])
 @token_required
 def add_cruise_ship(current_user):
-    data = request.get_json()
-    new_ship = CruiseShip(
-        name=data['name'],
-        company=data.get('company'),
-        gross_tonnage=data['grossTonnage'],
-        fuel_consumption_curve=data['fuelConsumptionCurve'],
-        fuel_type_id=data['fuelTypeId']
-    )
-    db.session.add(new_ship)
-    db.session.commit()
-    return jsonify({'message': 'Cruise ship added successfully'}), 201
+    try:
+        data = request.get_json()
+        
+        new_ship = CruiseShip(
+            name=data['name'],
+            operator=data.get('operator'),
+            gross_tonnage=data['grossTonnage'],
+            fuel_type_id=data['fuelTypeId'],
+            
+            # NEW REQUIRED FIELDS
+            propulsion_power=data['propulsionPower'],
+            cruising_speed=data['cruisingSpeed'],
+            max_speed=data['maxSpeed'],
+            length=data['length'],
+            beam=data['beam'],
+            
+            # NEW OPTIONAL FIELDS
+            year_built=data.get('yearBuilt'),
+            passenger_capacity=data.get('passengerCapacity'),
+            crew=data.get('crew'),
+            engine_type=data.get('engineType'),
+            builder=data.get('builder'), 
+            
+            fuel_consumption_curve=data.get('fuelConsumptionCurve') or data.get('fuel_consumption_curve')
+
+        )
+        
+        db.session.add(new_ship)
+        db.session.commit()
+        
+        return jsonify({'message': 'Cruise ship added successfully', 'id': new_ship.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/api/cruise-ships/<int:ship_id>', methods=['DELETE'])
 @token_required
@@ -335,15 +391,36 @@ def delete_cruise_ship(current_user, ship_id):
 @app.route('/api/cruise-ships/<int:ship_id>', methods=['PUT'])
 @token_required
 def update_cruise_ship(current_user, ship_id):
-    ship = CruiseShip.query.get_or_404(ship_id)
-    data = request.get_json()
-    ship.name = data['name']
-    ship.company = data.get('company')
-    ship.gross_tonnage = data['grossTonnage']
-    ship.fuel_type_id = data['fuelTypeId']
-    ship.fuel_consumption_curve = data['fuelConsumptionCurve']
-    db.session.commit()
-    return jsonify({'message': 'Cruise ship updated successfully'})
+    try:
+        ship = CruiseShip.query.get_or_404(ship_id)
+        data = request.get_json()
+        
+        ship.name = data['name']
+        ship.operator = data.get('operator')
+        ship.gross_tonnage = data['grossTonnage']
+        ship.fuel_type_id = data['fuelTypeId']
+        
+        # UPDATE NEW FIELDS
+        ship.propulsion_power = data['propulsionPower']
+        ship.cruising_speed = data['cruisingSpeed']
+        ship.max_speed = data['maxSpeed']
+        ship.length = data['length']
+        ship.beam = data['beam']
+        
+        ship.year_built = data.get('yearBuilt')
+        ship.passenger_capacity = data.get('passengerCapacity')
+        ship.crew = data.get('crew')
+        ship.engine_type = data.get('engineType')
+        ship.builder = data.get('builder')
+        
+        ship.fuel_consumption_curve = data.get('fuelConsumptionCurve') or data.get('fuel_consumption_curve')
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Cruise ship updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 # --- Fuel Type Endpoints ---
 @app.route('/api/fuel-types', methods=['GET'])

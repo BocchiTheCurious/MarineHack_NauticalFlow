@@ -25,6 +25,521 @@
                 <h1 class="page-title"><i class="bi bi-send me-2"></i>Cruise Ship Management</h1>
             </div>
 
+            <!-- NEW: Fuel Consumption Curve Chart -->
+            <div class="card shadow mb-4" id="fuel-curve-card" style="display: none;">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Fuel Consumption Curve: <span id="selected-ship-name">-</span>
+                    </h6>
+                    <button class="btn btn-sm btn-outline-secondary" id="close-curve-btn">
+                        <i class="bi bi-x-circle me-1"></i>Close
+                    </button>
+                </div>
+                <div class="card-body">
+                    <canvas id="fuelCurveChart" style="max-height: 300px;"></canvas>
+                    <div class="row mt-3 text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Gross Tonnage</small>
+                                <h6 id="chart-gt">-</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Cruising Speed</small>
+                                <h6 id="chart-cruise-speed">-</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">At Cruise (22 kn)</small>
+                                <h6 id="chart-cruise-consumption">-</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Hotel Load (0 kn)</small>
+                                <h6 id="chart-hotel-load">-</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Fuel Consumption Calculation Methodology Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-calculator me-2"></i>
+                        Fuel Consumption Calculation Methodology
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="calculationAccordion">
+
+                        <!-- Overview Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#overviewSection" aria-expanded="true">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Overview</strong>
+                                </button>
+                            </h2>
+                            <div id="overviewSection" class="accordion-collapse collapse show"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <p>
+                                        The fuel consumption curve is automatically calculated based on ship
+                                        specifications
+                                        using established marine engineering principles. The calculation considers hull
+                                        resistance,
+                                        propulsion efficiency, and auxiliary power requirements to provide realistic
+                                        fuel consumption
+                                        estimates across different operating speeds.
+                                    </p>
+                                    <div class="alert alert-info mb-0">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        <strong>Key Principle:</strong> Fuel consumption increases exponentially with
+                                        speed due to
+                                        hydrodynamic resistance, which grows approximately with the cube of velocity
+                                        (Speed³).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admiralty Formula Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#admiraltySection">
+                                    <i class="bi bi-gear me-2"></i>
+                                    <strong>1. Admiralty Formula (Propulsion Power)</strong>
+                                </button>
+                            </h2>
+                            <div id="admiraltySection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Propulsion Power Calculation</h6>
+                                    <div class="bg-light p-3 rounded mb-3">
+                                        <code class="text-dark">
+                                Power (MW) = (Displacement<sup>2/3</sup> × Speed³) / (C × 1000)
+                            </code>
+                                    </div>
+
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Displacement</strong></td>
+                                                <td>Ship weight in water (tons)</td>
+                                                <td>≈ Gross Tonnage × 1.5</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Speed</strong></td>
+                                                <td>Ship velocity</td>
+                                                <td>0 to Max Speed (knots)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>C (Admiralty Coefficient)</strong></td>
+                                                <td>Hull efficiency factor</td>
+                                                <td>400 (modern cruise ships)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="alert alert-secondary mb-0">
+                                        <strong>Note:</strong> The Admiralty Coefficient varies by vessel type. Modern
+                                        cruise ships
+                                        typically have C = 300-600, with 400 being a representative value for efficient
+                                        hull designs.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hull Efficiency Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#hullSection">
+                                    <i class="bi bi-ship me-2"></i>
+                                    <strong>2. Hull Efficiency Factor</strong>
+                                </button>
+                            </h2>
+                            <div id="hullSection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Length-to-Beam Ratio Impact</h6>
+                                    <div class="bg-light p-3 rounded mb-3">
+                                        <code class="text-dark">
+                                Hull Efficiency = 0.5 + (Length/Beam Ratio / 20)
+                            </code>
+                                    </div>
+
+                                    <p>
+                                        Ships with higher length-to-beam ratios have better hydrodynamic efficiency and
+                                        experience less drag. The hull efficiency factor adjusts power requirements
+                                        based
+                                        on the vessel's proportions.
+                                    </p>
+
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>L/B Ratio</th>
+                                                <th>Hull Type</th>
+                                                <th>Efficiency Factor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>4.0</td>
+                                                <td>Wide, stable hull</td>
+                                                <td>0.70 (70%)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>5.6</td>
+                                                <td>Typical cruise ship</td>
+                                                <td>0.78 (78%)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>7.0</td>
+                                                <td>Streamlined hull</td>
+                                                <td>0.85 (85%)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>10.0</td>
+                                                <td>Very efficient design</td>
+                                                <td>1.00 (100%)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="bg-light p-3 rounded">
+                                        <code class="text-dark">
+                                Adjusted Power = Propulsion Power / min(Hull Efficiency, 1.0)
+                            </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hotel Load Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#hotelSection">
+                                    <i class="bi bi-lightning me-2"></i>
+                                    <strong>3. Hotel Load (Auxiliary Power)</strong>
+                                </button>
+                            </h2>
+                            <div id="hotelSection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Non-Propulsion Power Requirements</h6>
+
+                                    <p>
+                                        Hotel load represents power consumed by all non-propulsion systems including
+                                        lighting,
+                                        air conditioning, galleys, elevators, entertainment systems, and other onboard
+                                        facilities.
+                                        This power is required even when the ship is stationary (at berth).
+                                    </p>
+
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Ship Size (GT)</th>
+                                                <th>Hotel Load Range</th>
+                                                <th>Example Ships</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>&lt; 50,000</td>
+                                                <td>3 - 5 MW</td>
+                                                <td>Small expedition ships</td>
+                                            </tr>
+                                            <tr>
+                                                <td>50,000 - 100,000</td>
+                                                <td>5 - 10 MW</td>
+                                                <td>Mid-size cruise ships</td>
+                                            </tr>
+                                            <tr>
+                                                <td>100,000 - 200,000</td>
+                                                <td>10 - 15 MW</td>
+                                                <td>Large modern cruise ships</td>
+                                            </tr>
+                                            <tr>
+                                                <td>&gt; 200,000</td>
+                                                <td>15 - 25+ MW</td>
+                                                <td>Mega ships (Oasis-class, Icon-class)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>Important:</strong> Hotel load scales with ship size due to increased
+                                        passenger
+                                        capacity, more amenities, and larger spaces requiring climate control.
+                                    </div>
+
+                                    <div class="bg-light p-3 rounded">
+                                        <code class="text-dark">
+                                Total Power = Propulsion Power + Hotel Load
+                            </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fuel Consumption Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#fuelSection">
+                                    <i class="bi bi-fuel-pump me-2"></i>
+                                    <strong>4. Fuel Consumption Calculation</strong>
+                                </button>
+                            </h2>
+                            <div id="fuelSection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Converting Power to Fuel Consumption</h6>
+
+                                    <div class="bg-light p-3 rounded mb-3">
+                                        <code class="text-dark">
+                                Fuel Consumption (tons/hour) = (Total Power × SFOC) / Engine Efficiency
+                            </code>
+                                    </div>
+
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                                <th>Typical Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Total Power</strong></td>
+                                                <td>Propulsion + Hotel Load</td>
+                                                <td>Variable (MW)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>SFOC</strong></td>
+                                                <td>Specific Fuel Oil Consumption (tons fuel per MWh)</td>
+                                                <td>0.19 t/MWh</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Engine Efficiency</strong></td>
+                                                <td>Thermal efficiency of modern engines</td>
+                                                <td>45% (0.45)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="card border-primary">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-primary">
+                                                        <i class="bi bi-clock-history me-2"></i>Legacy Engines
+                                                    </h6>
+                                                    <ul class="mb-0 small">
+                                                        <li>SFOC: 0.20-0.22 t/MWh</li>
+                                                        <li>Efficiency: 40-43%</li>
+                                                        <li>Higher fuel consumption</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card border-success">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-success">
+                                                        <i class="bi bi-stars me-2"></i>Modern Engines
+                                                    </h6>
+                                                    <ul class="mb-0 small">
+                                                        <li>SFOC: 0.18-0.19 t/MWh</li>
+                                                        <li>Efficiency: 45-50%</li>
+                                                        <li>Lower fuel consumption</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Example Calculation Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#exampleSection">
+                                    <i class="bi bi-clipboard-check me-2"></i>
+                                    <strong>5. Example Calculation</strong>
+                                </button>
+                            </h2>
+                            <div id="exampleSection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Icon of the Seas at Cruising Speed (22 knots)</h6>
+
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body">
+                                            <h6 class="text-secondary">Given Specifications:</h6>
+                                            <ul>
+                                                <li>Gross Tonnage: 250,800 GT</li>
+                                                <li>Propulsion Power: 84 MW</li>
+                                                <li>Length: 365 m</li>
+                                                <li>Beam: 65 m</li>
+                                                <li>Cruising Speed: 22 knots</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="text-secondary mb-2">Step-by-Step Calculation:</h6>
+
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <strong>Step 1:</strong> Calculate Displacement
+                                            <br><code>Displacement = 250,800 × 1.5 = 376,200 tons</code>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <strong>Step 2:</strong> Calculate Propulsion Power Needed
+                                            <br><code>Power = (376,200<sup>2/3</sup> × 22³) / (400 × 1000) ≈ 48.5 MW</code>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <strong>Step 3:</strong> Apply Hull Efficiency
+                                            <br><code>L/B Ratio = 365 / 65 = 5.62</code>
+                                            <br><code>Hull Efficiency = 0.5 + (5.62 / 20) = 0.78</code>
+                                            <br><code>Adjusted Power = 48.5 / 0.78 ≈ 62.2 MW</code>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <strong>Step 4:</strong> Estimate Hotel Load
+                                            <br><code>Hotel Load (250k+ GT) ≈ 20 MW</code>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <strong>Step 5:</strong> Calculate Total Power
+                                            <br><code>Total Power = 62.2 + 20 = 82.2 MW</code>
+                                        </div>
+                                    </div>
+
+                                    <div class="card border-success mb-2">
+                                        <div class="card-body py-2 bg-success bg-opacity-10">
+                                            <strong>Step 6:</strong> Calculate Fuel Consumption
+                                            <br><code>Fuel = (82.2 × 0.19) / 0.45 ≈ <strong>34.7 tons/hour</strong></code>
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-info mb-0 mt-3">
+                                        <i class="bi bi-calculator me-2"></i>
+                                        <strong>Daily Consumption at Cruising Speed:</strong> 34.7 tons/hour × 24 hours
+                                        ≈ 833 tons/day
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Curve Generation Section -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#curveSection">
+                                    <i class="bi bi-graph-up-arrow me-2"></i>
+                                    <strong>6. Fuel Curve Generation</strong>
+                                </button>
+                            </h2>
+                            <div id="curveSection" class="accordion-collapse collapse"
+                                data-bs-parent="#calculationAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="text-primary mb-3">Creating the Complete Consumption Profile</h6>
+
+                                    <p>
+                                        The system generates fuel consumption data points from 0 knots (at berth) to
+                                        maximum
+                                        speed, creating a smooth curve that shows how fuel consumption increases with
+                                        vessel speed.
+                                    </p>
+
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Speed (knots)</th>
+                                                <th>Operation Mode</th>
+                                                <th>Typical Use Case</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>0</td>
+                                                <td>At Berth</td>
+                                                <td>Hotel load only - port operations</td>
+                                            </tr>
+                                            <tr>
+                                                <td>5-10</td>
+                                                <td>Maneuvering</td>
+                                                <td>Port approach, canal transit</td>
+                                            </tr>
+                                            <tr>
+                                                <td>12-18</td>
+                                                <td>Economical Speed</td>
+                                                <td>Fuel-efficient cruising</td>
+                                            </tr>
+                                            <tr>
+                                                <td>20-22</td>
+                                                <td>Cruising Speed</td>
+                                                <td>Normal operations, scheduled sailing</td>
+                                            </tr>
+                                            <tr>
+                                                <td>23-25</td>
+                                                <td>Maximum Speed</td>
+                                                <td>Emergency, schedule recovery</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="alert alert-success mb-0">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        <strong>Automation:</strong> All calculations are performed automatically when
+                                        you add
+                                        or import ship data. The system uses the ship's specifications to generate a
+                                        realistic
+                                        fuel consumption curve instantly.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- Cruise Ship Database Table -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -36,6 +551,18 @@
                             <i class="bi bi-search"
                                 style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
                         </div>
+
+                        <!-- NEW: CSV BUTTONS -->
+                        <button class="btn btn-sm btn-outline-secondary" id="download-template-btn"
+                            title="Download CSV Template">
+                            <i class="bi bi-download me-1"></i>Download Template
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" id="import-csv-btn"
+                            title="Import Ships from CSV">
+                            <i class="bi bi-upload me-1"></i>Import CSV
+                        </button>
+                        <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#shipModal">
                             <i class="bi bi-plus-circle me-1"></i>Add Cruise Ship
@@ -48,8 +575,13 @@
                             <thead>
                                 <tr>
                                     <th>Ship Name</th>
-                                    <th>Company</th>
+                                    <th>Operator</th>
                                     <th>Gross Tonnage</th>
+                                    <th>Propulsion Power</th>
+                                    <th>Cruising Speed</th>
+                                    <th>Max Speed</th>
+                                    <th>Length</th>
+                                    <th>Year Built</th>
                                     <th>Fuel Type</th>
                                     <th>Actions</th>
                                 </tr>
@@ -59,52 +591,269 @@
                     </div>
                 </div>
             </div>
+    </div>
+    <!-- End of card -->
 
-            <!-- THE CORRECTED MODAL -->
-            <div class="modal fade" id="shipModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="shipModalLabel">Add New Cruise Ship</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- THE COMPLETE MODAL STRUCTURE -->
+    <div class="modal fade" id="shipModal" tabindex="-1">
+        <div class="modal-dialog modal-lg"> <!-- Added modal-lg for wider modal -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shipModalLabel">Add New Cruise Ship</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Enter ship specifications from CruiseMapper. All critical fields are required for accurate fuel
+                        consumption calculations.
+                    </p>
+
+                    <form id="shipForm" novalidate>
+                        <input type="hidden" id="shipId">
+
+                        <!-- Basic Information Section -->
+                        <h6 class="text-primary mb-3"><i class="bi bi-ship me-2"></i>Basic Information</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="shipName" class="form-label">Ship Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="shipName" required>
+                                <div class="invalid-feedback">Ship name is required.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="operator" class="form-label">Operator / Company</label>
+                                <input type="text" class="form-control" id="operator"
+                                    placeholder="e.g., Royal Caribbean">
+                            </div>
                         </div>
-                        <div class="modal-body">
-                            <p class="text-muted small">Enter the ship's basic details. A realistic fuel consumption
-                                curve will be automatically generated based on the Gross Tonnage.</p>
-                            <form id="shipForm" novalidate>
-                                <input type="hidden" id="shipId">
-                                <div class="mb-3">
-                                    <label for="shipName" class="form-label">Ship Name</label>
-                                    <input type="text" class="form-control" id="shipName" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="company" class="form-label">Company / Operator</label>
-                                    <input type="text" class="form-control" id="company">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="grossTonnage" class="form-label">Gross Tonnage (GT)</label>
-                                    <input type="number" class="form-control" id="grossTonnage" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="fuelType" class="form-label">Primary Fuel Type</label>
-                                    <select class="form-select" id="fuelType" required></select>
-                                </div>
-                            </form>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="builder" class="form-label">Builder</label>
+                                <input type="text" class="form-control" id="builder" placeholder="e.g., Meyer Werft">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="yearBuilt" class="form-label">Year Built</label>
+                                <input type="number" class="form-control" id="yearBuilt" placeholder="e.g., 2026"
+                                    min="1900" max="2030">
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" form="shipForm" class="btn btn-primary">Save Cruise Ship</button>
+
+                        <!-- Technical Specifications Section -->
+                        <h6 class="text-primary mb-3 mt-4"><i class="bi bi-gear me-2"></i>Technical Specifications</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="grossTonnage" class="form-label">Gross Tonnage (GT) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="grossTonnage" required min="1"
+                                    placeholder="e.g., 250800">
+                                <div class="invalid-feedback">Gross tonnage is required.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="propulsionPower" class="form-label">Propulsion Power (MW) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="propulsionPower" required step="0.1"
+                                    min="0" placeholder="e.g., 84">
+                                <div class="invalid-feedback">Propulsion power is required.</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cruisingSpeed" class="form-label">Cruising Speed (knots) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="cruisingSpeed" required step="0.1" min="0"
+                                    placeholder="e.g., 22">
+                                <div class="invalid-feedback">Cruising speed is required.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="maxSpeed" class="form-label">Max Speed (knots) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="maxSpeed" required step="0.1" min="0"
+                                    placeholder="e.g., 25">
+                                <div class="invalid-feedback">Max speed is required.</div>
+                            </div>
+                        </div>
+
+                        <!-- Dimensions Section -->
+                        <h6 class="text-primary mb-3 mt-4"><i class="bi bi-rulers me-2"></i>Dimensions</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="length" class="form-label">Length (LOA in meters) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="length" required step="0.1" min="0"
+                                    placeholder="e.g., 365">
+                                <div class="invalid-feedback">Length is required.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="beam" class="form-label">Beam / Width (meters) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="beam" required step="0.1" min="0"
+                                    placeholder="e.g., 65">
+                                <div class="invalid-feedback">Beam is required.</div>
+                            </div>
+                        </div>
+
+                        <!-- Capacity Section -->
+                        <h6 class="text-primary mb-3 mt-4"><i class="bi bi-people me-2"></i>Capacity</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="passengerCapacity" class="form-label">Passenger Capacity</label>
+                                <input type="number" class="form-control" id="passengerCapacity" min="0"
+                                    placeholder="e.g., 7600">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="crew" class="form-label">Crew Size</label>
+                                <input type="number" class="form-control" id="crew" min="0" placeholder="e.g., 2350">
+                            </div>
+                        </div>
+
+                        <!-- Propulsion & Fuel Section -->
+                        <h6 class="text-primary mb-3 mt-4"><i class="bi bi-fuel-pump me-2"></i>Propulsion & Fuel</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="engineType" class="form-label">Engine Type</label>
+                                <input type="text" class="form-control" id="engineType"
+                                    placeholder="e.g., Wartsila-LNG">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="fuelType" class="form-label">Primary Fuel Type <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="fuelType" required>
+                                    <option value="" disabled selected>Select a Fuel Type</option>
+                                </select>
+                                <div class="invalid-feedback">Fuel type is required.</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="shipForm" class="btn btn-primary">Save Cruise Ship</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End of modal -->
+
+    <!-- CSV Import Results Modal -->
+    <div class="modal fade" id="csvImportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                        CSV Import Review
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Bar (shown during import) -->
+                    <div id="import-progress-container" style="display: none;">
+                        <h6 class="mb-3">Importing Ships...</h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div id="import-progress-bar"
+                                class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted small" id="import-progress-text">Processing...</p>
+                    </div>
+
+                    <!-- Validation Errors (if any) -->
+                    <div id="validation-errors-container" style="display: none;">
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-exclamation-triangle me-2"></i>Validation Errors</h6>
+                            <p class="mb-2">The following rows have errors and cannot be imported:</p>
+                            <div id="validation-errors-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Duplicate Ships (if any) -->
+                    <div id="duplicate-ships-container" style="display: none;">
+                        <div class="alert alert-warning">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0"><i class="bi bi-exclamation-circle me-2"></i>Duplicate Ships Found</h6>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="select-all-duplicates">
+                                        <i class="bi bi-check-square me-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="deselect-all-duplicates">
+                                        <i class="bi bi-square me-1"></i>Deselect All
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="mb-2">The following ships already exist. Check the boxes to update them:</p>
+                            <div id="duplicate-ships-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Valid Ships Ready to Import -->
+                    <div id="valid-ships-container" style="display: none;">
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-check-circle me-2"></i>Ready to Import</h6>
+                            <p class="mb-0"><span id="valid-ships-count">0</span> ship(s) will be added to the database.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Summary after import -->
+                    <div id="import-summary-container" style="display: none;">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h3 class="text-success" id="summary-imported">0</h3>
+                                        <p class="mb-0">Imported</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-body">
+                                        <h3 class="text-warning" id="summary-updated">0</h3>
+                                        <p class="mb-0">Updated</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-secondary">
+                                    <div class="card-body">
+                                        <h3 class="text-secondary" id="summary-skipped">0</h3>
+                                        <p class="mb-0">Skipped</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="modal-footer" id="import-modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirm-import-btn">
+                        <i class="bi bi-upload me-1"></i>Confirm Import
+                    </button>
+                </div>
             </div>
-        </main>
+        </div>
+    </div>
+
+    </main>
+    </div>
+    </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script type="module" src="js/vessel-data.js"></script>
 </body>
 
