@@ -1,5 +1,5 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
 import { 
     getOptimizationTrends, 
@@ -12,6 +12,11 @@ import {
 
 // Chart instances
 let optimizationChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
+
+// Pagination and search state
+let allOptimizations = [];
+let optimizationPaginationController = null;
+let optimizationSearchController = null;
 
 // Configure toastr notifications
 toastr.options = {
@@ -266,37 +271,116 @@ async function loadVesselUsage() {
 }
 
 /**
- * Loads and renders the Recent Optimizations table.
+ * Loads and renders the Recent Optimizations table with pagination and search.
+ * Uses the same utility functions as fuel-types page.
  */
 async function loadRecentOptimizations() {
     try {
-        const optimizations = await getRecentOptimizations(10);
+        // Load all optimizations (increase limit for better pagination)
+        const optimizations = await getRecentOptimizations(1000);
         
-        const tbody = document.getElementById('recentOptimizationsTable');
-        if (!tbody) return;
-
+        allOptimizations = optimizations;
+        
         if (optimizations.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No optimization data available yet</td></tr>';
+            const tbody = document.getElementById('recentOptimizationsTable');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No optimization data available yet</td></tr>';
+            }
             return;
         }
 
-        tbody.innerHTML = optimizations.map(item => {
-            const date = new Date(item.timestamp);
-            return `
-                <tr>
-                    <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
-                    <td>${item.route}</td>
-                    <td>${item.vessel}</td>
-                    <td><span class="badge badge-fuel text-white">${item.fuelSaved}</span></td>
-                    <td><span class="badge badge-co2 text-white">${item.co2Reduced}</span></td>
-                    <td>${item.timeSaved}</td>
-                </tr>
-            `;
-        }).join('');
+        // Make table scrollable (only once)
+        makeTableScrollable('recentOptimizationsTableWrapper', 500);
+        
+        // Initialize search with utility function
+        optimizationSearchController = initializeTableSearch(
+            'optimizationSearch',
+            allOptimizations,
+            ['route', 'vessel', 'timestamp', 'fuelSaved', 'co2Reduced', 'timeSaved'],
+            (filteredData) => {
+                renderOptimizationsTable(filteredData);
+            },
+            {
+                debounceDelay: 300,
+                placeholder: 'Search by route, vessel, date...',
+                showResultCount: true,
+                minCharacters: 0
+            }
+        );
+        
+        // Add clear button to search
+        addSearchClearButton('optimizationSearch', () => {
+            renderOptimizationsTable(allOptimizations);
+        });
+        
+        // Initial render
+        renderOptimizationsTable(allOptimizations);
+        
     } catch (error) {
         console.error('Error loading recent optimizations:', error);
         toastr.error('Failed to load recent optimizations');
     }
+}
+
+/**
+ * Renders the optimizations table with pagination
+ * @param {Array} optimizations - Array of optimization data to display
+ */
+function renderOptimizationsTable(optimizations) {
+    const tableBody = document.getElementById('recentOptimizationsTable');
+    
+    if (optimizations.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No results found</td></tr>';
+        // Destroy pagination if no data
+        if (optimizationPaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            optimizationPaginationController = null;
+        }
+        return;
+    }
+
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(item => {
+            const date = new Date(item.timestamp);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+                <td>${item.route}</td>
+                <td>${item.vessel}</td>
+                <td><span class="badge badge-fuel text-white">${item.fuelSaved}</span></td>
+                <td><span class="badge badge-co2 text-white">${item.co2Reduced}</span></td>
+                <td>${item.timeSaved}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination using utility function
+    if (!optimizationPaginationController) {
+        optimizationPaginationController = initializePagination(
+            'recentOptimizationsTableWrapper',  // The table's parent container ID
+            optimizations,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true,
+                infoText: 'Showing {start} to {end} of {total} entries'
+            }
+        );
+    } else {
+        optimizationPaginationController.setData(optimizations);
+    }
+
+    // Initial render
+    optimizationPaginationController.render();
 }
 
 /**

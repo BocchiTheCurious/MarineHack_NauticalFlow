@@ -1,6 +1,6 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showAlert, formatDate, showLoader, hideLoader } from './modules/utils.js';
-import { getSavedOptimizations, deleteOptimizationResult, getPorts, getCruiseShips, runOptimization, saveOptimizationResult } from './modules/api.js';
+import { getPorts, getCruiseShips, runOptimization, saveOptimizationResult } from './modules/api.js';
 import { loadLayout } from './modules/layout.js';
 
 // --- MODULE-LEVEL VARIABLES ---
@@ -51,11 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize page-specific components
     initializeMap();
-    initializeSavedResults();
     populatePortDropdown('departure-port');
     populatePortDropdown('add-destination-port');
     populateVesselDropdown();
-    
+
     // Load AIS ship movement data
     loadAISShipData();
 
@@ -118,7 +117,7 @@ function setupPortSelectionListeners() {
     portsContainer.addEventListener('click', (e) => {
         const target = e.target.closest('.btn-close');
         if (!target) return;
-        
+
         // Check if it's the departure port remove button
         if (target.dataset.action === 'remove-departure') {
             // Reset the entire route
@@ -215,7 +214,7 @@ async function handleRunOptimization() {
 
     const originalRoutePorts = [route.departure, ...route.arrivals];
     const coordinates = originalRoutePorts.map(port => [port.latitude, port.longitude]);
-    
+
     try {
         // Send optimization request
         const result = await runOptimization(coordinates, selectedShipId);
@@ -224,26 +223,26 @@ async function handleRunOptimization() {
         const standardMetrics = result.standard_metrics;
         const optimizedMetrics = result.optimized_metrics;
         const orderedPorts = [route.departure, ...result.best_route_indices.map(index => route.arrivals[index - 1])];
-        
+
         // Update comparison table
         updateComparisonTable(
-            standardMetrics, 
-            optimizedMetrics, 
-            originalRoutePorts, 
+            standardMetrics,
+            optimizedMetrics,
+            originalRoutePorts,
             orderedPorts
         );
-        
+
         drawOptimizedRoute(orderedPorts, result.route_geometry);
         displayEtaDetails(result.eta_details, orderedPorts);
 
-        lastOptimizationResult = { 
-            standardMetrics, 
-            optimizedMetrics, 
-            standardRoutePorts: originalRoutePorts, 
+        lastOptimizationResult = {
+            standardMetrics,
+            optimizedMetrics,
+            standardRoutePorts: originalRoutePorts,
             optimizedRoutePorts: orderedPorts,
             etaDetails: result.eta_details
         };
-        
+
         const vesselSelect = document.getElementById('vessel-name');
         const vesselName = vesselSelect.options[vesselSelect.selectedIndex].text;
         const resultToSave = {
@@ -256,7 +255,6 @@ async function handleRunOptimization() {
 
         await saveOptimizationResult(resultToSave);
         toastr.info('Optimization result has been saved.', 'Result Saved');
-        await initializeSavedResults();
 
     } catch (error) {
         console.error("Optimization failed:", error);
@@ -362,24 +360,24 @@ function drawOptimizedRoute(orderedPorts, routeGeometry) {
         shadowSize: [41, 41]
     });
 
-  const markers = orderedPorts.map((port, index) => {
-    const markerOptions = {};
-    if (index === 0) {
-        markerOptions.icon = greenIcon;
-    }
-    const labelText = `${index === 0 ? 'Start' : `Stop ${index}`}: ${port.name}`;
-    
-    const marker = L.marker([port.latitude, port.longitude], markerOptions)
-        .bindTooltip(labelText, {
-            permanent: true,
-            direction: 'top',
-            className: 'port-label-tooltip',
-            offset: [0, -20]
-        })
-        .bindPopup(`<b>${labelText}</b>`);
-    
-    return marker;
-});
+    const markers = orderedPorts.map((port, index) => {
+        const markerOptions = {};
+        if (index === 0) {
+            markerOptions.icon = greenIcon;
+        }
+        const labelText = `${index === 0 ? 'Start' : `Stop ${index}`}: ${port.name}`;
+
+        const marker = L.marker([port.latitude, port.longitude], markerOptions)
+            .bindTooltip(labelText, {
+                permanent: true,
+                direction: 'top',
+                className: 'port-label-tooltip',
+                offset: [0, -20]
+            })
+            .bindPopup(`<b>${labelText}</b>`);
+
+        return marker;
+    });
 
     portMarkersLayer = L.layerGroup(markers).addTo(map);
 
@@ -402,7 +400,7 @@ function initializeMap() {
         L.latLng(24, -125),   // Southwest corner
         L.latLng(50, -65)     // Northeast corner
     );
-    
+
     // Initialize map with USA view
     map = L.map('nautical-map', {
         center: [37, -95],    // Center of USA
@@ -419,8 +417,9 @@ function initializeMap() {
     L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
         attribution: '© OpenSeaMap'
     }).addTo(map);
-    
+
     loadMarineZones();
+
     addMarineZonesLegend();
 }
 
@@ -449,7 +448,7 @@ async function loadAISShipData() {
         }
         aisData = await response.json();
         console.log('✓ Loaded AIS ship data:', aisData.metadata);
-        
+
     } catch (error) {
         console.warn('Failed to load AIS ship data:', error);
     }
@@ -484,14 +483,14 @@ function toggleShipMovements(show) {
  */
 function displayShipMovements() {
     if (!aisData || !aisData.vessels) return;
-    
+
     clearShipMovements();
-    
+
     aisData.vessels.forEach(vessel => {
         if (vessel.positions.length === 0) return;
-        
+
         const color = getVesselColor(vessel.type);
-        
+
         // Draw track if vessel has multiple positions
         if (vessel.positions.length > 1) {
             const trackPoints = vessel.positions.map(pos => [pos.lat, pos.lon]);
@@ -502,7 +501,7 @@ function displayShipMovements() {
             }).addTo(map);
             vesselTrackLayers.push(track);
         }
-        
+
         // Add vessel marker at last position
         const lastPos = vessel.positions[vessel.positions.length - 1];
         const marker = L.circleMarker([lastPos.lat, lastPos.lon], {
@@ -513,7 +512,7 @@ function displayShipMovements() {
             opacity: 1,
             fillOpacity: 0.8
         }).addTo(map);
-        
+
         // Create popup with vessel information
         const popupContent = `
             <div style="font-size: 12px;">
@@ -527,10 +526,10 @@ function displayShipMovements() {
             </div>
         `;
         marker.bindPopup(popupContent);
-        
+
         vesselLayers.push(marker);
     });
-    
+
     console.log(`✓ Displayed ${vesselLayers.length} ships with ${vesselTrackLayers.length} tracks`);
 }
 
@@ -542,19 +541,6 @@ function clearShipMovements() {
     vesselTrackLayers.forEach(layer => map.removeLayer(layer));
     vesselLayers = [];
     vesselTrackLayers = [];
-}
-
-/**
- * Fetches and renders the table of previously saved optimization results.
- */
-async function initializeSavedResults() {
-    try {
-        const savedResults = await getSavedOptimizations();
-        renderSavedResultsTable(savedResults);
-    } catch (error) {
-        console.error("Failed to initialize saved results:", error);
-        toastr.error("Could not load saved results.", "Data Load Error");
-    }
 }
 
 /**
@@ -591,7 +577,7 @@ function renderSavedResultsTable(results) {
     tableBody.addEventListener('click', async (event) => {
         const deleteBtn = event.target.closest('.delete-btn');
         if (!deleteBtn) return;
-        
+
         const row = deleteBtn.closest('tr');
         const resultId = row.dataset.resultId;
 
@@ -814,7 +800,7 @@ function formatCycloneDate(dateString) {
 function addMarineZonesLegend() {
     const legend = L.Control.extend({
         options: { position: 'bottomright' },
-        onAdd: function(map) {
+        onAdd: function (map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control legend');
             container.innerHTML = `
                 <div style="background: rgba(255,255,255,0.9); padding: 10px; border-radius: 4px; font-size: 12px; min-width: 200px;">
@@ -881,7 +867,7 @@ function exportResultsToPDF() {
     tableRows.push(["CO2 Emissions (kg)", standardMetrics.co2_kg.toFixed(2), optimizedMetrics.co2_kg.toFixed(2), formatImprovementText(standardMetrics.co2_kg, optimizedMetrics.co2_kg)]);
     tableRows.push(["Travel Time (hours)", standardMetrics.travel_time_hours.toFixed(2), optimizedMetrics.travel_time_hours.toFixed(2), formatImprovementText(standardMetrics.travel_time_hours, optimizedMetrics.travel_time_hours)]);
     tableRows.push(["Distance (km)", standardMetrics.distance_km.toFixed(2), optimizedMetrics.distance_km.toFixed(2), formatImprovementText(standardMetrics.distance_km, optimizedMetrics.distance_km)]);
-    
+
     doc.autoTable(tableColumn, tableRows, { startY: 50 });
     doc.save('route_optimization_report.pdf');
     toastr.success('PDF report downloaded.', 'Export Complete');
@@ -900,7 +886,7 @@ function exportResultsToCSV() {
     const headers = ["Metric", "Standard Value", "Optimized Value", "Unit"];
     csvContent += headers.join(",") + "\r\n";
     const rows = [
-        ["Route Sequence", `"${standardRoutePorts.map(p=>p.name).join(' -> ')}"`, `"${optimizedRoutePorts.map(p=>p.name).join(' -> ')}"`, "text"],
+        ["Route Sequence", `"${standardRoutePorts.map(p => p.name).join(' -> ')}"`, `"${optimizedRoutePorts.map(p => p.name).join(' -> ')}"`, "text"],
         ["Fuel Consumption", standardMetrics.fuel_liters.toFixed(2), optimizedMetrics.fuel_liters.toFixed(2), "liters"],
         ["CO2 Emissions", standardMetrics.co2_kg.toFixed(2), optimizedMetrics.co2_kg.toFixed(2), "kg"],
         ["Travel Time", standardMetrics.travel_time_hours.toFixed(2), optimizedMetrics.travel_time_hours.toFixed(2), "hours"],
