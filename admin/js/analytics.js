@@ -1,13 +1,13 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
 import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
-import { 
-    getOptimizationTrends, 
-    getFuelTypeDistribution, 
-    getWeeklyActivity, 
+import {
+    getOptimizationTrends,
+    getFuelTypeDistribution,
+    getWeeklyActivity,
     getVesselUsageStats,
     getRecentOptimizations,
-    getStatsSummary 
+    getStatsSummary
 } from './modules/api.js';
 
 // Chart instances
@@ -17,6 +17,47 @@ let optimizationChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
 let allOptimizations = [];
 let optimizationPaginationController = null;
 let optimizationSearchController = null;
+
+/**
+ * Helper function to format timestamp as Malaysia time (GMT+8)
+ * @param {string} timestamp - The timestamp string from the database
+ * @returns {string} Formatted date and time in Malaysia timezone
+ */
+function formatMalaysiaTime(timestamp) {
+    if (!timestamp) return 'N/A';
+    
+    // Parse the timestamp - assuming it's in UTC from the database
+    // Format expected: "2025-10-22 15:58:34" or "2025-10-22T15:58:34"
+    let date;
+    
+    // Replace space with 'T' if needed to make it ISO format
+    const isoTimestamp = timestamp.replace(' ', 'T');
+    
+    // Add 'Z' to explicitly mark it as UTC if not already present
+    if (!isoTimestamp.endsWith('Z') && !isoTimestamp.includes('+')) {
+        date = new Date(isoTimestamp + 'Z');
+    } else {
+        date = new Date(isoTimestamp);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+        console.error('Invalid timestamp:', timestamp);
+        return timestamp; // Return original if invalid
+    }
+
+    // Format as Malaysia time (GMT+8)
+    return date.toLocaleString('en-MY', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+}
 
 // Configure toastr notifications
 toastr.options = {
@@ -30,7 +71,7 @@ toastr.options = {
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
     await loadLayout();
-    
+
     setupLogout();
     initializeTooltips();
     highlightCurrentPage();
@@ -62,17 +103,17 @@ function initializeAnalyticsPage() {
 async function loadAllData() {
     try {
         showLoader(); // Show loading indicator
-        
+
         // Load all data in parallel for better performance
         await Promise.all([
-            loadStatsCards(),  
+            loadStatsCards(),
             loadOptimizationTrends(),
             loadFuelTypeDistribution(),
             loadWeeklyActivity(),
             loadVesselUsage(),
             loadRecentOptimizations()
         ]);
-        
+
         toastr.success('Dashboard data loaded successfully!');
     } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -88,7 +129,7 @@ async function loadAllData() {
 async function loadOptimizationTrends() {
     try {
         const data = await getOptimizationTrends(300); // Last 10 months
-        
+
         const ctx = document.getElementById('optimizationTrendsChart');
         if (!ctx) return;
 
@@ -137,7 +178,7 @@ async function loadOptimizationTrends() {
 async function loadFuelTypeDistribution() {
     try {
         const data = await getFuelTypeDistribution();
-        
+
         const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
 
         const ctx = document.getElementById('fuelTypeChart');
@@ -226,7 +267,7 @@ async function loadWeeklyActivity() {
 async function loadVesselUsage() {
     try {
         const data = await getVesselUsageStats();
-        
+
         const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
 
         const ctx = document.getElementById('vesselUsageChart');
@@ -278,9 +319,9 @@ async function loadRecentOptimizations() {
     try {
         // Load all optimizations (increase limit for better pagination)
         const optimizations = await getRecentOptimizations(1000);
-        
+
         allOptimizations = optimizations;
-        
+
         if (optimizations.length === 0) {
             const tbody = document.getElementById('recentOptimizationsTable');
             if (tbody) {
@@ -291,7 +332,7 @@ async function loadRecentOptimizations() {
 
         // Make table scrollable (only once)
         makeTableScrollable('recentOptimizationsTableWrapper', 500);
-        
+
         // Initialize search with utility function
         optimizationSearchController = initializeTableSearch(
             'optimizationSearch',
@@ -307,15 +348,15 @@ async function loadRecentOptimizations() {
                 minCharacters: 0
             }
         );
-        
+
         // Add clear button to search
         addSearchClearButton('optimizationSearch', () => {
             renderOptimizationsTable(allOptimizations);
         });
-        
+
         // Initial render
         renderOptimizationsTable(allOptimizations);
-        
+
     } catch (error) {
         console.error('Error loading recent optimizations:', error);
         toastr.error('Failed to load recent optimizations');
@@ -328,7 +369,7 @@ async function loadRecentOptimizations() {
  */
 function renderOptimizationsTable(optimizations) {
     const tableBody = document.getElementById('recentOptimizationsTable');
-    
+
     if (optimizations.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No results found</td></tr>';
         // Destroy pagination if no data
@@ -346,10 +387,9 @@ function renderOptimizationsTable(optimizations) {
     const renderPage = (pageData) => {
         tableBody.innerHTML = '';
         pageData.forEach(item => {
-            const date = new Date(item.timestamp);
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+                <td>${formatMalaysiaTime(item.timestamp)}</td>
                 <td>${item.route}</td>
                 <td>${item.vessel}</td>
                 <td><span class="badge badge-fuel text-white">${item.fuelSaved}</span></td>
@@ -389,13 +429,13 @@ function renderOptimizationsTable(optimizations) {
 async function loadStatsCards() {
     try {
         const stats = await getStatsSummary();
-        
+
         // Update each stat card
         document.getElementById('totalRoutes').textContent = stats.totalRoutes.toLocaleString();
         document.getElementById('totalVessels').textContent = stats.totalVessels.toLocaleString();
         document.getElementById('totalPorts').textContent = stats.totalPorts.toLocaleString();
         document.getElementById('totalFuelTypes').textContent = stats.totalFuelTypes.toLocaleString();
-        
+
     } catch (error) {
         console.error('Error loading stats cards:', error);
         // Keep the "-" placeholder if error occurs
