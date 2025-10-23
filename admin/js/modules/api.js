@@ -241,59 +241,81 @@ export function deleteOptimizationResult(resultId) {
     });
 }
 
+// --- Analytics Functions ---
+/**
+ * Fetches overall analytics summary (total optimizations, fuel saved, CO2 reduced)
+ * @returns {Promise<object>} Summary statistics
+ */
+export function getAnalyticsSummary() {
+    return fetchWithAuth('/analytics/summary');
+}
+
+/**
+ * Get monthly optimization trends
+ * @param {number} months - Number of months to retrieve (default: 12)
+ * @returns {Promise<{labels: string[], counts: number[]}>}
+ */
+export function getMonthlyTrends(months = 12) {
+    return fetchWithAuth(`/analytics/monthly-trends?months=${months}`);
+}
+
+/**
+ * Fetches recent optimization results
+ * @param {number} limit - Number of recent results to fetch (default 10)
+ * @returns {Promise<Array>} Array of recent optimization objects
+ */
+export function getRecentOptimizations(limit = 10) {
+    return fetchWithAuth(`/analytics/recent?limit=${limit}`);
+}
+
+/**
+ * Fetches vessel usage statistics (most used vessels)
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getVesselUsageStats() {
+    return fetchWithAuth('/analytics/vessel-usage');
+}
+
+/**
+ * Fetches fuel type distribution from user's optimization history
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getFuelTypeDistribution() {
+    return fetchWithAuth('/analytics/fuel-distribution');
+}
+
+/**
+ * Fetches weekly activity data
+ * @param {number} weeks - Number of weeks to look back (default 8)
+ * @returns {Promise<object>} Object with labels and counts arrays
+ */
+export function getWeeklyActivity(weeks = 8) {
+    return fetchWithAuth(`/analytics/weekly-activity?weeks=${weeks}`);
+}
+
+/**
+ * Fetches summary statistics for dashboard stats cards
+ * @returns {Promise<object>} Object with totalRoutes, totalVessels, totalPorts, totalFuelTypes
+ */
+export function getStatsSummary() {
+    return fetchWithAuth('/analytics/stats-summary');
+}
+
 // --- External APIs: Live Weather Data ---
 /**
- * Fetches current and hourly marine weather data from the Open-Meteo API.
- * This function does not use fetchWithAuth as it's an unauthenticated, public API.
- * @param {number} latitude - The latitude for the weather forecast.
- * @param {number} longitude - The longitude for the weather forecast.
- * @returns {Promise<Object>} The combined weather data from the APIs.
+ * Fetches cached weather data from the backend for a specific port.
+ * Weather data is updated daily at 2 AM via scheduled cron job.
+ * @param {number} portId - The ID of the port to get weather for.
+ * @returns {Promise<Object>} The cached weather data from the backend.
  */
-export async function getWeatherData(latitude, longitude) {
-    const weatherParams = "temperature_2m,weather_code,wind_speed_10m";
-    const marineParams = "wave_height,wave_direction,wave_period";
-    const weatherURL = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=${weatherParams},weather_code&hourly=${weatherParams}&timezone=auto&forecast_days=2`;
-    const marineURL = `https://marine-api.open-meteo.com/v1/marine?latitude=${latitude}&longitude=${longitude}&current=${marineParams}&hourly=wave_height&timezone=auto&forecast_days=2`;
-
+export async function getWeatherData(portId) {
     try {
-        const [weatherResponse, marineResponse] = await Promise.all([
-            fetch(weatherURL),
-            fetch(marineURL)
-        ]);
-
-        if (!weatherResponse.ok || !marineResponse.ok) {
-            console.error("Weather API Error:", await weatherResponse.text());
-            console.error("Marine API Error:", await marineResponse.text());
-            throw new Error(`Failed to fetch data from one or more weather APIs.`);
-        }
-
-        const weatherData = await weatherResponse.json();
-        const marineData = await marineResponse.json();
-
-        // Manually and precisely merge the two results into a single object
-        const combinedData = {
-            latitude: weatherData.latitude,
-            longitude: weatherData.longitude,
-            generationtime_ms: weatherData.generationtime_ms,
-            utc_offset_seconds: weatherData.utc_offset_seconds,
-            timezone: weatherData.timezone,
-            timezone_abbreviation: weatherData.timezone_abbreviation,
-            elevation: weatherData.elevation,
-            current_units: { ...weatherData.current_units, ...marineData.current_units },
-            hourly_units: { ...weatherData.hourly_units, ...marineData.hourly_units },
-            current: { ...weatherData.current, ...marineData.current },
-            hourly: {
-                time: weatherData.hourly.time,
-                temperature_2m: weatherData.hourly.temperature_2m,
-                weather_code: weatherData.hourly.weather_code,
-                wind_speed_10m: weatherData.hourly.wind_speed_10m,
-                wave_height: marineData.hourly.wave_height
-            }
-        };
-        return combinedData;
+        const response = await fetchWithAuth(`/weather/${portId}`);
+        // Return the data portion, maintaining compatibility with existing code
+        return response.data;
     } catch (error) {
-        console.error("Failed to fetch and combine weather data:", error);
-        throw error; // Re-throw the error to be handled by the calling function
+        console.error('Failed to fetch cached weather data:', error);
+        throw error;
     }
 }
 
@@ -321,5 +343,18 @@ export function addPortReview(portId, reviewData) {
 export function deletePortReview(portId, reviewId) {
     return fetchWithAuth(`/ports/${portId}/reviews/${reviewId}`, {
         method: 'DELETE'
+    });
+}
+
+// --- Feedback Functions ---
+/**
+ * Submits user feedback to the backend
+ * @param {object} feedbackData - The feedback data object with question responses
+ * @returns {Promise<object>} The server's confirmation response
+ */
+export function submitFeedback(feedbackData) {
+    return fetchWithAuth('/feedback', {
+        method: 'POST',
+        body: JSON.stringify(feedbackData)
     });
 }

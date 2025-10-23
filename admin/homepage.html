@@ -240,10 +240,18 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card shadow">
-                        <div class="card-header py-3">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
                             <h6 class="m-0 font-weight-bold text-primary">
                                 <i class="bi bi-bar-chart-line me-2"></i>Route Comparison Analysis
                             </h6>
+                            <div>
+                                <button class="btn btn-success btn-sm" id="export-pdf">
+                                    <i class="bi bi-file-pdf me-1"></i>Export PDF
+                                </button>
+                                <button class="btn btn-info btn-sm ms-2" id="export-csv">
+                                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export CSV
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -312,111 +320,6 @@
                 </div>
             </div>
 
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="bi bi-info-circle me-2"></i>How The Calculation Works
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">Our system uses a sophisticated process to provide you with an accurate
-                                and optimized route plan. Here's a breakdown of the data and methods we use:</p>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-cpu me-2"></i>The Optimization Algorithm</h6>
-                                    <small>We employ a <strong>Genetic Algorithm (GA)</strong> to solve this complex
-                                        routing challenge, which is a version of the classic Traveling Salesperson
-                                        Problem (TSP). Inspired by natural selection, the GA intelligently searches
-                                        through a vast number of possible route combinations to find the most efficient
-                                        sequence of ports, saving you from having to test them all manually.</small>
-                                </li>
-                                <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-rulers me-2"></i>Distance Calculation</h6>
-                                    <small>To ensure accuracy, our system doesn't just measure straight lines. It uses
-                                        the <strong>Haversine formula</strong>, which calculates the great-circle
-                                        distance (the shortest path on a sphere) between ports using their precise
-                                        latitude and longitude coordinates.</small>
-                                </li>
-                                <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-clock me-2"></i>Travel Time Calculation</h6>
-                                    <small>Travel time is calculated by dividing the total distance by an average vessel
-                                        speed. This speed is derived from the specific <strong>fuel consumption
-                                            curve</strong> data you provided for the selected vessel, ensuring the
-                                        estimate is tailored to that ship's performance characteristics.</small>
-                                </li>
-                                <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-fuel-pump me-2"></i>Fuel Consumption Calculation
-                                    </h6>
-                                    <small>Fuel usage is determined by multiplying the total distance by a fuel rate
-                                        (e.g., tons per kilometer). This rate is also extracted from the vessel's unique
-                                        <strong>fuel consumption curve</strong>, which directly links the ship's speed
-                                        to its rate of fuel burn.</small>
-                                </li>
-                                <li class="list-group-item">
-                                    <h6 class="mb-1"><i class="bi bi-cloud me-2"></i>CO₂ Emissions Calculation</h6>
-                                    <small>This is a direct calculation: the total fuel consumed is multiplied by the
-                                        specific <strong>CO₂ factor</strong> associated with the vessel's designated
-                                        fuel type (e.g., Heavy Fuel Oil, Marine Gas Oil). This provides an accurate
-                                        estimate of the voyage's carbon footprint.</small>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card shadow">
-                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="bi bi-save me-2"></i>Saved Optimization Results
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-striped border comparison-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date & Time</th>
-                                            <th>Route</th>
-                                            <th>Vessel Type</th>
-                                            <th>Fuel Saved</th>
-                                            <th>CO₂ Reduced</th>
-                                            <th>Time Saved</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="saved-results-body">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row mt-4 mb-4">
-                <div class="col-12">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="bi bi-download me-2"></i>Export & Sharing
-                            </h6>
-                        </div>
-                        <div class="card-body text-center">
-                            <button class="btn btn-success mx-2" id="export-pdf">
-                                <i class="bi bi-file-pdf me-2"></i>Export PDF Report
-                            </button>
-                            <button class="btn btn-info mx-2" id="export-csv">
-                                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV Data
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 

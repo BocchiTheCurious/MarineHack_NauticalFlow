@@ -1,45 +1,63 @@
 import { checkAuth, setupLogout } from './modules/auth.js';
-import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader } from './modules/utils.js';
+import { initializeTooltips, highlightCurrentPage, updateUserDisplayName, showLoader, hideLoader, initializePagination, makeTableScrollable, initializeTableSearch, addSearchClearButton } from './modules/utils.js';
 import { loadLayout } from './modules/layout.js';
+import {
+    getFuelTypeDistribution,
+    getWeeklyActivity,
+    getVesselUsageStats,
+    getRecentOptimizations,
+    getStatsSummary,
+    getMonthlyTrends 
+} from './modules/api.js';
 
 // Chart instances
-let optimizationChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
+let monthlyTrendsChart, fuelTypeChart, weeklyActivityChart, vesselUsageChart;
 
-// Hardcoded Data
-const hardcodedData = {
-    optimizations: [
-        { timestamp: '2024-10-10T08:30:00', route: 'Singapore → Hong Kong', vessel: 'Pacific Explorer', fuelSaved: '2,340 L', co2Reduced: '6.2 tons', timeSaved: '4.5 hrs' },
-        { timestamp: '2024-10-09T14:15:00', route: 'Rotterdam → New York', vessel: 'Atlantic Queen', fuelSaved: '5,120 L', co2Reduced: '13.6 tons', timeSaved: '8.2 hrs' },
-        { timestamp: '2024-10-08T09:45:00', route: 'Shanghai → Los Angeles', vessel: 'Pacific Explorer', fuelSaved: '7,890 L', co2Reduced: '21.0 tons', timeSaved: '12.3 hrs' },
-        { timestamp: '2024-10-07T16:20:00', route: 'Dubai → Mumbai', vessel: 'Indian Ocean Star', fuelSaved: '1,560 L', co2Reduced: '4.1 tons', timeSaved: '3.2 hrs' },
-        { timestamp: '2024-10-06T11:30:00', route: 'Hamburg → London', vessel: 'Northern Light', fuelSaved: '980 L', co2Reduced: '2.6 tons', timeSaved: '2.1 hrs' },
-        { timestamp: '2024-10-05T13:40:00', route: 'Tokyo → San Francisco', vessel: 'Pacific Explorer', fuelSaved: '6,230 L', co2Reduced: '16.5 tons', timeSaved: '10.5 hrs' },
-        { timestamp: '2024-10-04T10:10:00', route: 'Sydney → Auckland', vessel: 'Southern Cross', fuelSaved: '1,120 L', co2Reduced: '3.0 tons', timeSaved: '2.8 hrs' },
-        { timestamp: '2024-10-03T15:55:00', route: 'Barcelona → Genoa', vessel: 'Mediterranean Pearl', fuelSaved: '760 L', co2Reduced: '2.0 tons', timeSaved: '1.5 hrs' },
-        { timestamp: '2024-10-02T08:00:00', route: 'Cape Town → Lagos', vessel: 'African Star', fuelSaved: '3,450 L', co2Reduced: '9.2 tons', timeSaved: '6.7 hrs' },
-        { timestamp: '2024-10-01T12:25:00', route: 'Miami → Havana', vessel: 'Caribbean Dream', fuelSaved: '890 L', co2Reduced: '2.4 tons', timeSaved: '1.8 hrs' }
-    ],
-    vessels: [
-        { name: 'Pacific Explorer', fuelTypeName: 'LNG' },
-        { name: 'Atlantic Queen', fuelTypeName: 'Heavy Fuel Oil' },
-        { name: 'Indian Ocean Star', fuelTypeName: 'Marine Diesel' },
-        { name: 'Northern Light', fuelTypeName: 'LNG' },
-        { name: 'Southern Cross', fuelTypeName: 'Marine Diesel' },
-        { name: 'Mediterranean Pearl', fuelTypeName: 'Marine Diesel' },
-        { name: 'African Star', fuelTypeName: 'Heavy Fuel Oil' },
-        { name: 'Caribbean Dream', fuelTypeName: 'Marine Diesel' },
-        { name: 'Arctic Voyager', fuelTypeName: 'LNG' },
-        { name: 'Baltic Runner', fuelTypeName: 'Heavy Fuel Oil' },
-        { name: 'Coral Princess', fuelTypeName: 'Biofuel' },
-        { name: 'Desert Wind', fuelTypeName: 'Marine Diesel' },
-        { name: 'Emerald Tide', fuelTypeName: 'Biofuel' },
-        { name: 'Fjord Explorer', fuelTypeName: 'LNG' },
-        { name: 'Golden Horizon', fuelTypeName: 'Heavy Fuel Oil' },
-        { name: 'Harmony Wave', fuelTypeName: 'Marine Diesel' },
-        { name: 'Island Hopper', fuelTypeName: 'Marine Diesel' },
-        { name: 'Jade Navigator', fuelTypeName: 'LNG' }
-    ]
-};
+// Pagination and search state
+let allOptimizations = [];
+let optimizationPaginationController = null;
+let optimizationSearchController = null;
+
+/**
+ * Helper function to format timestamp as Malaysia time (GMT+8)
+ * @param {string} timestamp - The timestamp string from the database
+ * @returns {string} Formatted date and time in Malaysia timezone
+ */
+function formatMalaysiaTime(timestamp) {
+    if (!timestamp) return 'N/A';
+    
+    // Parse the timestamp - assuming it's in UTC from the database
+    // Format expected: "2025-10-22 15:58:34" or "2025-10-22T15:58:34"
+    let date;
+    
+    // Replace space with 'T' if needed to make it ISO format
+    const isoTimestamp = timestamp.replace(' ', 'T');
+    
+    // Add 'Z' to explicitly mark it as UTC if not already present
+    if (!isoTimestamp.endsWith('Z') && !isoTimestamp.includes('+')) {
+        date = new Date(isoTimestamp + 'Z');
+    } else {
+        date = new Date(isoTimestamp);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+        console.error('Invalid timestamp:', timestamp);
+        return timestamp; // Return original if invalid
+    }
+
+    // Format as Malaysia time (GMT+8)
+    return date.toLocaleString('en-MY', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+}
 
 // Configure toastr notifications
 toastr.options = {
@@ -53,7 +71,7 @@ toastr.options = {
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
     await loadLayout();
-    
+
     setupLogout();
     initializeTooltips();
     highlightCurrentPage();
@@ -75,234 +93,423 @@ function initializeAnalyticsPage() {
 
     // Load all data on page initialization
     loadAllData();
-
-    // Set up event listener for time period filter
-    const timePeriodFilter = document.getElementById('timePeriodFilter');
-    if (timePeriodFilter) {
-        timePeriodFilter.addEventListener('change', handleTimePeriodChange);
-    }
 }
 
-/**
- * Handles changes to the time period filter.
- * In a real application, this would fetch filtered data from the API.
- */
-function handleTimePeriodChange() {
-    const selectedPeriod = document.getElementById('timePeriodFilter').value;
-    toastr.info(`Filtering data for last ${selectedPeriod} days...`);
-    // In a real app, you would fetch filtered data here
-    loadAllData();
-}
 
 /**
  * Loads all charts and tables on the dashboard.
  * This is the main function that orchestrates data loading.
  */
-function loadAllData() {
-    loadOptimizationTrends();
-    loadFuelTypeDistribution();
-    loadWeeklyActivity();
-    loadVesselUsage();
-    loadRecentOptimizations();
-    toastr.success('Dashboard data refreshed successfully!');
+async function loadAllData() {
+    try {
+        showLoader(); // Show loading indicator
+
+        // Load all data in parallel for better performance
+        await Promise.all([
+            loadStatsCards(),
+            loadMonthlyTrends(),
+            loadFuelTypeDistribution(),
+            loadWeeklyActivity(),
+            loadVesselUsage(),
+            loadRecentOptimizations()
+        ]);
+
+        toastr.success('Dashboard data loaded successfully!');
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        toastr.error('Failed to load some dashboard data');
+    } finally {
+        hideLoader(); // Hide loading indicator
+    }
 }
 
 /**
- * Loads and renders the Monthly Optimization Trends line chart.
+ * NEW: Loads and renders the Monthly Optimization Trends chart
+ * This replaces the old optimization trends endpoint
  */
-function loadOptimizationTrends() {
-    const labels = ['Jan 2024', 'Feb 2024', 'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024', 'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024'];
-    const counts = [18, 22, 25, 31, 28, 35, 42, 38, 45, 52];
+async function loadMonthlyTrends() {
+    try {
+        const data = await getMonthlyTrends(12);  // ✅ Use the imported function
 
-    const ctx = document.getElementById('optimizationTrendsChart');
-    if (!ctx) return;
+        const ctx = document.getElementById('optimizationTrendsChart');
+        if (!ctx) return;
 
-    if (optimizationChart) optimizationChart.destroy();
+        if (monthlyTrendsChart) monthlyTrendsChart.destroy();
 
-    optimizationChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Routes Optimized',
-                data: counts,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
+        monthlyTrendsChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Routes Optimized',
+                    data: data.counts,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Routes: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            stepSize: 1
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error loading monthly trends:', error);
+        toastr.error('Failed to load monthly trends');
+    }
 }
 
 /**
- * Loads and renders the Fuel Type Distribution doughnut chart.
+ * FIXED: Loads and renders the Fuel Type Distribution doughnut chart
+ * Now shows actual usage frequency instead of distinct ship count
  */
-function loadFuelTypeDistribution() {
-    const fuelTypeCount = {};
-    hardcodedData.vessels.forEach(vessel => {
-        const fuelType = vessel.fuelTypeName;
-        fuelTypeCount[fuelType] = (fuelTypeCount[fuelType] || 0) + 1;
-    });
+async function loadFuelTypeDistribution() {
+    try {
+        const data = await getFuelTypeDistribution();
 
-    const labels = Object.keys(fuelTypeCount);
-    const counts = Object.values(fuelTypeCount);
-    const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
+        const ctx = document.getElementById('fuelTypeChart');
+        if (!ctx) return;
 
-    const ctx = document.getElementById('fuelTypeChart');
-    if (!ctx) return;
+        if (fuelTypeChart) fuelTypeChart.destroy();
 
-    if (fuelTypeChart) fuelTypeChart.destroy();
+        // Check if there's no data
+        if (!data.labels || data.labels.length === 0) {
+            const canvas = ctx;
+            const parent = canvas.parentElement;
+            
+            const noDataDiv = document.createElement('div');
+            noDataDiv.className = 'text-center text-muted py-5';
+            noDataDiv.innerHTML = '<i class="bi bi-pie-chart fs-1 mb-3 d-block"></i><p>No optimization data available yet</p>';
+            
+            canvas.style.display = 'none';
+            parent.appendChild(noDataDiv);
+            return;
+        }
 
-    fuelTypeChart = new Chart(ctx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: counts,
-                backgroundColor: colors.slice(0, labels.length),
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
+        ctx.style.display = 'block';
+        
+        const noDataDiv = ctx.parentElement.querySelector('.text-center.text-muted');
+        if (noDataDiv) noDataDiv.remove();
+
+        const colors = [
+            '#667eea', '#f5576c', '#4facfe', '#43e97b', 
+            '#f093fb', '#fa709a', '#fee140', '#30cfd0'
+        ];
+
+        fuelTypeChart = new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.counts,
+                    backgroundColor: colors.slice(0, data.labels.length),
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        return {
+                                            text: `${label}: ${value} uses`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} uses (${percentage}%)`;
+                            }
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error loading fuel type distribution:', error);
+        toastr.error('Failed to load fuel type distribution');
+    }
 }
 
 /**
  * Loads and renders the Weekly Activity bar chart.
  */
-function loadWeeklyActivity() {
-    const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'];
-    const counts = [8, 12, 15, 10, 18, 14, 20, 16];
+async function loadWeeklyActivity() {
+    try {
+        const data = await getWeeklyActivity(8); // Last 8 weeks
 
-    const ctx = document.getElementById('weeklyActivityChart');
-    if (!ctx) return;
+        const ctx = document.getElementById('weeklyActivityChart');
+        if (!ctx) return;
 
-    if (weeklyActivityChart) weeklyActivityChart.destroy();
+        if (weeklyActivityChart) weeklyActivityChart.destroy();
 
-    weeklyActivityChart = new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Optimizations',
-                data: counts,
-                backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                borderColor: '#667eea',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
+        weeklyActivityChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Optimizations',
+                    data: data.counts,
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: '#667eea',
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error loading weekly activity:', error);
+        toastr.error('Failed to load weekly activity');
+    }
 }
 
 /**
  * Loads and renders the Most Used Vessels horizontal bar chart.
  */
-function loadVesselUsage() {
-    const labels = ['Pacific Explorer', 'Atlantic Queen', 'Northern Light', 'Indian Ocean Star', 'Southern Cross'];
-    const counts = [35, 28, 24, 21, 18];
-    const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
+async function loadVesselUsage() {
+    try {
+        const data = await getVesselUsageStats();
 
-    const ctx = document.getElementById('vesselUsageChart');
-    if (!ctx) return;
+        const colors = ['#667eea', '#f5576c', '#4facfe', '#43e97b', '#f093fb'];
 
-    if (vesselUsageChart) vesselUsageChart.destroy();
+        const ctx = document.getElementById('vesselUsageChart');
+        if (!ctx) return;
 
-    vesselUsageChart = new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Times Used',
-                data: counts,
-                backgroundColor: colors,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
+        if (vesselUsageChart) vesselUsageChart.destroy();
+
+        vesselUsageChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Times Used',
+                    data: data.counts,
+                    backgroundColor: colors.slice(0, data.labels.length),
+                    borderWidth: 0
+                }]
             },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error loading vessel usage:', error);
+        toastr.error('Failed to load vessel usage statistics');
+    }
 }
 
 /**
- * Loads and renders the Recent Optimizations table.
+ * Loads and renders the Recent Optimizations table with pagination and search.
+ * Uses the same utility functions as fuel-types page.
  */
-function loadRecentOptimizations() {
-    const tbody = document.getElementById('recentOptimizationsTable');
-    if (!tbody) return;
+async function loadRecentOptimizations() {
+    try {
+        // Load all optimizations (increase limit for better pagination)
+        const optimizations = await getRecentOptimizations(1000);
 
-    tbody.innerHTML = hardcodedData.optimizations.map(item => {
-        const date = new Date(item.timestamp);
-        return `
-            <tr>
-                <td>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+        allOptimizations = optimizations;
+
+        if (optimizations.length === 0) {
+            const tbody = document.getElementById('recentOptimizationsTable');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No optimization data available yet</td></tr>';
+            }
+            return;
+        }
+
+        // Make table scrollable (only once)
+        makeTableScrollable('recentOptimizationsTableWrapper', 500);
+
+        // Initialize search with utility function
+        optimizationSearchController = initializeTableSearch(
+            'optimizationSearch',
+            allOptimizations,
+            ['route', 'vessel', 'timestamp', 'fuelSaved', 'co2Reduced', 'timeSaved'],
+            (filteredData) => {
+                renderOptimizationsTable(filteredData);
+            },
+            {
+                debounceDelay: 300,
+                placeholder: 'Search by route, vessel, date...',
+                showResultCount: true,
+                minCharacters: 0
+            }
+        );
+
+        // Add clear button to search
+        addSearchClearButton('optimizationSearch', () => {
+            renderOptimizationsTable(allOptimizations);
+        });
+
+        // Initial render
+        renderOptimizationsTable(allOptimizations);
+
+    } catch (error) {
+        console.error('Error loading recent optimizations:', error);
+        toastr.error('Failed to load recent optimizations');
+    }
+}
+
+/**
+ * Renders the optimizations table with pagination
+ * @param {Array} optimizations - Array of optimization data to display
+ */
+function renderOptimizationsTable(optimizations) {
+    const tableBody = document.getElementById('recentOptimizationsTable');
+
+    if (optimizations.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No results found</td></tr>';
+        // Destroy pagination if no data
+        if (optimizationPaginationController) {
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.remove();
+            }
+            optimizationPaginationController = null;
+        }
+        return;
+    }
+
+    // Render function for a page of data
+    const renderPage = (pageData) => {
+        tableBody.innerHTML = '';
+        pageData.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${formatMalaysiaTime(item.timestamp)}</td>
                 <td>${item.route}</td>
                 <td>${item.vessel}</td>
                 <td><span class="badge badge-fuel text-white">${item.fuelSaved}</span></td>
                 <td><span class="badge badge-co2 text-white">${item.co2Reduced}</span></td>
                 <td>${item.timeSaved}</td>
-            </tr>
-        `;
-    }).join('');
+            `;
+            tableBody.appendChild(row);
+        });
+    };
+
+    // Initialize or update pagination using utility function
+    if (!optimizationPaginationController) {
+        optimizationPaginationController = initializePagination(
+            'recentOptimizationsTableWrapper',  // The table's parent container ID
+            optimizations,
+            renderPage,
+            {
+                itemsPerPage: 10,
+                showEntriesSelector: true,
+                entriesOptions: [10, 25, 50, 100],
+                showInfo: true,
+                scrollToTop: true,
+                infoText: 'Showing {start} to {end} of {total} entries'
+            }
+        );
+    } else {
+        optimizationPaginationController.setData(optimizations);
+    }
+
+    // Initial render
+    optimizationPaginationController.render();
+}
+
+/**
+ * Loads and updates the stats cards with real data.
+ */
+async function loadStatsCards() {
+    try {
+        const stats = await getStatsSummary();
+
+        // Update each stat card
+        document.getElementById('totalRoutes').textContent = stats.totalRoutes.toLocaleString();
+        document.getElementById('totalVessels').textContent = stats.totalVessels.toLocaleString();
+        document.getElementById('totalPorts').textContent = stats.totalPorts.toLocaleString();
+        document.getElementById('totalFuelTypes').textContent = stats.totalFuelTypes.toLocaleString();
+
+    } catch (error) {
+        console.error('Error loading stats cards:', error);
+        // Keep the "-" placeholder if error occurs
+    }
 }
 
 // Make loadAllData available globally for the HTML button onclick

@@ -9,6 +9,10 @@ from functools import wraps
 import re
 from decimal import Decimal
 from optimization_solver import run_route_optimization
+from apscheduler.schedulers.background import BackgroundScheduler
+import requests
+import time
+import atexit
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -61,13 +65,47 @@ class FuelType(db.Model):
 
 class CruiseShip(db.Model):
     __tablename__ = 'cruise_ships'
+    
     id = db.Column(db.Integer, primary_key=True)
+    
+    # CORE IDENTIFICATION
     name = db.Column(db.String(100), nullable=False)
-    company = db.Column(db.String(100), nullable=True)
+    operator = db.Column(db.String(100))  # Renamed from 'company'
+    
+    # CRITICAL SPECS (for fuel calculation)
     gross_tonnage = db.Column(db.Integer, nullable=False)
-    fuel_consumption_curve = db.Column(db.JSON, nullable=True)
+    propulsion_power = db.Column(db.Float, nullable=False)  # MW - REQUIRED
+    cruising_speed = db.Column(db.Float, nullable=False)    # knots - REQUIRED
+    max_speed = db.Column(db.Float, nullable=False)         # knots - REQUIRED
+    length = db.Column(db.Float, nullable=False)            # meters - REQUIRED
+    beam = db.Column(db.Float, nullable=False)              # meters - REQUIRED
+    
+    # FUEL TYPE
     fuel_type_id = db.Column(db.Integer, db.ForeignKey('fuel_types.id'), nullable=False)
+    
+    # ADDITIONAL INFO
+    year_built = db.Column(db.Integer, nullable=True)
+    passenger_capacity = db.Column(db.Integer, nullable=True)
+    crew = db.Column(db.Integer, nullable=True)  # NEW - CruiseMapper has this
+    engine_type = db.Column(db.String(100), nullable=True)
+    builder = db.Column(db.String(100), nullable=True)  # NEW - CruiseMapper has this
+    
+    fuel_consumption_curve = db.Column(db.JSON, nullable=True)
+    
+    # REMOVED: fuel_consumption_curve (will be calculated on-the-fly)
+    
     fuel_type = db.relationship('FuelType', backref='cruise_ships')
+
+class WeatherCache(db.Model):
+    __tablename__ = 'weather_cache'
+    id = db.Column(db.Integer, primary_key=True)
+    port_id = db.Column(db.Integer, db.ForeignKey('ports.id', ondelete='CASCADE'), unique=True)
+    latitude = db.Column(db.Numeric(10, 6), nullable=False)
+    longitude = db.Column(db.Numeric(10, 6), nullable=False)
+    weather_data = db.Column(db.JSON, nullable=False)
+    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    port = db.relationship('Port', backref='weather_cache')
 
 class OptimizationResult(db.Model):
     __tablename__ = 'optimization_results'
@@ -122,6 +160,86 @@ with app.app_context():
         admin_user = User(display_name='Admin User', username='admin', password=hashed_pw)
         db.session.add(admin_user)
         db.session.commit()
+
+# --- Scheduled Weather Update ---
+def scheduled_weather_update():
+    """Background task to update weather cache daily at 2 AM"""
+    with app.app_context():
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting scheduled weather update...")
+        
+        ports = Port.query.all()
+        updated = 0
+        failed = 0
+        
+        for port in ports:
+            try:
+                weather_params = "temperature_2m,weather_code,wind_speed_10m"
+                marine_params = "wave_height,wave_direction,wave_period"
+                weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={port.latitude}&longitude={port.longitude}&current={weather_params},weather_code&hourly={weather_params}&timezone=auto&forecast_days=2"
+                marine_url = f"https://marine-api.open-meteo.com/v1/marine?latitude={port.latitude}&longitude={port.longitude}&current={marine_params}&hourly={marine_params}&timezone=auto&forecast_days=2"
+                
+                weather_resp = requests.get(weather_url, timeout=10)
+                marine_resp = requests.get(marine_url, timeout=10)
+                
+                if weather_resp.ok and marine_resp.ok:
+                    weather_data = weather_resp.json()
+                    marine_data = marine_resp.json()
+                    
+                    combined_data = {
+                        'latitude': weather_data.get('latitude'),
+                        'longitude': weather_data.get('longitude'),
+                        'timezone': weather_data.get('timezone'),
+                        'timezone_abbreviation': weather_data.get('timezone_abbreviation'),
+                        'elevation': weather_data.get('elevation'),
+                        'current_units': {**weather_data.get('current_units', {}), **marine_data.get('current_units', {})},
+                        'hourly_units': {**weather_data.get('hourly_units', {}), **marine_data.get('hourly_units', {})},
+                        'current': {**weather_data.get('current', {}), **marine_data.get('current', {})},
+                        'hourly': {
+                            'time': weather_data.get('hourly', {}).get('time', []),
+                            'temperature_2m': weather_data.get('hourly', {}).get('temperature_2m', []),
+                            'weather_code': weather_data.get('hourly', {}).get('weather_code', []),
+                            'wind_speed_10m': weather_data.get('hourly', {}).get('wind_speed_10m', []),
+                            'wave_height': marine_data.get('hourly', {}).get('wave_height', []),
+                            'wave_direction': marine_data.get('hourly', {}).get('wave_direction', []),
+                            'wave_period': marine_data.get('hourly', {}).get('wave_period', []),
+                        }
+                    }
+                    
+                    cache = WeatherCache.query.filter_by(port_id=port.id).first()
+                    if cache:
+                        cache.weather_data = combined_data
+                        cache.last_updated = datetime.utcnow()
+                    else:
+                        cache = WeatherCache(
+                            port_id=port.id,
+                            latitude=port.latitude,
+                            longitude=port.longitude,
+                            weather_data=combined_data,
+                            last_updated=datetime.utcnow()
+                        )
+                        db.session.add(cache)
+                    
+                    db.session.commit()
+                    updated += 1
+                else:
+                    failed += 1
+                
+                time.sleep(1)  # Rate limiting
+                
+            except Exception as e:
+                print(f"Error updating {port.name}: {e}")
+                failed += 1
+        
+        print(f"Weather update completed: {updated}/{len(ports)} ports updated, {failed} failed")
+
+# Initialize and start the scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=scheduled_weather_update, trigger="cron", hour=2, minute=0, id='daily_weather_update')
+scheduler.start()
+print("✅ Weather scheduler started - updates daily at 2:00 AM")
+
+# Shutdown scheduler when Flask stops
+atexit.register(lambda: scheduler.shutdown())
 
 # --- Authentication Decorator ---
 def token_required(f):
@@ -295,34 +413,67 @@ def delete_port(current_user, port_id):
 @app.route('/api/cruise-ships', methods=['GET'])
 @token_required
 def get_cruise_ships(current_user):
-    ships = CruiseShip.query.order_by(CruiseShip.name).all()
-    results = []
-    for ship in ships:
-        results.append({
-            'id': ship.id,
-            'name': ship.name,
-            'company': ship.company,
-            'grossTonnage': ship.gross_tonnage,
-            'fuelConsumptionCurve': ship.fuel_consumption_curve,
-            'fuelTypeId': ship.fuel_type_id,
-            'fuelTypeName': ship.fuel_type.name
-        })
-    return jsonify(results)
+    ships = CruiseShip.query.all()
+    return jsonify([{
+        'id': ship.id,
+        'name': ship.name,
+        'operator': ship.operator,  # Changed from 'company'
+        'grossTonnage': ship.gross_tonnage,
+        'fuelTypeId': ship.fuel_type_id,
+        'fuelTypeName': ship.fuel_type.name if ship.fuel_type else 'Unknown',
+        
+        # NEW FIELDS
+        'propulsionPower': ship.propulsion_power,
+        'cruisingSpeed': ship.cruising_speed,
+        'maxSpeed': ship.max_speed,
+        'length': ship.length,
+        'beam': ship.beam,
+        'yearBuilt': ship.year_built,
+        'passengerCapacity': ship.passenger_capacity,
+        'crew': ship.crew,
+        'engineType': ship.engine_type,
+        'builder': ship.builder,
+        
+        'fuelConsumptionCurve': ship.fuel_consumption_curve
+    } for ship in ships])
 
 @app.route('/api/cruise-ships', methods=['POST'])
 @token_required
 def add_cruise_ship(current_user):
-    data = request.get_json()
-    new_ship = CruiseShip(
-        name=data['name'],
-        company=data.get('company'),
-        gross_tonnage=data['grossTonnage'],
-        fuel_consumption_curve=data['fuelConsumptionCurve'],
-        fuel_type_id=data['fuelTypeId']
-    )
-    db.session.add(new_ship)
-    db.session.commit()
-    return jsonify({'message': 'Cruise ship added successfully'}), 201
+    try:
+        data = request.get_json()
+        
+        new_ship = CruiseShip(
+            name=data['name'],
+            operator=data.get('operator'),
+            gross_tonnage=data['grossTonnage'],
+            fuel_type_id=data['fuelTypeId'],
+            
+            # NEW REQUIRED FIELDS
+            propulsion_power=data['propulsionPower'],
+            cruising_speed=data['cruisingSpeed'],
+            max_speed=data['maxSpeed'],
+            length=data['length'],
+            beam=data['beam'],
+            
+            # NEW OPTIONAL FIELDS
+            year_built=data.get('yearBuilt'),
+            passenger_capacity=data.get('passengerCapacity'),
+            crew=data.get('crew'),
+            engine_type=data.get('engineType'),
+            builder=data.get('builder'), 
+            
+            fuel_consumption_curve=data.get('fuelConsumptionCurve') or data.get('fuel_consumption_curve')
+
+        )
+        
+        db.session.add(new_ship)
+        db.session.commit()
+        
+        return jsonify({'message': 'Cruise ship added successfully', 'id': new_ship.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/api/cruise-ships/<int:ship_id>', methods=['DELETE'])
 @token_required
@@ -335,15 +486,36 @@ def delete_cruise_ship(current_user, ship_id):
 @app.route('/api/cruise-ships/<int:ship_id>', methods=['PUT'])
 @token_required
 def update_cruise_ship(current_user, ship_id):
-    ship = CruiseShip.query.get_or_404(ship_id)
-    data = request.get_json()
-    ship.name = data['name']
-    ship.company = data.get('company')
-    ship.gross_tonnage = data['grossTonnage']
-    ship.fuel_type_id = data['fuelTypeId']
-    ship.fuel_consumption_curve = data['fuelConsumptionCurve']
-    db.session.commit()
-    return jsonify({'message': 'Cruise ship updated successfully'})
+    try:
+        ship = CruiseShip.query.get_or_404(ship_id)
+        data = request.get_json()
+        
+        ship.name = data['name']
+        ship.operator = data.get('operator')
+        ship.gross_tonnage = data['grossTonnage']
+        ship.fuel_type_id = data['fuelTypeId']
+        
+        # UPDATE NEW FIELDS
+        ship.propulsion_power = data['propulsionPower']
+        ship.cruising_speed = data['cruisingSpeed']
+        ship.max_speed = data['maxSpeed']
+        ship.length = data['length']
+        ship.beam = data['beam']
+        
+        ship.year_built = data.get('yearBuilt')
+        ship.passenger_capacity = data.get('passengerCapacity')
+        ship.crew = data.get('crew')
+        ship.engine_type = data.get('engineType')
+        ship.builder = data.get('builder')
+        
+        ship.fuel_consumption_curve = data.get('fuelConsumptionCurve') or data.get('fuel_consumption_curve')
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Cruise ship updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 # --- Fuel Type Endpoints ---
 @app.route('/api/fuel-types', methods=['GET'])
@@ -642,6 +814,255 @@ def get_my_port_review(current_user, port_id):
         'updatedAt': review.updated_at.isoformat()
     })
 
+# --- Weather Cache Endpoint ---
+@app.route('/api/weather/<int:port_id>', methods=['GET'])
+@token_required
+def get_weather(current_user, port_id):
+    """Get cached weather data for a specific port"""
+    try:
+        port = Port.query.get(port_id)
+        if not port:
+            return jsonify({'error': 'Port not found'}), 404
+        
+        # Get cached weather data
+        cache = WeatherCache.query.filter_by(port_id=port_id).first()
+        
+        if not cache:
+            return jsonify({
+                'error': 'Weather data not yet available for this port',
+                'message': 'Weather data will be updated in the next scheduled refresh (daily at 2 AM)'
+            }), 404
+        
+        return jsonify({
+            'data': cache.weather_data,
+            'lastUpdated': cache.last_updated.isoformat(),
+            'port': {
+                'id': port.id,
+                'name': port.name,
+                'latitude': float(port.latitude),
+                'longitude': float(port.longitude)
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Analytics Endpoints ---
+@app.route('/api/analytics/summary', methods=['GET'])
+@token_required
+def get_analytics_summary(current_user):
+    """Get overall analytics summary"""
+    from sqlalchemy import func
+    
+    total_optimizations = OptimizationResult.query.filter_by(user_id=current_user.id).count()
+    
+    # Calculate total fuel and CO2 saved
+    results = OptimizationResult.query.filter_by(user_id=current_user.id).all()
+    
+    total_fuel_saved = 0
+    total_co2_reduced = 0
+    
+    for r in results:
+        # Extract numeric value from strings like "2,340 L"
+        fuel_str = r.fuelSaved.replace(',', '').replace(' L', '').strip()
+        co2_str = r.co2Reduced.replace(' tons', '').strip()
+        
+        try:
+            total_fuel_saved += float(fuel_str)
+            total_co2_reduced += float(co2_str)
+        except ValueError:
+            continue
+    
+    return jsonify({
+        'totalOptimizations': total_optimizations,
+        'totalFuelSaved': f"{total_fuel_saved:,.0f} L",
+        'totalCo2Reduced': f"{total_co2_reduced:.1f} tons"
+    })
+    
+@app.route('/api/analytics/monthly-trends', methods=['GET'])
+@token_required
+def get_monthly_optimization_trends(current_user):
+    """Get monthly optimization trends for the last N months"""
+    from sqlalchemy import func, extract
+    from calendar import month_abbr
+    
+    months = request.args.get('months', 12, type=int)
+    cutoff_date = datetime.utcnow() - timedelta(days=months * 30)
+    
+    # Get monthly statistics
+    monthly_stats = db.session.query(
+        extract('year', OptimizationResult.timestamp).label('year'),
+        extract('month', OptimizationResult.timestamp).label('month'),
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id,
+        OptimizationResult.timestamp >= cutoff_date
+    ).group_by('year', 'month').order_by('year', 'month').all()
+    
+    # Create a complete list of months for the period
+    labels = []
+    counts = []
+    
+    # Get current month and year
+    now = datetime.utcnow()
+    
+    # Generate labels for the last N months
+    for i in range(months - 1, -1, -1):
+        target_date = now - timedelta(days=i * 30)
+        month_num = target_date.month
+        year = target_date.year
+        
+        # Create label like "Jan 2025"
+        label = f"{month_abbr[month_num]} {year}"
+        labels.append(label)
+        
+        # Find matching count from database
+        count = 0
+        for stat in monthly_stats:
+            if int(stat.year) == year and int(stat.month) == month_num:
+                count = stat.count
+                break
+        counts.append(count)
+    
+    return jsonify({
+        'labels': labels,
+        'counts': counts
+    })
+
+@app.route('/api/analytics/recent', methods=['GET'])
+@token_required
+def get_recent_optimizations_analytics(current_user):
+    """Get recent optimization results"""
+    limit = request.args.get('limit', 10, type=int)
+    
+    results = OptimizationResult.query.filter_by(
+        user_id=current_user.id
+    ).order_by(
+        OptimizationResult.timestamp.desc()
+    ).limit(limit).all()
+    
+    return jsonify([{
+        'timestamp': r.timestamp.isoformat(),
+        'route': r.route,
+        'vessel': r.vessel,
+        'fuelSaved': r.fuelSaved,
+        'co2Reduced': r.co2Reduced,
+        'timeSaved': r.timeSaved
+    } for r in results])
+
+@app.route('/api/analytics/vessel-usage', methods=['GET'])
+@token_required
+def get_vessel_usage_stats(current_user):
+    """Get most used vessels statistics"""
+    from sqlalchemy import func
+    
+    vessel_stats = db.session.query(
+        OptimizationResult.vessel,
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id
+    ).group_by(
+        OptimizationResult.vessel
+    ).order_by(
+        func.count(OptimizationResult.id).desc()
+    ).limit(5).all()
+    
+    return jsonify({
+        'labels': [v[0] for v in vessel_stats],
+        'counts': [v[1] for v in vessel_stats]
+    })
+
+@app.route('/api/analytics/fuel-distribution', methods=['GET'])
+@token_required
+def get_fuel_type_distribution(current_user):
+    """Get fuel type distribution based on actual optimization usage"""
+    from sqlalchemy import func
+    
+    # Join optimization results with cruise ships and fuel types
+    # Count how many times each fuel type was used in optimizations
+    fuel_distribution = db.session.query(
+        FuelType.name,
+        func.count(OptimizationResult.id).label('count')
+    ).join(
+        CruiseShip, CruiseShip.name == OptimizationResult.vessel
+    ).join(
+        FuelType, FuelType.id == CruiseShip.fuel_type_id
+    ).filter(
+        OptimizationResult.user_id == current_user.id
+    ).group_by(
+        FuelType.name
+    ).all()
+    
+    # If no data, return empty arrays
+    if not fuel_distribution:
+        return jsonify({
+            'labels': [],
+            'counts': []
+        })
+    
+    return jsonify({
+        'labels': [f[0] for f in fuel_distribution],
+        'counts': [f[1] for f in fuel_distribution]
+    })
+
+@app.route('/api/analytics/weekly-activity', methods=['GET'])
+@token_required
+def get_weekly_activity(current_user):
+    """Get weekly activity for the last N weeks"""
+    from sqlalchemy import func
+    
+    weeks = request.args.get('weeks', 8, type=int)
+    cutoff_date = datetime.utcnow() - timedelta(weeks=weeks)
+    
+    # Calculate week number for grouping
+    weekly_stats = db.session.query(
+        func.date_trunc('week', OptimizationResult.timestamp).label('week'),
+        func.count(OptimizationResult.id).label('count')
+    ).filter(
+        OptimizationResult.user_id == current_user.id,
+        OptimizationResult.timestamp >= cutoff_date
+    ).group_by('week').order_by('week').all()
+    
+    labels = []
+    counts = []
+    for i, (week, count) in enumerate(weekly_stats, 1):
+        labels.append(f'Week {i}')
+        counts.append(count)
+    
+    # Fill in missing weeks with zeros if needed
+    while len(labels) < weeks:
+        labels.append(f'Week {len(labels) + 1}')
+        counts.append(0)
+    
+    return jsonify({
+        'labels': labels[:weeks],
+        'counts': counts[:weeks]
+    })
+@app.route('/api/analytics/stats-summary', methods=['GET'])
+@token_required
+def get_stats_summary(current_user):
+    """Get summary statistics for the dashboard stats cards"""
+    from sqlalchemy import func
+    
+    # Count user's optimization results
+    total_routes = OptimizationResult.query.filter_by(user_id=current_user.id).count()
+    
+    # Count total vessels (all vessels in system, not user-specific)
+    total_vessels = CruiseShip.query.count()
+    
+    # Count total ports (all ports in system)
+    total_ports = Port.query.count()
+    
+    # Count total fuel types (all fuel types in system)
+    total_fuel_types = FuelType.query.count()
+    
+    return jsonify({
+        'totalRoutes': total_routes,
+        'totalVessels': total_vessels,
+        'totalPorts': total_ports,
+        'totalFuelTypes': total_fuel_types
+    })
+    
 # --- Feedback Endpoints ---
 @app.route('/api/feedback', methods=['POST'])
 @token_required

@@ -102,13 +102,11 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: auto auto auto;
-            /* Added third row */
             gap: 1rem;
             padding: 1rem;
             min-height: 500px;
         }
 
-        /* Asymmetric Grid Layout - Updated */
         .bento-map {
             grid-column: 1 / 2;
             grid-row: 1 / 3;
@@ -129,13 +127,11 @@
             grid-row: 2 / 3;
         }
 
-        /* NEW: Box 5 - Reviews */
         .bento-reviews {
             grid-column: 1 / 4;
             grid-row: 3 / 4;
         }
 
-        /* Star rating styles */
         .star-rating {
             display: inline-flex;
             gap: 0.25rem;
@@ -222,35 +218,6 @@
                 </h1>
             </div>
 
-            <!-- Filter Section -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="row align-items-end g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Time Period</label>
-                            <select class="form-select" id="timePeriodFilter">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30" selected>Last 30 Days</option>
-                                <option value="90">Last 90 Days</option>
-                                <option value="365">Last Year</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">View Type</label>
-                            <select class="form-select">
-                                <option selected>Overview</option>
-                                <option>Detailed Analysis</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-primary w-100" onclick="loadAllData()">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Stats Cards -->
             <div class="row">
                 <div class="col-xl-3 col-md-6 mb-4">
@@ -259,7 +226,7 @@
                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                             <i class="bi bi-compass"></i>
                         </div>
-                        <div class="stats-value text-primary" id="totalRoutes">247</div>
+                        <div class="stats-value text-primary" id="totalRoutes">-</div>
                         <div class="stats-label">Routes Optimized</div>
                         <small class="text-muted">All time</small>
                     </div>
@@ -270,7 +237,7 @@
                             style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                             <i class="bi bi-send"></i>
                         </div>
-                        <div class="stats-value text-danger" id="totalVessels">18</div>
+                        <div class="stats-value text-danger" id="totalVessels">-</div>
                         <div class="stats-label">Vessels Managed</div>
                         <small class="text-muted">Active fleet</small>
                     </div>
@@ -281,7 +248,7 @@
                             style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                             <i class="bi bi-geo-alt"></i>
                         </div>
-                        <div class="stats-value text-info" id="totalPorts">342</div>
+                        <div class="stats-value text-info" id="totalPorts">-</div>
                         <div class="stats-label">Ports in Database</div>
                         <small class="text-muted">Global coverage</small>
                     </div>
@@ -292,7 +259,7 @@
                             style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
                             <i class="bi bi-fuel-pump"></i>
                         </div>
-                        <div class="stats-value text-success" id="totalFuelTypes">5</div>
+                        <div class="stats-value text-success" id="totalFuelTypes">-</div>
                         <div class="stats-label">Fuel Types</div>
                         <small class="text-muted">Available options</small>
                     </div>
@@ -305,7 +272,7 @@
                     <div class="card shadow">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="bi bi-graph-up me-2"></i>Monthly Optimization Trends
+                                <i class="bi bi-graph-up"></i>Monthly Optimization Usage
                             </h6>
                         </div>
                         <div class="card-body">
@@ -359,26 +326,37 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
                             <h6 class="m-0 font-weight-bold text-primary">
                                 <i class="bi bi-clock-history me-2"></i>Recent Optimization Results
                             </h6>
+                            <div style="position: relative;">
+                                <input type="text" id="optimizationSearch" class="form-control form-control-sm"
+                                    style="width: 250px; padding-left: 35px;" placeholder="Search by route, vessel, date...">
+                                <i class="bi bi-search"
+                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-striped border comparison-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date & Time</th>
-                                            <th>Route</th>
-                                            <th>Vessel</th>
-                                            <th>Fuel Saved</th>
-                                            <th>CO₂ Reduced</th>
-                                            <th>Time Saved</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="recentOptimizationsTable"></tbody>
-                                </table>
+                            <div id="recentOptimizationsTableWrapper">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped border comparison-table" id="recentOptimizationsTableElement">
+                                        <thead>
+                                            <tr>
+                                                <th>Date & Time</th>
+                                                <th>Route</th>
+                                                <th>Vessel</th>
+                                                <th>Fuel Saved</th>
+                                                <th>CO₂ Reduced</th>
+                                                <th>Time Saved</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentOptimizationsTable">
+                                            <!-- Data will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Pagination will be inserted here by the utility function -->
                             </div>
                         </div>
                     </div>

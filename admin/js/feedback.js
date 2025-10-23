@@ -1,6 +1,6 @@
 import { loadLayout } from './modules/layout.js';
 import { checkAuth } from './modules/auth.js';
-import { API_BASE_URL } from './modules/api.js';
+import { submitFeedback } from './modules/api.js';
 
 // State management
 const feedbackState = {
@@ -167,73 +167,52 @@ async function handleFormSubmit(event) {
     const submitButton = document.getElementById('submit-feedback');
     const originalText = submitButton.innerHTML;
     
-    try {
-        // Show loading state
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
-        
-        // Get additional comments
-        const comments = document.getElementById('additional-comments').value.trim();
-        
-        // Get user info from localStorage (using correct keys)
-        const token = localStorage.getItem('nauticalflow-token');
-        
-        if (!token) {
-            throw new Error('User not authenticated');
-        }
-        
-        // Prepare feedback data (user_id will be extracted from token on backend)
-        const feedbackData = {
-            question_1: feedbackState.responses['1'],
-            question_2: feedbackState.responses['2'],
-            question_3: feedbackState.responses['3'],
-            question_4: feedbackState.responses['4'],
-            question_5: feedbackState.responses['5'],
-            question_6: feedbackState.responses['6'],
-            question_7: feedbackState.responses['7'],
-            question_8: feedbackState.responses['8'],
-            question_9: feedbackState.responses['9'],
-            question_10: feedbackState.responses['10'],
-            additional_comments: comments || null
-        };
-        
-        // Submit feedback
-        const response = await fetch(`${API_BASE_URL}/feedback`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(feedbackData)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to submit feedback');
-        }
-        
-        const result = await response.json();
-        
-        // Show success message
-        await Swal.fire({
-            icon: 'success',
-            title: 'Thank You!',
-            html: `
-                <p class="mb-3">Your feedback has been submitted successfully!</p>
-                <p class="text-muted small">Your input helps us improve NauticalFlow for everyone in the maritime industry.</p>
-            `,
-            confirmButtonText: 'Continue',
-            confirmButtonColor: '#00b4d8'
-        });
-        
-        // Reset form
-        resetForm();
-        
-        // Restore button to original state
-        submitButton.disabled = true; // Keep disabled until form is filled again
-        submitButton.innerHTML = originalText;
-        
-    } catch (error) {
+try {
+    // Show loading state
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+    
+    // Get additional comments
+    const comments = document.getElementById('additional-comments').value.trim();
+    
+    // Prepare feedback data
+    const feedbackData = {
+        question_1: feedbackState.responses['1'],
+        question_2: feedbackState.responses['2'],
+        question_3: feedbackState.responses['3'],
+        question_4: feedbackState.responses['4'],
+        question_5: feedbackState.responses['5'],
+        question_6: feedbackState.responses['6'],
+        question_7: feedbackState.responses['7'],
+        question_8: feedbackState.responses['8'],
+        question_9: feedbackState.responses['9'],
+        question_10: feedbackState.responses['10'],
+        additional_comments: comments || null
+    };
+    
+    // Submit feedback using API function
+    const result = await submitFeedback(feedbackData);
+    
+    // Show success message
+    await Swal.fire({
+        icon: 'success',
+        title: 'Thank You!',
+        html: `
+            <p class="mb-3">Your feedback has been submitted successfully!</p>
+            <p class="text-muted small">Your input helps us improve NauticalFlow for everyone in the maritime industry.</p>
+        `,
+        confirmButtonText: 'Continue',
+        confirmButtonColor: '#00b4d8'
+    });
+    
+    // Reset form
+    resetForm();
+    
+    // Restore button to original state
+    submitButton.disabled = true;
+    submitButton.innerHTML = originalText;
+    
+} catch (error) {
         console.error('Error submitting feedback:', error);
         
         Swal.fire({
@@ -282,4 +261,3 @@ if (document.readyState === 'loading') {
 } else {
     initFeedbackPage();
 }
-

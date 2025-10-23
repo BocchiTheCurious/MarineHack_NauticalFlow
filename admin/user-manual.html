@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,16 +19,16 @@
             background: white;
             border-radius: 0.35rem;
             padding: 0;
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             overflow: hidden;
         }
-        
+
         .nav-tabs {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             padding: 20px 20px 0;
         }
-        
+
         .nav-tabs .nav-link {
             color: rgba(255, 255, 255, 0.7);
             border: none;
@@ -38,25 +39,25 @@
             transition: all 0.3s;
             background: transparent;
         }
-        
+
         .nav-tabs .nav-link:hover {
             color: white;
             background: rgba(255, 255, 255, 0.1);
         }
-        
+
         .nav-tabs .nav-link.active {
             color: #667eea;
             background: white;
         }
-        
+
         .nav-tabs .nav-link i {
             margin-right: 8px;
         }
-        
+
         .tab-content {
             padding: 40px;
         }
-        
+
         .section-title {
             font-size: 2rem;
             font-weight: 700;
@@ -66,19 +67,19 @@
             align-items: center;
             gap: 15px;
         }
-        
+
         .section-title i {
             font-size: 2.5rem;
             color: #667eea;
         }
-        
+
         .section-description {
             font-size: 1.1rem;
             color: #4a5568;
             margin-bottom: 30px;
             line-height: 1.8;
         }
-        
+
         .video-container {
             position: relative;
             width: 100%;
@@ -86,11 +87,11 @@
             margin: 0 auto 40px;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             aspect-ratio: 16/9;
         }
-        
+
         .video-placeholder {
             width: 100%;
             height: 100%;
@@ -102,15 +103,15 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        
+
         .video-placeholder:hover {
             transform: scale(1.02);
         }
-        
+
         .video-placeholder:hover .play-button {
             transform: scale(1.1);
         }
-        
+
         .play-button {
             width: 80px;
             height: 80px;
@@ -124,27 +125,27 @@
             transition: all 0.3s;
             border: 3px solid rgba(255, 255, 255, 0.5);
         }
-        
+
         .play-button i {
             font-size: 2rem;
             margin-left: 5px;
         }
-        
+
         .video-title {
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 10px;
         }
-        
+
         .video-duration {
             font-size: 0.9rem;
             opacity: 0.8;
         }
-        
+
         .steps-section {
             margin-top: 40px;
         }
-        
+
         .steps-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -154,22 +155,22 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .step-card {
             background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
             border-left: 4px solid #667eea;
             padding: 25px;
             margin-bottom: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s;
         }
-        
+
         .step-card:hover {
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
             transform: translateX(5px);
         }
-        
+
         .step-number {
             display: inline-flex;
             align-items: center;
@@ -184,50 +185,50 @@
             margin-right: 15px;
             flex-shrink: 0;
         }
-        
+
         .step-content {
             display: flex;
             align-items: center;
         }
-        
+
         .step-text {
             flex: 1;
         }
-        
+
         .step-title {
             font-weight: 600;
             color: #2d3748;
             margin-bottom: 5px;
             font-size: 1.1rem;
         }
-        
+
         .step-description {
             color: #718096;
             margin: 0;
         }
-        
+
         .info-box {
             padding: 20px;
             border-radius: 10px;
             margin: 25px 0;
             border-left: 4px solid;
         }
-        
+
         .info-box.tip {
             background: #e6f7ff;
             border-color: #1890ff;
         }
-        
+
         .info-box.warning {
             background: #fff7e6;
             border-color: #faad14;
         }
-        
+
         .info-box.success {
             background: #f6ffed;
             border-color: #52c41a;
         }
-        
+
         .info-box-title {
             font-weight: 600;
             margin-bottom: 10px;
@@ -235,7 +236,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .faq-item {
             background: white;
             border: 1px solid #e2e8f0;
@@ -244,11 +245,11 @@
             margin-bottom: 15px;
             transition: all 0.3s;
         }
-        
+
         .faq-item:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .faq-question {
             font-weight: 600;
             color: #2d3748;
@@ -258,7 +259,7 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .faq-answer {
             color: #4a5568;
             margin: 0;
@@ -270,12 +271,14 @@
                 padding: 12px 15px;
                 font-size: 0.9rem;
             }
+
             .section-title {
                 font-size: 1.5rem;
             }
         }
     </style>
 </head>
+
 <body>
 
     <div id="loading-overlay" class="loading-overlay">
@@ -287,7 +290,8 @@
         <div id="sidebar-placeholder"></div>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2 text-white">
                     <i class="bi bi-book-half me-2"></i>
                     User Manual
@@ -298,32 +302,38 @@
                 <!-- Tabs Navigation -->
                 <ul class="nav nav-tabs" id="manualTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="getting-started-tab" data-bs-toggle="tab" 
-                                data-bs-target="#getting-started" type="button" role="tab">
+                        <button class="nav-link active" id="getting-started-tab" data-bs-toggle="tab"
+                            data-bs-target="#getting-started" type="button" role="tab">
                             <i class="bi bi-rocket-takeoff"></i> Getting Started
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="route-planning-tab" data-bs-toggle="tab" 
-                                data-bs-target="#route-planning" type="button" role="tab">
+                        <button class="nav-link" id="route-planning-tab" data-bs-toggle="tab"
+                            data-bs-target="#route-planning" type="button" role="tab">
                             <i class="bi bi-map"></i> Route Planning
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="data-management-tab" data-bs-toggle="tab" 
-                                data-bs-target="#data-management" type="button" role="tab">
+                        <button class="nav-link" id="data-management-tab" data-bs-toggle="tab"
+                            data-bs-target="#data-management" type="button" role="tab">
                             <i class="bi bi-database"></i> Data Management
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" 
-                                data-bs-target="#analytics" type="button" role="tab">
+                        <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics"
+                            type="button" role="tab">
                             <i class="bi bi-graph-up"></i> Analytics
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="faq-tab" data-bs-toggle="tab" 
-                                data-bs-target="#faq" type="button" role="tab">
+                        <button class="nav-link" id="port-weather-tab" data-bs-toggle="tab"
+                            data-bs-target="#port-weather" type="button" role="tab">
+                            <i class="bi bi-brightness-high-fill"></i> Port Weather
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="faq-tab" data-bs-toggle="tab" data-bs-target="#faq" type="button"
+                            role="tab">
                             <i class="bi bi-question-circle"></i> FAQ
                         </button>
                     </li>
@@ -338,8 +348,10 @@
                             <span>Getting Started with NauticalFlow</span>
                         </div>
                         <p class="section-description">
-                            Welcome to NauticalFlow! This comprehensive maritime route optimization platform helps you plan efficient routes, 
-                            manage vessel data, and reduce fuel consumption. Watch the video tutorial below to get started quickly.
+                            Welcome to NauticalFlow! This comprehensive maritime route optimization platform helps you
+                            plan efficient routes,
+                            manage vessel data, and reduce fuel consumption. Watch the video tutorial below to get
+                            started quickly.
                         </p>
 
                         <!-- Video Placeholder -->
@@ -364,7 +376,8 @@
                                     <div class="step-number">1</div>
                                     <div class="step-text">
                                         <div class="step-title">Create Your Account</div>
-                                        <div class="step-description">Sign up with your email and create a secure password. Verify your email to activate your account.</div>
+                                        <div class="step-description">Sign up with your email and create a secure
+                                            password. Verify your email to activate your account.</div>
                                     </div>
                                 </div>
                             </div>
@@ -374,7 +387,8 @@
                                     <div class="step-number">2</div>
                                     <div class="step-text">
                                         <div class="step-title">Login to Dashboard</div>
-                                        <div class="step-description">Access the system with your credentials. The dashboard displays your recent activities and quick actions.</div>
+                                        <div class="step-description">Access the system with your credentials. The
+                                            dashboard displays your recent activities and quick actions.</div>
                                     </div>
                                 </div>
                             </div>
@@ -384,7 +398,8 @@
                                     <div class="step-number">3</div>
                                     <div class="step-text">
                                         <div class="step-title">Explore Navigation Menu</div>
-                                        <div class="step-description">Familiarize yourself with the sidebar menu containing Route Planner, Data Management, and Analytics sections.</div>
+                                        <div class="step-description">Familiarize yourself with the sidebar menu
+                                            containing Route Planner, Data Management, and Analytics sections.</div>
                                     </div>
                                 </div>
                             </div>
@@ -394,7 +409,8 @@
                                     <div class="step-number">4</div>
                                     <div class="step-text">
                                         <div class="step-title">Add Your First Vessel</div>
-                                        <div class="step-description">Navigate to Vessel Data and add your cruise ship details including fuel consumption curves.</div>
+                                        <div class="step-description">Navigate to Vessel Data and add your cruise ship
+                                            details including fuel consumption curves.</div>
                                     </div>
                                 </div>
                             </div>
@@ -404,7 +420,8 @@
                                     <div class="step-number">5</div>
                                     <div class="step-text">
                                         <div class="step-title">Plan Your First Route</div>
-                                        <div class="step-description">Go to Route Planner, select ports, choose your vessel, and run optimization to see fuel savings.</div>
+                                        <div class="step-description">Go to Route Planner, select ports, choose your
+                                            vessel, and run optimization to see fuel savings.</div>
                                     </div>
                                 </div>
                             </div>
@@ -414,7 +431,8 @@
                             <div class="info-box-title">
                                 <i class="bi bi-lightbulb"></i> Pro Tip
                             </div>
-                            <p>Start by exploring the sample data provided in the system to understand how everything works before adding your own fleet information.</p>
+                            <p>Start by exploring the sample data provided in the system to understand how everything
+                                works before adding your own fleet information.</p>
                         </div>
                     </div>
 
@@ -425,7 +443,8 @@
                             <span>Optimized Route Planning</span>
                         </div>
                         <p class="section-description">
-                            Learn how to create optimal maritime routes that minimize fuel consumption and CO₂ emissions while considering 
+                            Learn how to create optimal maritime routes that minimize fuel consumption and CO₂ emissions
+                            while considering
                             port congestion, weather conditions, and vessel capabilities.
                         </p>
 
@@ -451,7 +470,8 @@
                                     <div class="step-number">1</div>
                                     <div class="step-text">
                                         <div class="step-title">Access Route Planner</div>
-                                        <div class="step-description">Click on "Optimized Route Planner" from the main navigation menu to open the planning interface.</div>
+                                        <div class="step-description">Click on "Optimized Route Planner" from the main
+                                            navigation menu to open the planning interface.</div>
                                     </div>
                                 </div>
                             </div>
@@ -461,7 +481,8 @@
                                     <div class="step-number">2</div>
                                     <div class="step-text">
                                         <div class="step-title">Select Departure & Destination Ports</div>
-                                        <div class="step-description">Choose your starting port and final destination from the dropdown menus. Add intermediate stops if needed.</div>
+                                        <div class="step-description">Choose your starting port and final destination
+                                            from the dropdown menus. Add intermediate stops if needed.</div>
                                     </div>
                                 </div>
                             </div>
@@ -471,7 +492,8 @@
                                     <div class="step-number">3</div>
                                     <div class="step-text">
                                         <div class="step-title">Choose Your Vessel</div>
-                                        <div class="step-description">Select the cruise ship from your fleet. The system will use its fuel consumption curve for calculations.</div>
+                                        <div class="step-description">Select the cruise ship from your fleet. The system
+                                            will use its fuel consumption curve for calculations.</div>
                                     </div>
                                 </div>
                             </div>
@@ -481,7 +503,8 @@
                                     <div class="step-number">4</div>
                                     <div class="step-text">
                                         <div class="step-title">Set Departure Date & Time</div>
-                                        <div class="step-description">Specify when you plan to depart. This affects weather and port congestion predictions.</div>
+                                        <div class="step-description">Specify when you plan to depart. This affects
+                                            weather and port congestion predictions.</div>
                                     </div>
                                 </div>
                             </div>
@@ -491,7 +514,8 @@
                                     <div class="step-number">5</div>
                                     <div class="step-text">
                                         <div class="step-title">Run Optimization</div>
-                                        <div class="step-description">Click "Optimize Route" button. The algorithm will calculate the most efficient path considering all factors.</div>
+                                        <div class="step-description">Click "Optimize Route" button. The algorithm will
+                                            calculate the most efficient path considering all factors.</div>
                                     </div>
                                 </div>
                             </div>
@@ -501,7 +525,8 @@
                                     <div class="step-number">6</div>
                                     <div class="step-text">
                                         <div class="step-title">Review & Save Results</div>
-                                        <div class="step-description">Analyze fuel savings, CO₂ reduction, and time estimates. Save the optimization for future reference.</div>
+                                        <div class="step-description">Analyze fuel savings, CO₂ reduction, and time
+                                            estimates. Save the optimization for future reference.</div>
                                     </div>
                                 </div>
                             </div>
@@ -511,7 +536,8 @@
                             <div class="info-box-title">
                                 <i class="bi bi-check-circle"></i> Best Practice
                             </div>
-                            <p>Always check port weather conditions before finalizing your route. Severe weather can impact fuel efficiency significantly.</p>
+                            <p>Always check port weather conditions before finalizing your route. Severe weather can
+                                impact fuel efficiency significantly.</p>
                         </div>
                     </div>
 
@@ -522,7 +548,8 @@
                             <span>Managing Your Data</span>
                         </div>
                         <p class="section-description">
-                            Effectively manage your vessel fleet, fuel types, and port information. Keep your data up-to-date to ensure 
+                            Effectively manage your vessel fleet, fuel types, and port information. Keep your data
+                            up-to-date to ensure
                             accurate route optimization calculations and better decision-making.
                         </p>
 
@@ -548,7 +575,9 @@
                                     <div class="step-number">1</div>
                                     <div class="step-text">
                                         <div class="step-title">Adding Vessel Data</div>
-                                        <div class="step-description">Navigate to Vessel Data page, click "Add New Vessel", fill in ship details, gross tonnage, and fuel consumption curve.</div>
+                                        <div class="step-description">Navigate to Vessel Data page, click "Add New
+                                            Vessel", fill in ship details, gross tonnage, and fuel consumption curve.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -558,7 +587,8 @@
                                     <div class="step-number">2</div>
                                     <div class="step-text">
                                         <div class="step-title">Managing Fuel Types</div>
-                                        <div class="step-description">Access Fuel Types section to add, edit, or remove fuel options. Specify CO₂ emission factors for each fuel type.</div>
+                                        <div class="step-description">Access Fuel Types section to add, edit, or remove
+                                            fuel options. Specify CO₂ emission factors for each fuel type.</div>
                                     </div>
                                 </div>
                             </div>
@@ -568,7 +598,8 @@
                                     <div class="step-number">3</div>
                                     <div class="step-text">
                                         <div class="step-title">Updating Port Information</div>
-                                        <div class="step-description">Go to Port Data page to add new ports or update existing ones with coordinates, congestion index, and facilities.</div>
+                                        <div class="step-description">Go to Port Data page to add new ports or update
+                                            existing ones with coordinates, congestion index, and facilities.</div>
                                     </div>
                                 </div>
                             </div>
@@ -578,7 +609,9 @@
                                     <div class="step-number">4</div>
                                     <div class="step-text">
                                         <div class="step-title">Editing Existing Records</div>
-                                        <div class="step-description">Click the edit icon on any record to modify details. Changes are saved immediately and affect future optimizations.</div>
+                                        <div class="step-description">Click the edit icon on any record to modify
+                                            details. Changes are saved immediately and affect future optimizations.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -588,7 +621,8 @@
                                     <div class="step-number">5</div>
                                     <div class="step-text">
                                         <div class="step-title">Deleting Records</div>
-                                        <div class="step-description">Use the delete button with caution. Confirm deletion when prompted. Deleted data cannot be recovered.</div>
+                                        <div class="step-description">Use the delete button with caution. Confirm
+                                            deletion when prompted. Deleted data cannot be recovered.</div>
                                     </div>
                                 </div>
                             </div>
@@ -598,7 +632,8 @@
                             <div class="info-box-title">
                                 <i class="bi bi-exclamation-triangle"></i> Important Note
                             </div>
-                            <p>Deleting a vessel or fuel type that's used in saved optimizations may affect historical data. Always backup important information before deletion.</p>
+                            <p>Deleting a vessel or fuel type that's used in saved optimizations may affect historical
+                                data. Always backup important information before deletion.</p>
                         </div>
                     </div>
 
@@ -609,7 +644,8 @@
                             <span>Analytics Dashboard</span>
                         </div>
                         <p class="section-description">
-                            Gain valuable insights from your route optimization data. Track fuel savings, CO₂ reductions, vessel performance, 
+                            Gain valuable insights from your route optimization data. Track fuel savings, CO₂
+                            reductions, vessel performance,
                             and identify trends to make informed decisions about your maritime operations.
                         </p>
 
@@ -635,7 +671,8 @@
                                     <div class="step-number">1</div>
                                     <div class="step-text">
                                         <div class="step-title">Access Analytics Dashboard</div>
-                                        <div class="step-description">Click "Data Visualization" from the Analytics & Insights section to view comprehensive charts and statistics.</div>
+                                        <div class="step-description">Click "Data Visualization" from the Analytics &
+                                            Insights section to view comprehensive charts and statistics.</div>
                                     </div>
                                 </div>
                             </div>
@@ -645,7 +682,8 @@
                                     <div class="step-number">2</div>
                                     <div class="step-text">
                                         <div class="step-title">Review Key Performance Metrics</div>
-                                        <div class="step-description">Check the summary cards showing total routes optimized, fuel saved, CO₂ reduced, and vessels managed.</div>
+                                        <div class="step-description">Check the summary cards showing total routes
+                                            optimized, fuel saved, CO₂ reduced, and vessels managed.</div>
                                     </div>
                                 </div>
                             </div>
@@ -655,7 +693,8 @@
                                     <div class="step-number">3</div>
                                     <div class="step-text">
                                         <div class="step-title">Analyze Optimization Trends</div>
-                                        <div class="step-description">View the line chart showing monthly optimization activity and identify patterns in your route planning.</div>
+                                        <div class="step-description">View the line chart showing monthly optimization
+                                            activity and identify patterns in your route planning.</div>
                                     </div>
                                 </div>
                             </div>
@@ -665,7 +704,8 @@
                                     <div class="step-number">4</div>
                                     <div class="step-text">
                                         <div class="step-title">Compare Vessel Performance</div>
-                                        <div class="step-description">Use the comparison charts to evaluate which vessels are most efficient and identify optimization opportunities.</div>
+                                        <div class="step-description">Use the comparison charts to evaluate which
+                                            vessels are most efficient and identify optimization opportunities.</div>
                                     </div>
                                 </div>
                             </div>
@@ -675,7 +715,8 @@
                                     <div class="step-number">5</div>
                                     <div class="step-text">
                                         <div class="step-title">Export Reports</div>
-                                        <div class="step-description">Download PDF or CSV reports for sharing with stakeholders or regulatory compliance documentation.</div>
+                                        <div class="step-description">Download PDF or CSV reports for sharing with
+                                            stakeholders or regulatory compliance documentation.</div>
                                     </div>
                                 </div>
                             </div>
@@ -685,7 +726,128 @@
                             <div class="info-box-title">
                                 <i class="bi bi-lightbulb"></i> Pro Tip
                             </div>
-                            <p>Regular analysis of optimization trends can reveal seasonal patterns and help you plan more efficient routes throughout the year.</p>
+                            <p>Regular analysis of optimization trends can reveal seasonal patterns and help you plan
+                                more efficient routes throughout the year.</p>
+                        </div>
+                    </div>
+
+                    <!-- Port Weather Tab -->
+                    <div class="tab-pane fade" id="port-weather" role="tabpanel">
+                        <div class="section-title">
+                            <i class="bi bi-brightness-high-fill"></i>
+                            <span>Port Weather Monitoring</span>
+                        </div>
+                        <p class="section-description">
+                            Monitor real-time weather conditions and safety assessments for any port in your network.
+                            The Port Weather feature provides comprehensive meteorological data, wave conditions, and
+                            automated
+                            safety evaluations to help you make informed operational decisions.
+                        </p>
+
+                        <!-- YouTube Video -->
+                        <div class="video-container" style="aspect-ratio: 16/9; background: #000;">
+                            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/aHe1AWLN1uI"
+                                title="Port Weather Tutorial" frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen style="border-radius: 15px;">
+                            </iframe>
+                        </div>
+
+                        <!-- Steps Section -->
+                        <div class="steps-section">
+                            <div class="steps-title">
+                                <i class="bi bi-list-check"></i> Using Port Weather
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">1</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Access Port Weather</div>
+                                        <div class="step-description">Navigate to "Port Weather" from the Live Data
+                                            section in the sidebar menu.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">2</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Select Your Port</div>
+                                        <div class="step-description">Choose a port from the dropdown menu to view its
+                                            current weather conditions and forecasts.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">3</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Review Safety Assessment</div>
+                                        <div class="step-description">Check the overall safety status banner (Safe,
+                                            Caution, or Dangerous) and review any active warnings.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">4</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Analyze Current Conditions</div>
+                                        <div class="step-description">View real-time data including temperature, wind
+                                            speed, wave height, wave period, and wave direction with safety indicators.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">5</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Check 48-Hour Forecast</div>
+                                        <div class="step-description">Review the hourly forecast cards showing
+                                            conditions at +6, +12, +24, and +48 hours with color-coded safety borders.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step-card">
+                                <div class="step-content">
+                                    <div class="step-number">6</div>
+                                    <div class="step-text">
+                                        <div class="step-title">Understand Safety Thresholds</div>
+                                        <div class="step-description">Review the Safety Threshold Guidelines section to
+                                            understand the criteria used for safety assessments.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-box success">
+                            <div class="info-box-title">
+                                <i class="bi bi-shield-check"></i> Safety Features
+                            </div>
+                            <p class="mb-2">The Port Weather system includes automated safety assessments based on:</p>
+                            <ul class="mb-0">
+                                <li><strong>Wave Height:</strong> Safe (&lt;2m), Caution (2-4m), Dangerous (&gt;4m)</li>
+                                <li><strong>Wind Speed:</strong> Safe (&lt;40 km/h), Caution (40-60 km/h), Dangerous
+                                    (&gt;60 km/h)</li>
+                                <li><strong>Temperature:</strong> Safe (10-35°C), Caution (outside this range)</li>
+                            </ul>
+                        </div>
+
+                        <div class="info-box tip">
+                            <div class="info-box-title">
+                                <i class="bi bi-lightbulb"></i> Pro Tip
+                            </div>
+                            <p>Weather data is automatically refreshed from Open-Meteo and Marine Weather API. Click the
+                                "Refresh" button to get the latest updates, especially before planning departures or
+                                arrivals.</p>
                         </div>
                     </div>
 
@@ -696,7 +858,9 @@
                             <span>Frequently Asked Questions</span>
                         </div>
                         <p class="section-description">
-                            Find answers to common questions about NauticalFlow. If you can't find what you're looking for, 
+                            Find answers to common questions about NauticalFlow. If you can't find what you're
+                            looking
+                            for,
                             please contact our support team.
                         </p>
 
@@ -706,8 +870,12 @@
                                 How accurate are the fuel consumption calculations?
                             </div>
                             <p class="faq-answer">
-                                Our calculations are based on the fuel consumption curves you provide for each vessel, combined with real-time weather data 
-                                and port congestion information. Accuracy typically ranges from 92-98% when vessel data is properly calibrated.
+                                Our calculations are based on the fuel consumption curves you provide for each
+                                vessel,
+                                combined with real-time weather data
+                                and port congestion information. Accuracy typically ranges from 92-98% when vessel
+                                data
+                                is properly calibrated.
                             </p>
                         </div>
 
@@ -717,7 +885,9 @@
                                 Can I optimize routes with multiple destination ports?
                             </div>
                             <p class="faq-answer">
-                                Yes! Our multi-port optimization feature uses advanced algorithms (Genetic Algorithm for TSP) to find the most efficient 
+                                Yes! Our multi-port optimization feature uses advanced algorithms (Genetic Algorithm
+                                for
+                                TSP) to find the most efficient
                                 sequence of ports to visit, minimizing total fuel consumption and travel time.
                             </p>
                         </div>
@@ -728,7 +898,8 @@
                                 What weather data sources does NauticalFlow use?
                             </div>
                             <p class="faq-answer">
-                                We integrate with Open-Meteo and Marine Weather API to provide real-time weather forecasts, wave conditions, 
+                                We integrate with Open-Meteo and Marine Weather API to provide real-time weather
+                                forecasts, wave conditions,
                                 wind patterns, and cyclone tracking for accurate route planning.
                             </p>
                         </div>
@@ -739,7 +910,9 @@
                                 How do I update my vessel's fuel consumption curve?
                             </div>
                             <p class="faq-answer">
-                                Navigate to the Vessel Data page, find your vessel, and click the edit button. You can update the fuel consumption 
+                                Navigate to the Vessel Data page, find your vessel, and click the edit button. You
+                                can
+                                update the fuel consumption
                                 curve data points, which will be used in all future route optimizations.
                             </p>
                         </div>
@@ -750,7 +923,8 @@
                                 Can I export my optimization history?
                             </div>
                             <p class="faq-answer">
-                                Yes! You can export your data in multiple formats including PDF reports for presentations and CSV files for 
+                                Yes! You can export your data in multiple formats including PDF reports for
+                                presentations and CSV files for
                                 further analysis in spreadsheet applications.
                             </p>
                         </div>
@@ -761,8 +935,11 @@
                                 Is my data secure?
                             </div>
                             <p class="faq-answer">
-                                Yes, we take data security seriously. All data is encrypted in transit and at rest. We use industry-standard 
-                                authentication protocols and regularly backup all information. Your vessel and route data remains private and confidential.
+                                Yes, we take data security seriously. All data is encrypted in transit and at rest.
+                                We
+                                use industry-standard
+                                authentication protocols and regularly backup all information. Your vessel and route
+                                data remains private and confidential.
                             </p>
                         </div>
 
@@ -772,8 +949,11 @@
                                 What happens if I delete a vessel that's used in saved optimizations?
                             </div>
                             <p class="faq-answer">
-                                Historical optimization records will retain the vessel name, but you won't be able to use that vessel for new 
-                                optimizations. We recommend archiving vessels instead of deleting them if they have historical data.
+                                Historical optimization records will retain the vessel name, but you won't be able
+                                to
+                                use that vessel for new
+                                optimizations. We recommend archiving vessels instead of deleting them if they have
+                                historical data.
                             </p>
                         </div>
 
@@ -783,7 +963,9 @@
                                 How often is port and weather data updated?
                             </div>
                             <p class="faq-answer">
-                                Port data is updated manually as needed. Weather data is refreshed every 6 hours from our API sources, 
+                                Port data is updated manually as needed. Weather data is refreshed every 6 hours
+                                from
+                                our API sources,
                                 ensuring you always have current information for route planning decisions.
                             </p>
                         </div>
@@ -792,7 +974,9 @@
                             <div class="info-box-title">
                                 <i class="bi bi-headset"></i> Need More Help?
                             </div>
-                            <p class="mb-2">Can't find the answer you're looking for? Our support team is here to help!</p>
+                            <p class="mb-2">Can't find the answer you're looking for? Our support team is here to
+                                help!
+                            </p>
                             <p class="mb-0">
                                 <strong>Email:</strong> support@nauticalflow.com<br>
                                 <strong>Phone:</strong> +1 (555) 123-4567<br>
@@ -805,11 +989,12 @@
         </main>
     </div>
 
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- The JavaScript file that will handle the logic for this page -->
     <script type="module" src="js/user-manual.js"></script>
 </body>
+
 </html>

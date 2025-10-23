@@ -310,30 +310,9 @@ h6 {
     -webkit-backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.18);
     transition: all var(--transition-speed);
+    height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(173, 232, 244, 0.5) rgba(255, 255, 255, 0.1);
-}
-
-/* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge, Vivaldi) */
-.sidebar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: rgba(173, 232, 244, 0.4);
-    border-radius: 10px;
-    transition: background 0.3s ease;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(173, 232, 244, 0.7);
 }
 
 .sidebar-heading {
@@ -864,6 +843,24 @@ main {
     .sidebar-ad {
         display: none;
     }
+}
+
+/* Custom scrollbar styling */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Pagination Styles */
