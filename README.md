@@ -195,7 +195,7 @@ NauticalFlow/
     └── result.geojson          # Route results
 ```
 
-## 🔐 Demo Credentials
+## 🔐 User Credentials
 
 Create an account on the website:
 - Visit: **https://nauticalflow.fkifyp22.online/**
