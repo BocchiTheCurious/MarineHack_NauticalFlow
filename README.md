@@ -1,182 +1,276 @@
 # NauticalFlow Dashboard
 
-A modern, responsive maritime navigation dashboard built with Bootstrap 5 and vanilla JavaScript, designed for vessel route optimization and environmental impact analysis.
+🌐 **Our website is now online!** Visit us at: **https://nauticalflow.fkifyp22.online/**
+
+A modern, responsive maritime navigation dashboard built with Flask (Python), PostgreSQL, Bootstrap 5, and JavaScript, designed for vessel route optimization and environmental impact analysis.
 
 ## 🌟 Features
 
 ### Navigation Bar
 - **Brand**: NauticalFlow logo with water icon
-- **Current Location**: Displays current vessel location with dropdown for location management
-- **Notifications**: Real-time alerts and notifications with badge counter
 - **User Profile**: User menu with profile, settings, and logout options
-- **Theme Toggle**: Switch between light and dark themes
+- **Feedback**: Submit feedback and suggestions
+- **User Manual**: Access comprehensive user documentation
 
 ### Sidebar Menu
 
 #### Main Features
 - **Dashboard Overview**: Main dashboard with vessel stats, weather, and quick actions
-- **Route Planner**: Plan and optimize navigation routes
+- **Route Planner**: Plan and optimize navigation routes using advanced TSP algorithms
 - **Route Analytics**: Analyze route performance and efficiency
 - **Live Data Feed**: Real-time vessel and environmental data
+- **Data Visualization**: Interactive charts and analytics for route and vessel performance
+- **Port Data Management**: Comprehensive port information and characteristics
+- **Vessel Data Management**: Manage cruise ship specifications and fuel consumption data
+- **Fuel Types Management**: Configure and manage fuel types and CO2 emission factors
 
 #### Support Features
 - **Environmental Impact Analysis**: Comprehensive environmental metrics and optimization
-- **Marine Zones & Regulations**: Access to maritime zones and regulatory information
 - **Route History / Past Voyages**: Historical route data and voyage records
-- **Upload Vessel Data**: Interface for uploading vessel information and data
-- **System Settings**: Dashboard configuration and preferences
+- **Profile Settings**: User profile and account management
+- **Feedback System**: Submit and manage user feedback
+- **User Manual**: Comprehensive documentation and guides
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **WSL (Windows Subsystem for Linux)** - For Windows users
+- **Python 3.8+** - Backend runtime
+- **PostgreSQL** - Database server
+- **WSL (Windows Subsystem for Linux)** - Recommended for Windows users
 - **Modern web browser** (Chrome, Firefox, Safari, Edge)
-- **Node.js** (for live-server)
-- **Python 3** (alternative server option)
+- **pip** - Python package manager
 
 ### Installation & Setup
 
-#### Option 1: Using WSL (Recommended for Windows Users)
+#### Step 1: Install PostgreSQL
 
-1. **Install WSL** (if not already installed):
-   ```bash
-   # Open PowerShell as Administrator and run:
-   wsl --install
-   ```
+**On WSL/Ubuntu:**
+```bash
+# Update package list
+sudo apt update
 
-2. **Install Node.js in WSL**:
-   ```bash
-   # Update package list
-   sudo apt update
-   
-   # Install Node.js and npm
-   curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   
-   # Verify installation
-   node --version
-   npm --version
-   ```
+# Install PostgreSQL
+sudo apt install postgresql postgresql-contrib
 
-3. **Clone or download the NauticalFlow folder**:
-   ```bash
-   # Navigate to your desired directory
-   cd /home/your-username/
-   
-   # If using git (optional)
-   git clone <repository-url>
-   cd NauticalFlow
-   ```
+# Start PostgreSQL service
+sudo service postgresql start
 
-4. **Install dependencies**:
-   ```bash
-   # Install live-server globally
-   npm install -g live-server
-   
-   # Or install from requirements.txt
-   npm install -g live-server@1.2.2
-   ```
+# Switch to postgres user and create database
+sudo -u postgres psql
+CREATE DATABASE nauticalflow;
+CREATE USER postgres WITH PASSWORD 'chen';
+GRANT ALL PRIVILEGES ON DATABASE nauticalflow TO postgres;
+\q
+```
 
-5. **Start the development server**:
-   ```bash
-   # Navigate to the NauticalFlow directory
-   cd /path/to/NauticalFlow
-   
-   # Start live-server
-   live-server --port=8000
-   ```
+#### Step 2: Clone or Download the Project
 
-6. **Access the application**:
-   - Open your browser and go to: `http://localhost:8000`
-   - The dashboard will load with default settings
+```bash
+# Navigate to your desired directory
+cd /home/your-username/
 
-#### Option 2: Using Python HTTP Server (Alternative)
+# Clone the repository (if using git)
+git clone <repository-url>
+cd NauticalFlow
+```
 
-1. **Navigate to the NauticalFlow folder**:
-   ```bash
-   cd /path/to/NauticalFlow
-   ```
+#### Step 3: Set Up Python Virtual Environment
 
-2. **Start Python HTTP server**:
-   ```bash
-   # Python 3
-   python3 -m http.server 8000
-   
-   # Or Python 2 (if available)
-   python -m SimpleHTTPServer 8000
-   ```
+```bash
+# Create virtual environment
+python3 -m venv .venv
 
-3. **Access the application**:
-   - Open your browser and go to: `http://localhost:8000`
+# Activate virtual environment
+source .venv/bin/activate  # On Windows WSL/Linux
+# OR
+.venv\Scripts\activate  # On Windows Command Prompt
+```
 
-#### Option 3: Direct Browser Access (Simplest)
+#### Step 4: Install Python Dependencies
 
-1. **Navigate to the NauticalFlow folder**:
-   ```bash
-   cd /path/to/NauticalFlow
-   ```
+```bash
+# Navigate to backend directory
+cd backend
 
-2. **Open the main file in your browser**:
-   - Open your web browser
-   - Navigate to: `file:///path/to/NauticalFlow/index.html`
-   - Or simply double-click the `index.html` file from your file manager
+# Install dependencies
+pip install -r requirements.txt
+```
+
+#### Step 5: Start the Flask Backend
+
+```bash
+# Make sure you're in the backend directory
+cd backend
+
+# Run the Flask application
+python app.py
+```
+
+The backend API will start on `http://localhost:5000`
+
+#### Step 6: Access the Application
+
+1. Open your web browser
+2. Navigate to: **https://nauticalflow.fkifyp22.online/**
+3. Or for local development, open `index.html` in your browser
+
+### Quick Start (Local Development)
+
+For local development without deploying:
+
+```bash
+# Start PostgreSQL
+sudo service postgresql start
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Start Flask backend
+cd backend
+python app.py
+```
+
+Then open `index.html` in your browser or use a local server:
+
+```bash
+# Using Python's built-in server (from project root)
+python3 -m http.server 8000
+```
+
+Access the application at `http://localhost:8000`
 
 ## 📁 File Structure
 ```
 NauticalFlow/
-├── index.html              # Main login page
-├── styles.css              # Custom CSS styles and theme support
-├── script.js               # Main JavaScript functionality
-├── login.js                # Login functionality
-├── requirements.txt        # Project dependencies
-├── README.md              # This documentation file
-├── admin/
-│   ├── homepage.html       # Admin dashboard
-│   ├── environmental-impact.html
-│   └── [other admin files...]
-└── user/
-    ├── user-dashboard.html # User dashboard
-    ├── environmental-impact.html
-    ├── reroute.html        # Route optimization
-    ├── past-trips.html     # Trip history
-    └── [other user files...]
+├── index.html                  # Main login/signup page
+├── styles.css                  # Global CSS styles and theme support
+├── requirements.txt            # Project dependencies list
+├── README.md                   # This documentation file
+├── LICENSE                     # Project license
+├── .gitignore                  # Git ignore rules
+├── admin/                      # Admin dashboard pages
+│   ├── homepage.html           # Admin main dashboard
+│   ├── chart-visualization.html # Data visualization dashboard
+│   ├── live-data-feed.html     # Real-time data feed
+│   ├── port-data.html          # Port management interface
+│   ├── vessel-data.html        # Vessel management interface
+│   ├── fuel-types.html         # Fuel types configuration
+│   ├── feedback.html           # Feedback management
+│   ├── user-manual.html        # User documentation
+│   ├── profile.html            # User profile page
+│   ├── components/             # Reusable HTML components
+│   │   ├── _navbar.html        # Navigation bar component
+│   │   └── _sidebar.html       # Sidebar menu component
+│   └── js/                     # JavaScript modules
+│       ├── optimized-route-planner.js
+│       ├── analytics.js
+│       ├── live-data-feed.js
+│       ├── port-data.js
+│       ├── vessel-data.js
+│       ├── fuel-types.js
+│       ├── feedback.js
+│       ├── profile.js
+│       ├── user-manual.js
+│       └── modules/            # Core JavaScript modules
+│           ├── api.js          # API client
+│           ├── auth.js         # Authentication
+│           ├── layout.js       # Layout management
+│           └── utils.js        # Utility functions
+├── backend/                    # Flask backend application
+│   ├── app.py                  # Main Flask application
+│   ├── optimization_solver.py # Route optimization algorithms
+│   ├── requirements.txt        # Python dependencies
+│   ├── data/                   # Backend data files
+│   │   └── southeast_asia_boundaries.geojson
+│   └── instance/               # Database files
+│       └── nauticalflow.db
+├── assets/                     # Static assets
+│   └── img/                    # Images and icons
+│       ├── loader-icon.svg
+│       ├── pilotservice.webp
+│       ├── tugboatservice.jpeg
+│       └── [other service images...]
+└── data/                       # Application data files
+    ├── ais_processed.json      # Processed AIS data
+    └── result.geojson          # Route results
 ```
 
 ## 🔐 Demo Credentials
 
-Use these credentials to test the application:
-- **Admin**: `admin` / `admin123`
-- **User**: `user` / `user123`
+Create an account on the website:
+- Visit: **https://nauticalflow.fkifyp22.online/**
+- Sign up with a new account or contact the administrator
 
 ## 🎯 Usage
 
-### Navigation
-- Click on sidebar menu items to navigate between different sections
-- Use the top navigation bar for quick access to location, notifications, and user settings
-- The dashboard overview is the default landing page
+### Authentication
+1. **Sign Up**: Create a new account with display name, username, and password
+2. **Sign In**: Log in with your credentials
+3. **JWT Authentication**: Secure token-based authentication for API requests
 
-### Theme Switching
-- Click the theme toggle button (moon/sun icon) in the top navigation bar
-- Theme preference is saved in localStorage and persists between sessions
-- Supports both light and dark themes
+### Navigation
+- Use the **sidebar menu** to navigate between different sections
+- Access **Feedback** and **User Manual** from the navigation bar
+- The dashboard overview is the default landing page after login
+
+### Route Planning & Optimization
+1. **Select Origin Port**: Choose your starting port
+2. **Add Destination Ports**: Select multiple ports to visit
+3. **Select Vessel**: Choose from available cruise ships in the database
+4. **Optimize Route**: The system uses TSP (Traveling Salesman Problem) algorithms to find the most efficient route
+5. **View Results**: See optimized route on interactive map with distance and fuel calculations
+
+### Data Visualization
+- **Chart Visualization**: Interactive charts showing route analytics
+- **Live Data Feed**: Real-time vessel tracking and environmental data
+- **Performance Metrics**: View fuel consumption, CO2 emissions, and efficiency ratings
+
+### Port & Vessel Management
+- **Port Data**: View and manage comprehensive port information including:
+  - Port characteristics (depth, size, facilities)
+  - Entrance restrictions
+  - Available services (pilot, tugboat, repairs, etc.)
+  - Congestion index
+- **Vessel Data**: Manage cruise ship specifications including:
+  - Technical specifications (tonnage, dimensions, power)
+  - Fuel consumption curves
+  - Engine types and capabilities
+  - Passenger and crew capacity
 
 ### Environmental Impact Analysis
-- Access comprehensive environmental metrics and optimization suggestions
-- View fuel consumption, CO₂ emissions, and efficiency ratings
-- Compare performance with fleet averages and industry standards
-
-### Route Optimization
-- Plan and optimize navigation routes
-- Compare different route options with fuel and time savings
-- Access weather routing and safety recommendations
+- Track fuel consumption and CO2 emissions
+- Compare different fuel types and their environmental impact
+- View optimization suggestions for reducing environmental footprint
+- Analyze route efficiency and sustainability metrics
 
 ## 🛠️ Development
 
-### Dependencies
-This project uses CDN for external libraries:
+### Backend Technologies
+- **Flask 3.1.1**: Python web framework
+- **PostgreSQL**: Relational database
+- **SQLAlchemy 2.0.42**: ORM for database operations
+- **Flask-CORS**: Cross-origin resource sharing
+- **python-jose**: JWT token authentication
+- **bcrypt**: Password hashing
+- **APScheduler 3.10.4**: Background task scheduling
+- **searoute**: Maritime route calculation
+- **pygad**: Genetic algorithm for optimization
+- **numpy**: Numerical computations
+
+### Frontend Technologies
 - **Bootstrap 5.3.0**: CSS framework
 - **Bootstrap Icons 1.10.0**: Icon library
-- **Live Server**: Development server
+- **Leaflet 1.9.4**: Interactive maps
+- **Chart.js**: Data visualization
+- **Toastr**: Notification system
+- **Vanilla JavaScript**: Client-side logic
+
+### Key Features Implementation
+- **Route Optimization**: Traveling Salesman Problem (TSP) solver with genetic algorithms
+- **Real-time Data**: Weather API integration and vessel tracking
+- **Authentication**: JWT-based secure authentication
+- **Database**: PostgreSQL with comprehensive maritime data models
+- **Interactive Maps**: Leaflet with route visualization and port markers
 
 ### Browser Support
 - Chrome 90+
@@ -184,56 +278,73 @@ This project uses CDN for external libraries:
 - Safari 14+
 - Edge 90+
 
-## 🔧 Troubleshooting
-
-### WSL Issues
-- **Port Access**: If you can't access localhost:8000, try using `0.0.0.0:8000` instead
-- **File Permissions**: Ensure you have read permissions for all files
-- **Node.js Installation**: If npm commands fail, try reinstalling Node.js
-
-### Browser Issues
-- **CORS Errors**: Use a local server (live-server or Python) instead of direct file access
-- **JavaScript Errors**: Check browser console for any script loading issues
-- **Theme Issues**: Clear browser cache if theme switching doesn't work
-
 ### Common Commands
 ```bash
-# Check if live-server is installed
-which live-server
+# Check PostgreSQL status
+sudo service postgresql status
 
-# Install live-server if missing
-npm install -g live-server
+# Restart PostgreSQL
+sudo service postgresql restart
 
-# Start server on specific port
-live-server --port=8000
+# Check Flask process
+ps aux | grep python
 
-# Start server with specific host
-live-server --host=0.0.0.0 --port=8000
+# Activate virtual environment
+source .venv/bin/activate
+
+# Start Flask backend
+cd backend && python app.py
+
+# Check Python packages
+pip list
+
+# Install missing packages
+pip install -r backend/requirements.txt
 ```
 
-## 🚀 Future Enhancements
-- Integration with real GPS and navigation APIs
-- Live map integration (Google Maps, OpenSeaMap, etc.)
-- Real-time weather API integration
-- Vessel tracking and AIS data
-- Route optimization algorithms
-- User authentication system
-- Database integration for persistent data
+## 🌊 Key Technologies & Algorithms
+
+### Route Optimization
+The system implements sophisticated route optimization using:
+- **Traveling Salesman Problem (TSP)**: Finding the optimal route through multiple ports
+- **Genetic Algorithms (PyGAD)**: Evolutionary optimization for complex route scenarios
+- **Searoute Library**: Accurate maritime distance calculation considering shipping lanes
+- **Multi-objective Optimization**: Balancing distance, fuel consumption, and time
+
+### Environmental Analysis
+- **CO2 Emission Calculation**: Based on IMO guidelines and fuel-specific emission factors
+- **Fuel Consumption Modeling**: Considers vessel characteristics, speed, and sea conditions
+- **Efficiency Metrics**: Performance indicators for environmental impact assessment
+
+### Data Management
+- **PostgreSQL Database**: Robust relational database for maritime data
+- **SQLAlchemy ORM**: Type-safe database operations
+- **JSON Storage**: Flexible data structures for complex port and vessel characteristics
 
 ## 📝 Contributing
-This is a frontend-only demonstration. For production use, consider:
-- Adding backend API integration
-- Implementing real-time data feeds
-- Adding user authentication
-- Integrating with maritime databases
-- Adding offline capabilities
+This is an active development project. For contributions:
+- Fork the repository
+- Create a feature branch
+- Implement your changes with proper documentation
+- Test thoroughly (backend and frontend)
+- Submit a pull request with detailed description
 
 ## 📄 License
-This project is for demonstration purposes. Feel free to use and modify as needed.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## 🆘 Support
-For questions or issues:
-1. Check the troubleshooting section above
-2. Verify all dependencies are installed correctly
-3. Ensure you're using a supported browser
-4. Check the browser console for error messages 
+For questions, issues, or feedback:
+1. Visit our website: **https://nauticalflow.fkifyp22.online/**
+2. Use the **Feedback** feature in the application
+3. Check the **User Manual** for comprehensive documentation
+4. Review the troubleshooting section in this README
+5. Check the browser console for error messages
+6. Ensure all prerequisites are properly installed
+
+## 📞 Contact
+- Website: https://nauticalflow.fkifyp22.online/
+- For technical support, use the in-app Feedback system
+
+---
+
+**NauticalFlow** - Optimizing Maritime Navigation for a Sustainable Future 🌊⚓ 
