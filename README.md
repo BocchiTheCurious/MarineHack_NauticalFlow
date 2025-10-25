@@ -2,7 +2,7 @@
 
 🌐 **Our website is now online!** Visit us at: **https://nauticalflow.fkifyp22.online/**
 
-A modern, responsive maritime navigation dashboard built with Flask (Python), PostgreSQL, Bootstrap 5, and JavaScript, designed for vessel route optimization and environmental impact analysis. Our online websites uses MYSQL and our local website uses PostgreSQL. **Currently in progress to migrate from local development PostgreSQL to online website MYSQL.**
+A modern, responsive maritime navigation dashboard built with Flask (Python), PostgreSQL, Bootstrap 5, and JavaScript, designed for vessel route optimization and environmental impact analysis. Our online website uses MYSQL and our local website uses PostgreSQL. **Currently in progress to migrate from local development PostgreSQL to online website MYSQL.**
 
 ## 🌟 Features
 
