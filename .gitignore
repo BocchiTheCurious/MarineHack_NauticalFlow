@@ -1,0 +1,32 @@
+# Node modules (if you add any later)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.venv
+venv
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+
+# Python cache files
+__pycache__/
+
+# Test files
+test/

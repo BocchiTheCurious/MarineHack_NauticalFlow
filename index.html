@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NauticalFlow - Login & Signup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- SweetAlert2 for nice modals -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* --- Free Hosting Notice Banner --- */
+        .hosting-notice {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            animation: slideDown 0.5s ease-out;
+            display: none; /* Hidden by default, shown by JS if not dismissed */
+        }
+
+        .hosting-notice.show {
+            display: block;
+        }
+
+        .hosting-notice-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .hosting-notice i {
+            font-size: 20px;
+        }
+
+        .hosting-notice a {
+            color: white;
+            text-decoration: underline;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .hosting-notice a:hover {
+            opacity: 0.8;
+        }
+
+        .hosting-notice .close-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            margin-left: 15px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hosting-notice .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Adjust body padding when banner is visible */
+        body.banner-visible {
+            padding-top: 60px;
+        }
+
+        /* --- Base & Background Styles --- */
+        body {
+            background-image: url('https://cdn.pixabay.com/photo/2019/09/08/09/26/cruise-ship-4460493_1280.jpg');
+            background-size: cover;
+            background-position: center center;
+            min-height: 100vh;
+            position: relative;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: padding-top 0.3s;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(13, 27, 42, 0.6);
+            z-index: 1;
+        }
+
+        .form-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            padding: 2rem 0;
+        }
+
+        /* --- Flip Animation Styles --- */
+        .flipper-container {
+            perspective: 1000px;
+        }
+
+        #flipper {
+            position: relative;
+            min-height: 700px; 
+            transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-style: preserve-3d;
+        }
+
+        #flipper.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* --- Card Styles --- */
+        .auth-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border-radius: 1rem;
+        }
+
+        #flipper .auth-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+
+        #flipper #signup-card {
+            transform: rotateY(180deg);
+        }
+
+        /* --- Form Element Styles --- */
+        .auth-card .form-control, 
+        .auth-card .input-group-text {
+            background-color: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            color: #fff;
+        }
+        
+        .auth-card .btn-toggle {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .auth-card .form-control::placeholder { 
+            color: rgba(255, 255, 255, 0.7); 
+        }
+
+        .auth-card .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.2); 
+            border-color: #78c0e0; 
+            box-shadow: 0 0 0 0.25rem rgba(120, 192, 224, 0.3); 
+            color: #fff;
+        }
+
+        .auth-card .form-label, 
+        .auth-card .form-check-label, 
+        .auth-card .text-muted, 
+        .auth-card h2, 
+        .auth-card p { 
+            color: #fff !important; 
+        }
+
+        .auth-card .text-primary { 
+            color: #78c0e0 !important; 
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .auth-card .text-primary:hover {
+            opacity: 0.8;
+        }
+
+        /* --- Password Strength Indicator --- */
+        .progress-bar.strength-weak { background-color: #dc3545; }
+        .progress-bar.strength-medium { background-color: #ffc107; }
+        .progress-bar.strength-strong { background-color: #198754; }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .hosting-notice-content {
+                font-size: 14px;
+                padding: 5px;
+            }
+            .hosting-notice .close-btn {
+                width: 25px;
+                height: 25px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Free Hosting Notice Banner -->
+    <div id="hosting-notice" class="hosting-notice">
+        <div class="hosting-notice-content">
+            <i class="bi bi-info-circle"></i>
+            <span>
+                <strong>Notice:</strong> We use free hosting. First load may take 30-60 seconds to wake up the server.
+                <a id="learn-more-hosting">Learn more</a>
+            </span>
+            <button id="close-hosting-notice" class="close-btn" title="Dismiss">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4 flipper-container">
+                    <div id="flipper">
+                        <!-- ============== LOGIN CARD (Front Face) ============== -->
+                        <div id="login-card" class="card auth-card border-0">
+                             <div class="card-body p-4 p-md-5">
+                                <div class="text-center mb-4">
+                                        <img src="/assets/img/LOGO.png" alt="NauticalFlow Logo" style="width: 120px; height: 120px; object-fit: contain;">
+                                    <h2 class="mt-3 mb-1 fw-bold">NauticalFlow</h2>
+                                    <p class="text-muted small">Maritime Navigation Dashboard</p>
+                                </div>
+                                <form id="login-form">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="password" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+                                </form>
+                                <div class="text-center mt-4">
+                                    <p class="mb-0">
+                                        Don't have an account? 
+                                        <a id="show-signup" class="text-primary fw-bold">Sign up here</a>
+                                    </p>
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- ============== SIGNUP CARD (Back Face) ============== -->
+                        <div id="signup-card" class="card auth-card border-0">
+                             <div class="card-body p-4 p-md-4">
+                                <div class="text-center mb-2">
+                                   <img src="/assets/img/LOGO.png" alt="NauticalFlow Logo" style="width: 100px; height: 100px; object-fit: contain;">
+                                   <h2 class="mt-2 mb-1 fw-bold">NauticalFlow</h2>
+                                   <p class="text-muted small">Create Your Account</p>
+                                </div>
+                                <form id="signup-form">
+                                    <div class="mb-3">
+                                        <label for="display-name" class="form-label">Display Name</label>
+                                        <div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input type="text" class="form-control" id="display-name" required></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="username-signup" class="form-label">Username</label>
+                                        <div class="input-group"><span class="input-group-text"><i class="bi bi-person-badge"></i></span><input type="text" class="form-control" id="username-signup" required></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="password-signup" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="password-signup" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-password-signup"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                        <div class="progress mt-2" style="height: 5px;">
+                                            <div id="password-strength" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                     <div class="mb-3">
+                                        <label for="confirm-password" class="form-label">Confirm Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                            <input type="password" class="form-control" id="confirm-password" required>
+                                            <button class="btn btn-toggle" type="button" id="toggle-confirm-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 py-2 mt-3">Create Account</button>
+                                </form>
+                                 <div class="text-center mt-4">
+                                     <p class="mb-0">Already have an account? <a id="show-login" class="text-primary fw-bold">Sign in here</a></p>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <script>
+        // Hosting Notice Banner Logic
+        (function() {
+            const notice = document.getElementById('hosting-notice');
+            const closeBtn = document.getElementById('close-hosting-notice');
+            const learnMoreBtn = document.getElementById('learn-more-hosting');
+            
+            // Show banner if not previously dismissed
+            if (!localStorage.getItem('hosting-notice-dismissed')) {
+                notice.classList.add('show');
+                document.body.classList.add('banner-visible');
+            }
+            
+            // Close button handler
+            closeBtn.addEventListener('click', function() {
+                notice.classList.remove('show');
+                document.body.classList.remove('banner-visible');
+                localStorage.setItem('hosting-notice-dismissed', 'true');
+            });
+            
+            // Learn more button handler
+            learnMoreBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '⚡ About Our Hosting',
+                    html: `
+                        <div style="text-align: left; padding: 0 10px;">
+                            <p style="margin-bottom: 15px;">
+                                <strong>🤔 Why does the first load take time?</strong><br>
+                                We use Render's free tier, which puts the server to "sleep" after 15 minutes of inactivity. 
+                                When you visit, it needs 30-60 seconds to wake up.
+                            </p>
+                            
+                            <p style="margin-bottom: 15px;">
+                                <strong>⚡ What happens after the first load?</strong><br>
+                                Once the server is awake, everything runs at full speed! All your actions will be fast and responsive.
+                            </p>
+                            
+                            <p style="margin-bottom: 15px;">
+                                <strong>💡 Tips to minimize wait time:</strong>
+                            </p>
+                            <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                <li>After the initial load, the site stays fast as long as you're active</li>
+                                <li>Keep the browser tab open while using the app</li>
+                                <li>The server stays awake for 15 minutes after your last action</li>
+                            </ul>
+                            
+                            <p style="margin-bottom: 0; color: #666;">
+                                <strong>🚀 Future plans:</strong><br>
+                                We're working on upgrading to paid hosting for instant load times. Thank you for your patience! 
+                            </p>
+                        </div>
+                    `,
+                    icon: 'info',
+                    confirmButtonText: 'Got it, thanks!',
+                    confirmButtonColor: '#667eea',
+                    width: '600px'
+                });
+            });
+        })();
+    </script>
+
+    <script type="module">
+        import { initializeAuthPage } from '/admin/js/modules/auth.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Flip Animation Logic ---
+            const flipper = document.getElementById('flipper');
+            const showSignupLink = document.getElementById('show-signup');
+            const showLoginLink = document.getElementById('show-login');
+
+            showSignupLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                flipper.classList.add('is-flipped');
+            });
+
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                flipper.classList.remove('is-flipped');
+            });
+            
+            // --- Initialize Authentication Logic ---
+            initializeAuthPage(); 
+        });
+    </script>
+</body>
+</html>

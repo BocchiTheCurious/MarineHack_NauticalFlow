@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 0.35rem;
+            padding: 25px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        .comparison-table {
+            background-color: white;
+            color: #212529;
+        }
+
+        .comparison-table th {
+            background-color: #343a40 !important;
+            color: white !important;
+            border: 2px solid #000 !important;
+            font-weight: bold;
+        }
+
+        .comparison-table td {
+            background-color: white !important;
+            color: #212529 !important;
+            border: 1px solid #000 !important;
+            padding: 12px 8px;
+        }
+
+        .comparison-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa !important;
+        }
+
+        .comparison-table tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+
+        .badge-fuel {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .badge-co2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .bento-grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: 1rem;
+            padding: 1rem;
+            min-height: 500px;
+        }
+
+        .bento-map {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+        }
+
+        .bento-info {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        .bento-facilities {
+            grid-column: 3 / 4;
+            grid-row: 1 / 2;
+        }
+
+        .bento-congestion {
+            grid-column: 2 / 4;
+            grid-row: 2 / 3;
+        }
+
+        .bento-reviews {
+            grid-column: 1 / 4;
+            grid-row: 3 / 4;
+        }
+
+        .star-rating {
+            display: inline-flex;
+            gap: 0.25rem;
+            font-size: 1.25rem;
+        }
+
+        .star-rating i {
+            color: #ffc107;
+        }
+
+        .star-rating i.bi-star {
+            color: #dee2e6;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .rating-distribution {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .rating-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <img src="../assets/img/loader-icon.svg" alt="Loading..." class="loader-icon">
+    </div>
+
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+        <div id="sidebar-placeholder"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2 text-white">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Analytics Dashboard
+                </h1>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stats-card">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <i class="bi bi-compass"></i>
+                        </div>
+                        <div class="stats-value text-primary" id="totalRoutes">-</div>
+                        <div class="stats-label">Routes Optimized</div>
+                        <small class="text-muted">All time</small>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stats-card">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <i class="bi bi-send"></i>
+                        </div>
+                        <div class="stats-value text-danger" id="totalVessels">-</div>
+                        <div class="stats-label">Vessels Managed</div>
+                        <small class="text-muted">Active fleet</small>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stats-card">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <div class="stats-value text-info" id="totalPorts">-</div>
+                        <div class="stats-label">Ports in Database</div>
+                        <small class="text-muted">Global coverage</small>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stats-card">
+                        <div class="stats-icon"
+                            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                            <i class="bi bi-fuel-pump"></i>
+                        </div>
+                        <div class="stats-value text-success" id="totalFuelTypes">-</div>
+                        <div class="stats-label">Fuel Types</div>
+                        <small class="text-muted">Available options</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="row">
+                <div class="col-xl-8 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-graph-up"></i>Monthly Optimization Usage
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="optimizationTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-pie-chart me-2"></i>Fuel Type Distribution
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="fuelTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="row">
+                <div class="col-xl-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-bar-chart me-2"></i>Weekly Activity
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="weeklyActivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-lightning me-2"></i>Most Used Vessels
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="vesselUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Optimizations Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="bi bi-clock-history me-2"></i>Recent Optimization Results
+                            </h6>
+                            <div style="position: relative;">
+                                <input type="text" id="optimizationSearch" class="form-control form-control-sm"
+                                    style="width: 250px; padding-left: 35px;" placeholder="Search by route, vessel, date...">
+                                <i class="bi bi-search"
+                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentOptimizationsTableWrapper">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped border comparison-table" id="recentOptimizationsTableElement">
+                                        <thead>
+                                            <tr>
+                                                <th>Date & Time</th>
+                                                <th>Route</th>
+                                                <th>Vessel</th>
+                                                <th>Fuel Saved</th>
+                                                <th>CO₂ Reduced</th>
+                                                <th>Time Saved</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentOptimizationsTable">
+                                            <!-- Data will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Pagination will be inserted here by the utility function -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- The JavaScript file that will handle the logic for this page -->
+    <script type="module" src="js/analytics.js"></script>
+    <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+    <script src="https://files.bpcontent.cloud/2025/11/02/10/20251102105058-M6B4IKVL.js" defer></script>
+</body>
+
+</html>

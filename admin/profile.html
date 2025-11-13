@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        .password-strength { height: 4px; border-radius: 2px; margin-top: 5px; transition: all 0.3s ease; }
+        .strength-weak { background-color: #dc3545; }
+        .strength-medium { background-color: #ffc107; }
+        .strength-strong { background-color: #28a745; }
+    </style>
+</head>
+<body>
+
+     <div id="loading-overlay" class="loading-overlay">
+        <img src="../assets/img/loader-icon.svg" alt="Loading..." class="loader-icon">
+    </div>
+    
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+    <div id="sidebar-placeholder"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div id="profile-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="page-title"><i class="bi bi-person-circle me-2"></i> Profile Settings</h1>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 id="profile-display-name" class="mb-1"> - </h4>
+                                <p class="text-muted mb-0" id="profile-username"> - </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Personal Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="personal-info-form">
+                                    <div class="mb-3">
+                                        <label for="display-name" class="form-label">Display Name</label>
+                                        <input type="text" class="form-control" id="display-name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username (Login)</label>
+                                        <input type="text" class="form-control" id="username" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-2"></i>Update Information</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-lock me-2"></i>Change Password</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="password-form">
+                                    <div class="mb-3">
+                                        <label for="current-password" class="form-label">Current Password</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="current-password" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggle-current-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="new-password" class="form-label">New Password</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="new-password" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggle-new-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                        <div class="password-strength" id="password-strength"></div>
+                                        <div class="form-text">Must be at least 8 characters and include uppercase, lowercase, number, and a special character.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="confirm-new-password" class="form-label">Confirm New Password</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="confirm-new-password" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggle-confirm-password"><i class="bi bi-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-warning"><i class="bi bi-key me-2"></i>Change Password</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script type="module" src="js/profile.js"></script>
+    <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+    <script src="https://files.bpcontent.cloud/2025/11/02/10/20251102105058-M6B4IKVL.js" defer></script>
+</body>
+</html>

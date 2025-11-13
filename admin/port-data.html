@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Data - NauticalFlow</title>
+    <!-- Using the newer Bootstrap and Bootstrap Icons links -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href="../styles.css" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+    <style>
+        /* Tooltip info icon */
+        .info-icon {
+            cursor: help;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-left: 0.25rem;
+        }
+
+        .info-icon:hover {
+            color: #0d6efd;
+        }
+
+        /* Bento Grid Layout */
+        .bento-grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto auto;
+
+            gap: 1rem;
+            padding: 1rem;
+            min-height: 500px;
+        }
+
+        .bento-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .bento-box:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Asymmetric Grid Layout */
+        .bento-map {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+        }
+
+        .bento-info {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        .bento-facilities {
+            grid-column: 3 / 4;
+            grid-row: 1 / 2;
+        }
+
+        .bento-congestion {
+            grid-column: 2 / 4;
+            grid-row: 2 / 3;
+        }
+
+        .bento-reviews {
+            grid-column: 1 / 4;
+            grid-row: 3 / 4;
+        }
+
+        .star-rating {
+            display: inline-flex;
+            gap: 0.25rem;
+            font-size: 1.25rem;
+        }
+
+        .star-rating i {
+            color: #ffc107;
+        }
+
+        .star-rating i.bi-star {
+            color: #dee2e6;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .rating-distribution {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .rating-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+
+        /* Placeholder styling */
+        .placeholder-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .bento-grid-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+
+            .bento-map,
+            .bento-info,
+            .bento-facilities,
+            .bento-congestion {
+                grid-column: 1 / -1;
+                grid-row: auto;
+            }
+        }
+
+        /* Port Info Box Styling */
+        .port-header {
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .port-header h5 {
+            margin: 0;
+            color: #0d6efd;
+        }
+
+        .port-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .port-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Facilities Grid */
+        /* Facility Accordion Animations */
+        .facility-item-wrapper {
+            transition: all 0.3s ease;
+        }
+
+        .facility-header {
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .facility-header:hover {
+            background-color: #f8f9fa !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .facility-header[aria-expanded="true"] .chevron-icon {
+            transform: rotate(0deg);
+        }
+
+        .facility-header[aria-expanded="false"] .chevron-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* Smooth collapse animation */
+        .facility-content {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .collapse {
+            transition: height 0.3s ease-in-out;
+        }
+
+        /* Custom scrollbar for facilities list */
+        .facilities-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .facilities-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .facilities-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .facilities-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Facility status colors - refined */
+        .facility-available .facility-header {
+            border-left: 4px solid #28a745;
+        }
+
+        .facility-unavailable .facility-header {
+            border-left: 4px solid #dc3545;
+            opacity: 0.6;
+        }
+
+        .facility-unavailable .facility-header:hover {
+            opacity: 0.8;
+        }
+
+        /* Image container styling */
+        .facility-content img {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .facility-content img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Description text styling */
+        .facility-content p {
+            text-align: justify;
+            color: #495057;
+        }
+
+        /* Congestion Chart */
+        .congestion-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .congestion-bar {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .congestion-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 15px;
+        }
+
+        .congestion-low {
+            background: linear-gradient(90deg, #28a745, #5cb85c);
+        }
+
+        .congestion-medium {
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+
+        .congestion-high {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+
+        .congestion-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        /* Star Rating Input */
+        .star-rating-input {
+            display: inline-flex;
+            gap: 0.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .star-rating-input i {
+            color: #dee2e6;
+            transition: color 0.2s ease;
+        }
+
+        .star-rating-input i:hover,
+        .star-rating-input i.active {
+            color: #ffc107;
+        }
+
+        .star-rating-input i.hover-active {
+            color: #ffc107;
+        }
+
+        #commentCharCount {
+            font-weight: bold;
+        }
+
+        #commentCharCount.text-danger {
+            color: #dc3545 !important;
+        }
+        
+        /* Congestion slider with gradient background */
+        .congestion-slider {
+            background: linear-gradient(to right, 
+                #28a745 0%, 
+                #28a745 25%, 
+                #ffc107 25%, 
+                #ffc107 50%, 
+                #fd7e14 50%, 
+                #fd7e14 75%, 
+                #dc3545 75%, 
+                #dc3545 100%
+            );
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .congestion-slider::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 2px solid #0d6efd;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        
+        .congestion-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 2px solid #0d6efd;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        
+        /* Congestion value color coding */
+        .congestion-low {
+            color: #28a745 !important;
+        }
+        
+        .congestion-moderate {
+            color: #ffc107 !important;
+        }
+        
+        .congestion-high {
+            color: #fd7e14 !important;
+        }
+        
+        .congestion-severe {
+            color: #dc3545 !important;
+        }
+        
+        /* Data age styling */
+        .data-fresh {
+            color: #28a745;
+        }
+        
+        .data-stale {
+            color: #ffc107;
+        }
+        
+        .data-outdated {
+            color: #dc3545;
+        }
+        
+        /* Orange badge for high congestion */
+        .bg-orange {
+            background-color: #fd7e14 !important;
+        }
+        
+        /* Button hover effects */
+        #openSeadexBtn:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        #setTodayBtn:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <img src="../assets/img/loader-icon.svg" alt="Loading..." class="loader-icon">
+    </div>
+
+    <!-- Placeholder for a navigation bar -->
+    <div id="navbar-placeholder"></div>
+
+    <div class="d-flex">
+        <!-- Placeholder for a sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="page-title">
+                    <i class="bi bi-geo me-2"></i>
+                    Port Data Management
+                </h1>
+            </div>
+
+            <!-- Interactive Port Map with Bento Grid -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-map me-2"></i>Port Location & Details
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="bento-grid-container">
+                        <!-- Box 1: Map -->
+                        <div class="bento-box bento-map" id="bentoMap">
+                            <div id="portMap" style="height: 100%; width: 100%;"></div>
+                        </div>
+
+                        <!-- Box 2: Port Header (Dynamic) -->
+                        <div class="bento-box bento-info" id="bentoPortInfo">
+                            <div class="placeholder-content">
+                                <i class="bi bi-pin-map text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2">Select a port on the map</p>
+                            </div>
+                        </div>
+
+                        <!-- Box 3: Facilities (Dynamic) -->
+                        <div class="bento-box bento-facilities" id="bentoFacilities">
+                            <div class="placeholder-content">
+                                <i class="bi bi-buildings text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2">Facilities will appear here</p>
+                            </div>
+                        </div>
+
+                        <!-- Box 4: Congestion (Dynamic) -->
+                        <div class="bento-box bento-congestion" id="bentoCongestion">
+                            <div class="placeholder-content">
+                                <i class="bi bi-speedometer2 text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2">Operational Data</p>
+                            </div>
+                        </div>
+
+                        <!-- Box 5: Reviews & Ratings (Dynamic) -->
+                        <div class="bento-box bento-reviews" id="bentoReviews">
+                            <div class="placeholder-content">
+                                <i class="bi bi-star text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-2">Reviews will appear here</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+<div class="alert alert-primary mb-3">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h6 class="mb-2">
+                <i class="bi bi-database me-2"></i>
+                Data Sources
+            </h6>
+            <ul class="mb-0">
+                <li>
+                    <strong>Port Locations:</strong> 
+                    Download comprehensive port data from the 
+                    <a href="https://msi.nga.mil/Publications/WPI" target="_blank" class="alert-link">
+                        World Port Index (WPI)
+                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    </a>
+                </li>
+                <li>
+                    <strong>Port Congestion:</strong> 
+                    All congestion data sourced from 
+                    <a href="https://seadex.ai/en/free-tools/port-congestion-tool" target="_blank" class="alert-link">
+                        <strong>Seadex.ai Port Congestion Tool</strong>
+                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    </a>
+                    <br>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Update frequency: Major ports (bi-weekly), Regular ports (monthly)
+                    </small>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="https://seadex.ai/en/free-tools/port-congestion-tool" 
+               target="_blank" 
+               class="btn btn-primary">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Open Seadex Tool
+            </a>
+        </div>
+    </div>
+</div>
+
+
+
+            <!-- Port Data Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Port Database</h6>
+                    <div class="d-flex gap-2">
+                        <div style="position: relative;">
+                            <input type="text" id="port-search-input" class="form-control form-control-sm"
+                                style="width: 250px; padding-left: 35px;">
+                            <i class="bi bi-search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+                        </div>
+                        <button class="btn btn-sm btn-outline-info" id="download-template-btn">
+                            <i class="bi bi-download me-1"></i>Download Template
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" id="export-excel-btn">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export to Excel
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" id="import-ports-btn" data-bs-toggle="modal"
+                            data-bs-target="#importModal">
+                            <i class="bi bi-file-earmark-arrow-up me-1"></i>Import CSV
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" id="add-port-btn" data-bs-toggle="modal"
+                            data-bs-target="#portModal">
+                            <i class="bi bi-plus-circle me-1"></i>Add Port
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="port-data-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Port ID</th>
+                                    <th>Port Name</th>
+                                    <th>Country</th>
+                                    <th>Latitude</th>
+                                    <th>Longitude</th>
+                                    <th>
+                                        Congestion 
+                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                           title="From Seadex.ai - Color indicates data freshness: Green (<15d), Yellow (15-45d), Red (>45d)"></i>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <!-- This tbody will be populated by JavaScript -->
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Port Modal -->
+            <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="portModalLabel">Add New Port</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="portForm">
+                                <input type="hidden" id="portId">
+
+                                <!-- Tabs Navigation -->
+                                <ul class="nav nav-tabs mb-3" id="portFormTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab"
+                                            data-bs-target="#basic-info" type="button" role="tab">
+                                            <i class="bi bi-info-circle me-1"></i>Basic Info
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="profile-tab" data-bs-toggle="tab"
+                                            data-bs-target="#port-profile" type="button" role="tab">
+                                            <i class="bi bi-building me-1"></i>Port Profile
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="operational-tab" data-bs-toggle="tab"
+                                            data-bs-target="#operational-data" type="button" role="tab">
+                                            <i class="bi bi-speedometer2 me-1"></i>Operational Data
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="facilities-tab" data-bs-toggle="tab"
+                                            data-bs-target="#facilities-data" type="button" role="tab">
+                                            <i class="bi bi-tools me-1"></i>Facilities
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- Tab Content -->
+                                <div class="tab-content" id="portFormTabContent">
+
+                                    <!-- TAB 1: Basic Info -->
+                                    <div class="tab-pane fade show active" id="basic-info" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="portName" class="form-label">
+                                                    Port Name <span class="text-danger">*</span>
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        title="Official name of the port as recognized internationally"></i>
+                                                </label>
+                                                <input type="text" class="form-control" id="portName" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="country" class="form-label">Country <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="country" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="locodePasteInput" class="form-label">
+                                                UN/LOCODE Coordinate String
+                                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    title="UN standard format: DDMMN DDDMME (e.g., 0301N 10124E). Will auto-fill coordinates below."></i>
+                                            </label>
+                                            <input type="text" class="form-control" id="locodePasteInput"
+                                                placeholder="e.g., 0301N 10124E">
+                                            <div class="form-text">Paste coordinates to auto-fill Latitude and Longitude
+                                                below</div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="latitude" class="form-label">Latitude (Decimal) <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="latitude" step="0.000001"
+                                                    required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="longitude" class="form-label">Longitude (Decimal) <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="longitude" step="0.000001"
+                                                    required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="portCongestionIndex" class="form-label">
+                                                Congestion Index: <span id="congestionValue" class="fw-bold">50%</span>
+                                                <span id="estimatedWaitTime" class="text-muted ms-2">
+                                                    (~3.0 hours estimated wait)
+                                                </span>
+                                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    title="Port congestion from Seadex.ai. Higher % = longer wait times. Update bi-weekly for major ports, monthly for others."></i>
+                                            </label>
+                                            
+                                            <!-- Helper buttons -->
+                                            <div class="d-flex gap-2 mb-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" id="openSeadexBtn">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                    Check on Seadex.ai
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" id="setTodayBtn">
+                                                    <i class="bi bi-calendar-check me-1"></i>
+                                                    Mark Updated Today
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Slider with gradient -->
+                                            <input type="range" class="form-range congestion-slider" 
+                                                   id="portCongestionIndex" 
+                                                   min="0" max="100" value="50" step="1">
+                                            
+                                            <!-- Color zones -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-success">0-25% Low</small>
+                                                <small class="text-warning">26-50% Moderate</small>
+                                                <small class="text-danger">51-75% High</small>
+                                                <small class="text-danger fw-bold">76-100% Severe</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Last Updated Date -->
+                                        <div class="mb-3">
+                                            <label for="congestionLastUpdated" class="form-label">
+                                                Last Updated from Seadex
+                                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                    title="When you last checked this port's congestion on Seadex.ai. Data older than 30 days should be refreshed."></i>
+                                            </label>
+                                            <input type="date" class="form-control" id="congestionLastUpdated">
+                                            
+                                            <!-- Auto-calculated warning -->
+                                            <div class="form-text" id="congestionAgeWarning">
+                                                <!-- JavaScript will populate this -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 2: Port Profile -->
+                                    <div class="tab-pane fade" id="port-profile" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="harborSize" class="form-label">
+                                                    Harbor Size
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        title="Overall capacity rating: Large (L), Medium (M), Small (S), or Very Small (V)"></i>
+                                                </label>
+                                                <select class="form-select" id="harborSize">
+                                                    <option value="">Select size...</option>
+                                                    <option value="L">Large</option>
+                                                    <option value="M">Medium</option>
+                                                    <option value="S">Small</option>
+                                                    <option value="V">Very Small</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="harborType" class="form-label">
+                                                    Harbor Type
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        title="Physical classification of harbor structure and protection"></i>
+                                                </label>
+                                                <select class="form-select" id="harborType">
+                                                    <option value="">Select type...</option>
+                                                    <option value="CB">Coastal Breakwater</option>
+                                                    <option value="CN">Coastal Natural</option>
+                                                    <option value="CT">Coastal Tide Gate</option>
+                                                    <option value="LC">Lake or Canal</option>
+                                                    <option value="OR">Open Roadstead</option>
+                                                    <option value="RB">River Basin</option>
+                                                    <option value="RN">River Natural</option>
+                                                    <option value="RT">River Tide Gate</option>
+                                                    <option value="TH">Typhoon Harbor</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-rulers me-2"></i>Maximum Vessel Dimensions
+                                            <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                data-bs-placement="right"
+                                                title="Physical constraints - largest vessel that can safely enter and berth at this port"></i>
+                                        </h6>
+
+
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="maxVesselLength" class="form-label">
+                                                    Max Length (m)
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        title="Maximum vessel length overall (LOA) in meters"></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="maxVesselLength"
+                                                    step="0.01">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="maxVesselBeam" class="form-label">Max Beam (m)</label>
+                                                <input type="number" class="form-control" id="maxVesselBeam"
+                                                    step="0.01">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="maxVesselDraft" class="form-label">Max Draft (m)</label>
+                                                <input type="number" class="form-control" id="maxVesselDraft"
+                                                    step="0.01">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="firstPortOfEntry">
+                                            <label for="firstPortOfEntry" class="form-check-label">
+                                                <i class="bi bi-flag me-1"></i>First Port of Entry (International)
+                                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    title="Port has customs and immigration facilities for international arrivals"></i>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 3: Operational Data -->
+                                    <div class="tab-pane fade" id="operational-data" role="tabpanel">
+                                        <h6 class="mb-3"><i class="bi bi-water me-2"></i>Harbor Depths</h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="channelDepth" class="form-label">
+                                                    Channel Depth (m)
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        title="Controlling depth of main approach channel at chart datum"></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="channelDepth" step="0.1">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="anchorageDepth" class="form-label">
+                                                    Anchorage Depth (m)
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        title="Typical depth at designated anchorage areas"></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="anchorageDepth"
+                                                    step="0.1">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="cargoPierDepth" class="form-label">
+                                                    Cargo Pier Depth (m)
+                                                    <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                        title="Water depth alongside main cargo berths"></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="cargoPierDepth"
+                                                    step="0.1">
+                                            </div>
+                                        </div>
+
+                                        <hr>
+                                        <h6 class="mb-3"><i class="bi bi-shield-check me-2"></i>Conditions</h6>
+
+                                        <div class="mb-3">
+                                            <label for="shelterAfforded" class="form-label">
+                                                Shelter Afforded
+                                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                    title="Protection from weather and sea conditions: Excellent, Good, Fair, Poor, or None"></i>
+                                            </label>
+                                            <select class="form-select" id="shelterAfforded">
+                                                <option value="">Select...</option>
+                                                <option value="E">Excellent</option>
+                                                <option value="G">Good</option>
+                                                <option value="F">Fair</option>
+                                                <option value="P">Poor</option>
+                                                <option value="N">None</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="goodHoldingGround">
+                                                    <label for="goodHoldingGround" class="form-check-label">
+                                                        Good Holding Ground
+                                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                            title="Seabed provides secure anchorage for vessel anchors"></i>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="turningArea">
+                                                    <label for="turningArea" class="form-check-label">
+                                                        Turning Area Available
+                                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                            title="Sufficient space for large vessels to turn around"></i>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>Entrance Restrictions
+                                            <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                title="Natural conditions that may limit or prevent port access"></i>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="restrictionTide">
+                                                    <label class="form-check-label" for="restrictionTide">
+                                                        <i class="bi bi-water me-1"></i>Tide
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="restrictionSwell">
+                                                    <label class="form-check-label" for="restrictionSwell">
+                                                        <i class="bi bi-tsunami me-1"></i>Heavy Swell
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="restrictionIce">
+                                                    <label class="form-check-label" for="restrictionIce">
+                                                        <i class="bi bi-snow me-1"></i>Ice
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-hospital me-2"></i>Quarantine Services
+                                            <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                title="Health and sanitation inspection services available for arriving vessels"></i>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="quarantinePratique">
+                                                    <label class="form-check-label" for="quarantinePratique">
+                                                        Pratique Available
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="quarantineSanitation">
+                                                    <label class="form-check-label" for="quarantineSanitation">
+                                                        Sanitation Services
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 4: Facilities -->
+                                    <div class="tab-pane fade" id="facilities-data" role="tabpanel">
+                                        <h6 class="mb-3"><i class="bi bi-buildings me-2"></i>Available Port Facilities
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityPotableWater">
+                                                    <label class="form-check-label" for="facilityPotableWater">
+                                                        <i class="bi bi-droplet me-1"></i>Potable Water
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityProvisions">
+                                                    <label class="form-check-label" for="facilityProvisions">
+                                                        <i class="bi bi-basket me-1"></i>Provisions
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityPilotService">
+                                                    <label for="facilityPilotService" class="form-check-label">
+                                                        <i class="bi bi-compass me-1"></i>Pilot Service
+                                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                            title="Licensed harbor pilots available for vessel navigation"></i>
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityTugService">
+                                                    <label for="facilityTugService" class="form-check-label">
+                                                        <i class="bi bi-life-preserver me-1"></i>Tugboat Service
+                                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                            title="Tugboats available to assist with berthing and unberthing"></i>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityMedical">
+                                                    <label class="form-check-label" for="facilityMedical">
+                                                        <i class="bi bi-heart-pulse me-1"></i>Medical Facilities
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityGarbageDisposal">
+                                                    <label class="form-check-label" for="facilityGarbageDisposal">
+                                                        <i class="bi bi-trash me-1"></i>Garbage Disposal
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityBallastDisposal">
+                                                    <label for="facilityBallastDisposal" class="form-check-label">
+                                                        <i class="bi bi-water me-1"></i>Ballast Disposal
+                                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                                            title="Facilities for discharge of dirty ballast water"></i>
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="facilityRepairs">
+                                                    <label class="form-check-label" for="facilityRepairs">
+                                                        <i class="bi bi-tools me-1"></i>Repair Facilities
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="portForm" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Save Port
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import CSV Modal -->
+            <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="importModalLabel">
+                                <i class="bi bi-file-earmark-arrow-up me-2"></i>Import Ports from CSV
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Supported Formats:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>CSV Template:</strong> Download the template above and fill in your port
+                                        data</li>
+                                    <li><strong>Excel Export:</strong> Upload a previously exported Excel file to
+                                        re-import ports</li>
+                                    <li><strong>World Port Index:</strong> Standard WPI CSV format is also supported
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="csvFileInput" class="form-label">Select CSV or Excel File</label>
+                                <input type="file" class="form-control" id="csvFileInput" accept=".csv,.xlsx,.xls">
+                                <div class="form-text">Upload a CSV file or Excel file (.xlsx)</div>
+                            </div>
+
+                            <!-- ADD THIS ERROR SECTION -->
+                            <div id="importErrors" class="d-none">
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Validation
+                                        Errors Found</h6>
+                                    <p class="mb-2">The following rows contain errors and will be skipped:</p>
+                                    <div id="errorList" class="small" style="max-height: 200px; overflow-y: auto;">
+                                        <!-- Error messages will be inserted here -->
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
+                            </div>
+
+                            <div id="importPreview" class="d-none">
+                                <h6 class="mb-3">Preview - Select ports to import:</h6>
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllPorts">
+                                        Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="deselectAllPorts">
+                                        Deselect All
+                                    </button>
+                                    <span class="ms-3 text-muted" id="selectedCount">0 selected</span>
+                                </div>
+                                <div id="portPreviewTable" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Preview table will be inserted here -->
+                                </div>
+                            </div>
+
+                            <div id="importProgress" class="d-none">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                        id="importProgressBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <p class="text-center mt-2 mb-0" id="importStatusText">Processing...</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirmImportBtn" disabled>
+                                <i class="bi bi-cloud-upload me-1"></i>Import Selected Ports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Review Modal -->
+            <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="reviewModalLabel">Add Your Review</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="reviewForm">
+                                <input type="hidden" id="reviewPortId">
+                                <input type="hidden" id="reviewId">
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Your Rating <span class="text-danger">*</span>
+                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                            title="Rate your overall experience at this port (1 = Poor, 5 = Excellent)"></i>
+                                    </label>
+                                    <div class="star-rating-input">
+                                        <i class="bi bi-star-fill" data-rating="1"></i>
+                                        <i class="bi bi-star-fill" data-rating="2"></i>
+                                        <i class="bi bi-star-fill" data-rating="3"></i>
+                                        <i class="bi bi-star-fill" data-rating="4"></i>
+                                        <i class="bi bi-star-fill" data-rating="5"></i>
+                                    </div>
+                                    <input type="hidden" id="reviewRating" required>
+                                    <div class="invalid-feedback" id="ratingError">Please select a rating</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="reviewComment" class="form-label">
+                                        Your Review (Optional)
+                                        <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip"
+                                            title="Share your experience with other cruise operators"></i>
+                                    </label>
+                                    <textarea class="form-control" id="reviewComment" rows="4"
+                                        placeholder="Share your experience with facilities, services, efficiency, etc."></textarea>
+                                    <div class="form-text">
+                                        <span id="commentCharCount">0</span>/500 characters
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="reviewForm" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Submit Review
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View All Reviews Modal -->
+            <div class="modal fade" id="allReviewsModal" tabindex="-1" aria-labelledby="allReviewsModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="allReviewsModalLabel">
+                                <i class="bi bi-star me-2"></i>All Reviews
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <select class="form-select" id="reviewSortOrder">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="highest">Highest Rating</option>
+                                    <option value="lowest">Lowest Rating</option>
+                                </select>
+                            </div>
+                            <div id="allReviewsContent">
+                                <!-- Reviews will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- Bootstrap JS and SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Papa Parse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Custom JS -->
+    <script type="module" src="js/port-data.js"></script>
+    <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+    <script src="https://files.bpcontent.cloud/2025/11/02/10/20251102105058-M6B4IKVL.js" defer></script>
+</body>
+
+</html>

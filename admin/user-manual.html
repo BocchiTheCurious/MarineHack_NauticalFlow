@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manual - NauticalFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href="../styles.css" rel="stylesheet">
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-icon {
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .manual-container {
+            background: white;
+            border-radius: 0.35rem;
+            padding: 0;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            overflow: hidden;
+        }
+
+        .nav-tabs {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 20px 20px 0;
+        }
+
+        .nav-tabs .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 15px 25px;
+            margin-right: 5px;
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .nav-tabs .nav-link i {
+            margin-right: 8px;
+        }
+
+        .tab-content {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            font-size: 2.5rem;
+            color: #667eea;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            aspect-ratio: 16/9;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .video-placeholder:hover {
+            transform: scale(1.02);
+        }
+
+        .video-placeholder:hover .play-button {
+            transform: scale(1.1);
+        }
+
+        .play-button {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .play-button i {
+            font-size: 2rem;
+            margin-left: 5px;
+        }
+
+        .video-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .video-duration {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .steps-section {
+            margin-top: 40px;
+        }
+
+        .steps-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-card {
+            background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
+            border-left: 4px solid #667eea;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+
+        .step-card:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .step-text {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .step-description {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .feature-description {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border-left: 5px solid;
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #22c55e;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: #f59e0b;
+        }
+
+        .info-box.tip {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #3b82f6;
+        }
+
+        .info-box-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box-title i {
+            font-size: 1.5rem;
+        }
+
+        .info-box.success .info-box-title {
+            color: #16a34a;
+        }
+
+        .info-box.warning .info-box-title {
+            color: #d97706;
+        }
+
+        .info-box.tip .info-box-title {
+            color: #2563eb;
+        }
+
+        .faq-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .faq-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .faq-question i {
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        .faq-answer {
+            color: #4a5568;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8fafc;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                padding: 15px 15px 0;
+            }
+
+            .nav-tabs .nav-link {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+
+            .tab-content {
+                padding: 25px;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <img src="../assets/img/loader-icon.svg" alt="Loading..." class="loader-icon">
+    </div>
+
+    <div id="navbar-placeholder"></div>
+    <div class="d-flex">
+        <div id="sidebar-placeholder"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2 text-white">
+                    <i class="bi bi-book-half me-2"></i>
+                    User Manual
+                </h1>
+            </div>
+
+            <div class="manual-container">
+                    <ul class="nav nav-tabs" id="manualTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="getting-started-tab" data-bs-toggle="tab"
+                                data-bs-target="#getting-started" type="button" role="tab">
+                                <i class="bi bi-play-circle"></i>Getting Started
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="route-planner-tab" data-bs-toggle="tab"
+                                data-bs-target="#route-planner" type="button" role="tab">
+                                <i class="bi bi-map"></i>Route Planner
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="data-viz-tab" data-bs-toggle="tab"
+                                data-bs-target="#data-viz" type="button" role="tab">
+                                <i class="bi bi-graph-up"></i>Data Visualization
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="fuel-types-tab" data-bs-toggle="tab"
+                                data-bs-target="#fuel-types" type="button" role="tab">
+                                <i class="bi bi-fuel-pump"></i>Fuel Types
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="port-data-tab" data-bs-toggle="tab"
+                                data-bs-target="#port-data" type="button" role="tab">
+                                <i class="bi bi-geo-alt"></i>Port Data
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="vessel-data-tab" data-bs-toggle="tab"
+                                data-bs-target="#vessel-data" type="button" role="tab">
+                                <i class="bi bi-ship"></i>Vessel Data
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="port-weather-tab" data-bs-toggle="tab"
+                                data-bs-target="#port-weather" type="button" role="tab">
+                                <i class="bi bi-cloud-sun"></i>Port Weather
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="faq-tab" data-bs-toggle="tab" data-bs-target="#faq"
+                                type="button" role="tab">
+                                <i class="bi bi-question-circle"></i>FAQ
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="manualTabContent">
+                        <!-- Getting Started Tab -->
+                        <div class="tab-pane fade show active" id="getting-started" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-rocket-takeoff"></i>
+                                <span>Getting Started with NauticalFlow</span>
+                            </div>
+                            <p class="section-description">
+                                Welcome to NauticalFlow! This comprehensive guide will help you get up and running with
+                                our maritime route optimization platform. Watch the video tutorial below and follow the
+                                step-by-step instructions to start optimizing your vessel routes.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="uQS1CSS5HHo">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Getting Started Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Quick Start Steps
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Create Your Account</div>
+                                            <div class="step-description">Sign up with your email and verify your
+                                                account to access all features of NauticalFlow.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add Your First Vessel</div>
+                                            <div class="step-description">Navigate to Vessel Data and add your vessel
+                                                details including fuel consumption curves for accurate optimization.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Select Ports</div>
+                                            <div class="step-description">Choose your departure and destination ports
+                                                from our comprehensive database of global maritime ports.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Run Optimization</div>
+                                            <div class="step-description">Click the optimize button to generate the most
+                                                efficient route based on fuel consumption, weather conditions, and other
+                                                factors.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Analyze Results</div>
+                                            <div class="step-description">Review the optimized route on the interactive
+                                                map and analyze fuel consumption, travel time, and cost savings.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>For the best results, make sure to calibrate your vessel's fuel consumption curve with
+                                    real operational data. This will significantly improve the accuracy of route
+                                    optimizations.</p>
+                            </div>
+                        </div>
+
+                        <!-- Route Planner Tab -->
+                        <div class="tab-pane fade" id="route-planner" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-gear-wide-connected"></i>
+                                <span>Optimized Route Planner (Multi-Port TSP)</span>
+                            </div>
+                            <p class="section-description">
+                                The Multi-Port Route Planner uses the Traveling Salesman Problem (TSP) algorithm with Genetic Algorithm optimization to find the most efficient sequence for visiting multiple ports. The system compares your entered route against the optimized route, showing fuel savings, CO₂ reductions, and time improvements.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="stXxthvfl90">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Multi-Port Route Planner Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </div>
+                                    <div class="feature-title">Multi-Port Optimization</div>
+                                    <div class="feature-description">
+                                        Add multiple destination ports and let the TSP algorithm find the optimal visiting sequence to minimize total distance and fuel consumption.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-map"></i>
+                                    </div>
+                                    <div class="feature-title">Interactive Nautical Map</div>
+                                    <div class="feature-description">
+                                        Leaflet-based map showing EEZ boundaries, territorial seas, wind patterns, wave height data, and your optimized routes visually.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-bar-chart-line"></i>
+                                    </div>
+                                    <div class="feature-title">Route Comparison Table</div>
+                                    <div class="feature-description">
+                                        Side-by-side comparison showing Standard Route vs. Optimized Route with metrics for fuel, CO₂, time, and distance improvements.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <div class="feature-title">Dynamic Port Selection</div>
+                                    <div class="feature-description">
+                                        Add or remove destination ports easily with visual port badges showing your current route configuration.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-calendar-check"></i>
+                                    </div>
+                                    <div class="feature-title">ETA Breakdown</div>
+                                    <div class="feature-description">
+                                        Detailed estimated time of arrival breakdown showing the complete voyage timeline for your optimized route.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-file-pdf"></i>
+                                    </div>
+                                    <div class="feature-title">Export Results</div>
+                                    <div class="feature-description">
+                                        Export optimization results to PDF or CSV format for reporting and analysis purposes.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    How to Optimize Multi-Port Routes
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Select Departure Port</div>
+                                            <div class="step-description">Choose your starting port from the "Departure Port" dropdown menu. This is where your voyage will begin.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add Destination Ports</div>
+                                            <div class="step-description">Select a port from "Add Destination Port" dropdown and click the "Add" button. Repeat to add multiple ports to your route. Each port appears as a badge in the "Current Route" section.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Choose Your Vessel</div>
+                                            <div class="step-description">Select the cruise ship or vessel from the "Vessel Name" dropdown. The system will use this vessel's fuel consumption data.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Run Optimization</div>
+                                            <div class="step-description">Click the "Run Multi-Port Optimization" button. The TSP algorithm will calculate the most efficient route sequence.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Results on Map</div>
+                                            <div class="step-description">The interactive map displays both routes with different colors. Markers show each port, and lines connect them in sequence.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Analyze Comparison Table</div>
+                                            <div class="step-description">Review the Route Comparison Analysis table showing improvements in route sequence, fuel consumption, CO₂ emissions, travel time, and distance.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">7</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Check ETA Breakdown</div>
+                                            <div class="step-description">Scroll down to see the detailed ETA breakdown showing arrival times and durations for each leg of the journey.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">8</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Export Results</div>
+                                            <div class="step-description">Use the "Export PDF" or "Export CSV" buttons to save your optimization results for reporting or further analysis.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-trophy"></i> Multi-Port Optimization Benefits
+                                </div>
+                                <p class="mb-2">The TSP-based route optimization provides:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Optimal Sequencing:</strong> Automatically finds the best order to visit all ports</li>
+                                    <li><strong>Fuel Savings:</strong> Reduces total distance traveled and fuel consumed</li>
+                                    <li><strong>CO₂ Reduction:</strong> Lower emissions through efficient routing</li>
+                                    <li><strong>Time Efficiency:</strong> Minimizes overall voyage duration</li>
+                                    <li><strong>Visual Comparison:</strong> Clear side-by-side comparison of standard vs. optimized routes</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>The map shows marine zones including EEZ boundaries and territorial seas. Use this information to understand maritime jurisdictions along your route. The system also displays weather data like wind patterns and wave heights to help plan safer voyages.</p>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">
+                                    <i class="bi bi-info-circle"></i> How It Works
+                                </div>
+                                <p class="mb-0">The system uses a Genetic Algorithm to solve the Traveling Salesman Problem (TSP). It compares your entered sequence (Standard Route) against the mathematically optimized sequence (Optimized Route) and shows the improvements in a comprehensive comparison table.</p>
+                            </div>
+                        </div>
+
+                        <!-- Data Visualization Tab -->
+                        <div class="tab-pane fade" id="data-viz" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-graph-up"></i>
+                                <span>Analytics Dashboard</span>
+                            </div>
+                            <p class="section-description">
+                                The Analytics Dashboard provides comprehensive insights into your maritime operations with interactive charts, statistics cards, and detailed optimization history. Monitor your fleet's performance, track fuel savings, and analyze trends over time.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="snhmGToy6nY">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Analytics Dashboard Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <div class="feature-title">Statistics Overview</div>
+                                    <div class="feature-description">
+                                        Four key metric cards display total routes optimized, vessels managed, ports in database, and available fuel types at a glance.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-graph-up"></i>
+                                    </div>
+                                    <div class="feature-title">Monthly Optimization Trends</div>
+                                    <div class="feature-description">
+                                        Line chart showing your optimization usage over time, helping you track activity patterns and growth.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-pie-chart"></i>
+                                    </div>
+                                    <div class="feature-title">Fuel Type Distribution</div>
+                                    <div class="feature-description">
+                                        Pie chart visualizing the breakdown of fuel types used across your fleet operations.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-bar-chart"></i>
+                                    </div>
+                                    <div class="feature-title">Weekly Activity Chart</div>
+                                    <div class="feature-description">
+                                        Bar chart displaying day-by-day optimization activity to identify peak usage patterns.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-lightning"></i>
+                                    </div>
+                                    <div class="feature-title">Vessel Usage Analysis</div>
+                                    <div class="feature-description">
+                                        Horizontal bar chart showing which vessels are used most frequently in route optimizations.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <div class="feature-title">Optimization History Table</div>
+                                    <div class="feature-description">
+                                        Searchable table showing recent optimizations with details on fuel saved, CO₂ reduced, and time saved.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Using the Analytics Dashboard
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Access Analytics Dashboard</div>
+                                            <div class="step-description">Click on "Data Visualization" or "Analytics" in the sidebar menu to open the dashboard.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Review Statistics Cards</div>
+                                            <div class="step-description">The top row displays four key metrics: Routes Optimized, Vessels Managed, Ports in Database, and Fuel Types available.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Analyze Monthly Trends</div>
+                                            <div class="step-description">View the line chart showing optimization usage trends over the past months to identify patterns.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Check Fuel Type Distribution</div>
+                                            <div class="step-description">The pie chart shows the percentage breakdown of different fuel types used across your operations.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Search Optimization History</div>
+                                            <div class="step-description">Use the search box above the Recent Optimization Results table to filter by route, vessel, or date.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Detailed Results</div>
+                                            <div class="step-description">The table shows fuel saved, CO₂ reduced, and time saved for each optimization, with color-coded badges for easy reading.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-trophy"></i> Dashboard Features
+                                </div>
+                                <p class="mb-2">The Analytics Dashboard provides:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Real-time Statistics:</strong> Live counters showing your system usage</li>
+                                    <li><strong>Interactive Charts:</strong> Hover over any chart element for detailed information</li>
+                                    <li><strong>Searchable History:</strong> Quickly find past optimizations with the search feature</li>
+                                    <li><strong>Visual Insights:</strong> Color-coded data for quick analysis</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>Charts are interactive! Hover over data points to see exact values. Use the analytics dashboard regularly to track your fleet's efficiency improvements over time and identify optimization opportunities.</p>
+                            </div>
+                        </div>
+
+                        <!-- Fuel Types Tab -->
+                        <div class="tab-pane fade" id="fuel-types" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-fuel-pump-fill"></i>
+                                <span>Fuel Type Management</span>
+                            </div>
+                            <p class="section-description">
+                                Manage fuel types and their CO₂ emission factors based on IMO (International Maritime Organization) standards. The system uses these values to calculate accurate emissions for your route optimizations and environmental reporting.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="6t1-K2CStKI">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Fuel Types Management Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-database"></i>
+                                    </div>
+                                    <div class="feature-title">Fuel Types Database</div>
+                                    <div class="feature-description">
+                                        Comprehensive table displaying all fuel types with their names and CO₂ emission factors in tonnes of CO₂ per tonne of fuel.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <div class="feature-title">Add Fuel Types</div>
+                                    <div class="feature-description">
+                                        Easily add new fuel types using the modal dialog with predefined IMO-compliant categories and emission factors.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <div class="feature-title">IMO Standards</div>
+                                    <div class="feature-description">
+                                        All emission factors are based on official IMO guidelines including Diesel/Gas Oil, LFO, LNG, HFO, and LPG variants.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-search"></i>
+                                    </div>
+                                    <div class="feature-title">Quick Search</div>
+                                    <div class="feature-description">
+                                        Search functionality allows you to quickly filter and find specific fuel types in your database.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </div>
+                                    <div class="feature-title">Edit & Delete</div>
+                                    <div class="feature-description">
+                                        Action buttons in each row allow you to edit existing fuel types or remove them from the database.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-calculator"></i>
+                                    </div>
+                                    <div class="feature-title">Automatic Calculations</div>
+                                    <div class="feature-description">
+                                        Emission factors are automatically applied when calculating CO₂ emissions for route optimizations.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Managing Fuel Types
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Access Fuel Management</div>
+                                            <div class="step-description">Navigate to "Fuel Types" in the sidebar menu to view the Fuel Types Database table.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add New Fuel Type</div>
+                                            <div class="step-description">Click the "Add Fuel Type" button in the top right corner to open the modal dialog.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Enter Fuel Name</div>
+                                            <div class="step-description">Provide a descriptive name for your fuel type in the "Fuel Type" field (e.g., "Marine Diesel Oil", "Heavy Fuel Oil").</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Select IMO Category</div>
+                                            <div class="step-description">Choose the appropriate fuel category from the dropdown. The CO₂ emission factor will be automatically filled based on IMO standards.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Review Emission Factor</div>
+                                            <div class="step-description">The CO₂ Emission Factor field (in t-CO₂/t-Fuel) is read-only and automatically populated based on your category selection.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Save or Edit</div>
+                                            <div class="step-description">Click "Save Fuel Type" to add it to your database. Use the action buttons in the table to edit or delete fuel types later.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table class="comparison-table" style="width: 100%; margin-top: 30px; border-collapse: separate; border-spacing: 0; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                                <thead>
+                                    <tr>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">Fuel Category (IMO)</th>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">CO₂ Factor (t-CO₂/t-Fuel)</th>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">Typical Usage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;">Diesel / Gas Oil</td>
+                                        <td style="padding: 20px;"><strong>3.206</strong></td>
+                                        <td style="padding: 20px;">Most common for medium vessels</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;">Light Fuel Oil (LFO)</td>
+                                        <td style="padding: 20px;"><strong>3.151</strong></td>
+                                        <td style="padding: 20px;">Intermediate grade fuel</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;">Liquified Natural Gas (LNG)</td>
+                                        <td style="padding: 20px;"><strong>2.750</strong></td>
+                                        <td style="padding: 20px;">Cleanest option, lowest emissions</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;">Heavy Fuel Oil (HFO)</td>
+                                        <td style="padding: 20px;"><strong>3.114</strong></td>
+                                        <td style="padding: 20px;">Large ocean-going vessels</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;">LPG - Propane</td>
+                                        <td style="padding: 20px;"><strong>3.000</strong></td>
+                                        <td style="padding: 20px;">Alternative fuel option</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 20px;">LPG - Butane</td>
+                                        <td style="padding: 20px;"><strong>3.030</strong></td>
+                                        <td style="padding: 20px;">Alternative fuel option</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-patch-check"></i> IMO Compliance
+                                </div>
+                                <p class="mb-0">All emission factors are based on the International Maritime Organization (IMO) Fourth GHG Study guidelines, ensuring accuracy in environmental reporting and compliance with international maritime regulations.</p>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">
+                                    <i class="bi bi-exclamation-triangle"></i> Important Note
+                                </div>
+                                <p class="mb-0">Deleting a fuel type that is currently in use by vessels or route optimizations may affect historical data. Consider the impact before removing fuel types from your database.</p>
+                            </div>
+                        </div>
+
+                        <!-- Port Data Tab -->
+                        <div class="tab-pane fade" id="port-data" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-geo"></i>
+                                <span>Port Data Management</span>
+                            </div>
+                            <p class="section-description">
+                                Manage comprehensive port information with an interactive Bento Grid layout displaying maps, facilities, congestion data, and user reviews. Import/export ports in bulk via CSV and visualize all port locations on an interactive Leaflet map.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="c6t_U-LatzQ">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Port Data Management Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-grid-3x3"></i>
+                                    </div>
+                                    <div class="feature-title">Bento Grid Layout</div>
+                                    <div class="feature-description">
+                                        Asymmetric grid interface displaying port location map, basic info, facilities, congestion data, and reviews in an organized visual layout.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-map"></i>
+                                    </div>
+                                    <div class="feature-title">Interactive Map</div>
+                                    <div class="feature-description">
+                                        Leaflet-based map showing all port locations with markers. Click any port to view detailed information in the Bento Grid sections.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+                                    <div class="feature-title">Facilities Information</div>
+                                    <div class="feature-description">
+                                        Track port facilities including berths, cranes, storage capacity, and available services for operational planning.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <div class="feature-title">Congestion Tracking</div>
+                                    <div class="feature-description">
+                                        Monitor median waiting times and congestion levels at each port to optimize arrival schedules and reduce delays.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-star"></i>
+                                    </div>
+                                    <div class="feature-title">Reviews & Ratings</div>
+                                    <div class="feature-description">
+                                        User-generated reviews with star ratings, rating distribution charts, and detailed feedback for each port.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                                    </div>
+                                    <div class="feature-title">CSV Import/Export</div>
+                                    <div class="feature-description">
+                                        Bulk import ports from CSV files, download templates, and export your entire port database to Excel format.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Managing Port Data
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Port on Map</div>
+                                            <div class="step-description">Click on any port marker in the Bento Grid map to display its detailed information across all grid sections.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Review Port Details</div>
+                                            <div class="step-description">The grid displays port info (name, country, coordinates), facilities, operational data with congestion metrics, and user reviews with star ratings.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Search Port Database</div>
+                                            <div class="step-description">Use the search box above the Port Database table to filter ports by ID, name, country, or location.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add New Port</div>
+                                            <div class="step-description">Click "Add Port" to open a modal with tabbed sections for Basic Info, Port Profile, Operations & Safety, and Services & Documentation.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Import Ports from CSV</div>
+                                            <div class="step-description">Click "Download Template" to get the CSV format, fill it with port data, then click "Import CSV" to bulk upload multiple ports at once.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Export to Excel</div>
+                                            <div class="step-description">Click "Export to Excel" to download your complete port database as a spreadsheet for external analysis or backup.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">7</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add Reviews</div>
+                                            <div class="step-description">Click on a port to view reviews, then use the "Add Review" button to submit your own rating and feedback for that port.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-grid-3x3-gap"></i> Bento Grid Layout
+                                </div>
+                                <p class="mb-2">The innovative Bento Grid organizes port information into five interactive sections:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Map Section:</strong> Interactive Leaflet map with port markers (large left panel)</li>
+                                    <li><strong>Port Info:</strong> Name, country, coordinates, and basic details (top middle)</li>
+                                    <li><strong>Facilities:</strong> Berths, cranes, storage, and available services (top right)</li>
+                                    <li><strong>Congestion:</strong> Median waiting times and operational metrics (middle span)</li>
+                                    <li><strong>Reviews:</strong> Star ratings, distribution charts, and user feedback (bottom span)</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>The Port Database table displays Port ID, Name, Country, Latitude, Longitude, and Congestion (Median Time). Use the action buttons in each row to edit port details, view on map, or delete ports. The congestion data helps optimize vessel scheduling to avoid delays.</p>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">
+                                    <i class="bi bi-exclamation-triangle"></i> CSV Import Format
+                                </div>
+                                <p class="mb-0">When importing ports via CSV, ensure your file follows the template format. Required fields include Port ID, Name, Country, Latitude, and Longitude. Optional fields include facilities, congestion data, and operational information. Download the template first to see the exact format required.</p>
+                            </div>
+                        </div>
+
+                        <!-- Vessel Data Tab -->
+                        <div class="tab-pane fade" id="vessel-data" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-send"></i>
+                                <span>Cruise Ship Management</span>
+                            </div>
+                            <p class="section-description">
+                                Manage your cruise ship fleet with automatic fuel consumption curve calculations based on marine engineering principles. The system uses hull resistance, propulsion efficiency, and auxiliary power requirements to generate realistic fuel curves across different operating speeds.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="RH-CLuL8kbo">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Cruise Ship Management Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-graph-up"></i>
+                                    </div>
+                                    <div class="feature-title">Automatic Fuel Curve Calculation</div>
+                                    <div class="feature-description">
+                                        System automatically calculates fuel consumption curves based on ship specifications using Admiralty coefficient, propulsion efficiency, and auxiliary loads.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-clipboard-data"></i>
+                                    </div>
+                                    <div class="feature-title">Comprehensive Specifications</div>
+                                    <div class="feature-description">
+                                        Track ship name, operator, gross tonnage, propulsion power, cruising speed, max speed, length, year built, and fuel type.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-calculator"></i>
+                                    </div>
+                                    <div class="feature-title">Calculation Methodology</div>
+                                    <div class="feature-description">
+                                        Detailed accordion sections explain hull resistance, speed-power relationships, propulsion efficiency, and auxiliary power calculations.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                                    </div>
+                                    <div class="feature-title">CSV Import/Export</div>
+                                    <div class="feature-description">
+                                        Download CSV template, import multiple ships at once, and manage your fleet efficiently with bulk operations.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-bar-chart-line"></i>
+                                    </div>
+                                    <div class="feature-title">Visual Fuel Curve Chart</div>
+                                    <div class="feature-description">
+                                        Interactive chart displays fuel consumption across different speeds with key metrics like gross tonnage, cruising speed, and hotel load.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-speedometer"></i>
+                                    </div>
+                                    <div class="feature-title">Speed Range Analysis</div>
+                                    <div class="feature-description">
+                                        System calculates fuel consumption from 0 knots (hotel load) through cruising speed up to maximum speed for complete operational analysis.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Managing Cruise Ships
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Fuel Curve Methodology</div>
+                                            <div class="step-description">Review the "Fuel Consumption Calculation Methodology" card with accordion sections explaining Overview, Hull Resistance, Speed-Power Relationship, Propulsion Efficiency, and Auxiliary Power.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Add New Cruise Ship</div>
+                                            <div class="step-description">Click "Add Cruise Ship" to open the modal. Enter basic information including ship name, operator, and specifications from CruiseMapper or similar sources.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Enter Technical Specifications</div>
+                                            <div class="step-description">Fill in gross tonnage, propulsion power (MW), cruising speed, max speed, length (meters), beam, year built, and fuel type. All fields are required for accurate calculations.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Automatic Curve Generation</div>
+                                            <div class="step-description">Upon saving, the system automatically calculates the fuel consumption curve using marine engineering formulas. No manual curve entry needed!</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Fuel Consumption Chart</div>
+                                            <div class="step-description">Click the chart icon in the Actions column to display the fuel curve with speed vs. consumption graph and key metrics (GT, cruising speed, consumption at cruise, hotel load).</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Search and Filter</div>
+                                            <div class="step-description">Use the search box to filter ships by name, operator, tonnage, or specifications in the Cruise Ship Database table.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">7</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Bulk Import via CSV</div>
+                                            <div class="step-description">Download the CSV template, fill it with multiple ship specifications, then click "Import CSV" to add your entire fleet at once.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">8</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Edit or Delete Ships</div>
+                                            <div class="step-description">Use the action buttons in each row to edit ship details, view the fuel curve chart, or delete ships from your database.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-gear"></i> Automatic Calculation Features
+                                </div>
+                                <p class="mb-2">The system automatically calculates fuel consumption using the Simonsen et al. (2018) methodology:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Speed-Ratio Method:</strong> Uses actual MCR and speed ratio (not Admiralty Formula)</li>
+                                    <li><strong>Weather & Fouling Factors:</strong> τ<sub>w</sub> = 1.15, τ<sub>f</sub> = 1.09 (from paper)</li>
+                                    <li><strong>Load-Dependent SFC:</strong> Accounts for engine efficiency changes with load</li>
+                                    <li><strong>Hotel Load:</strong> Size-based auxiliary power estimation (3-25 MW)</li>
+                                    <li><strong>Academic Validation:</strong> Verified against MS Finnmarken, MS Artania, Norwegian Star</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>The Cruise Ship Database displays 9 columns: Ship Name, Operator, Gross Tonnage, Propulsion Power, Cruising Speed, Max Speed, Length, Year Built, and Fuel Type. Click the chart icon to visualize each ship's fuel consumption curve with detailed breakdowns of consumption at different speeds.</p>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">
+                                    <i class="bi bi-info-circle"></i> Data Source Recommendation
+                                </div>
+                                <p class="mb-0">For accurate specifications, use data from CruiseMapper or official ship documentation. All critical fields (tonnage, power, speeds, dimensions) are required for the automatic fuel curve calculation to work properly. The system uses these values with marine engineering formulas to generate realistic fuel consumption estimates.</p>
+                            </div>
+
+                            <table class="comparison-table" style="width: 100%; margin-top: 30px; border-collapse: separate; border-spacing: 0; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                                <thead>
+                                    <tr>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">Calculation Component</th>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">Formula (Simonsen et al. 2018)</th>
+                                        <th style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; font-weight: 600; text-align: left;">Purpose</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;"><strong>Power at Speed (Eq. 12)</strong></td>
+                                        <td style="padding: 20px;">P = MCR × (V/V<sub>ref</sub>)³ × 1.15 × 1.09</td>
+                                        <td style="padding: 20px;">Calculates propulsion power using speed ratio</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;"><strong>Load Factor (Eq. 14)</strong></td>
+                                        <td style="padding: 20px;">L = P / MCR</td>
+                                        <td style="padding: 20px;">Determines engine loading percentage</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;"><strong>SFC (Eq. 17)</strong></td>
+                                        <td style="padding: 20px;">SFC = 195 × [1.28 - 0.71L + 0.455L²]</td>
+                                        <td style="padding: 20px;">Load-dependent fuel consumption rate</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 20px;"><strong>Hotel Load</strong></td>
+                                        <td style="padding: 20px;">15-25 MW for mega ships</td>
+                                        <td style="padding: 20px;">Auxiliary power (HVAC, lighting, services)</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 20px;"><strong>Fuel Consumption (Eq. 19)</strong></td>
+                                        <td style="padding: 20px;">F = (P + Hotel) × SFC / 1000</td>
+                                        <td style="padding: 20px;">Final fuel consumption in tons/hour</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Port Weather Tab -->
+                        <div class="tab-pane fade" id="port-weather" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-cloud-sun"></i>
+                                <span>Port Weather Information</span>
+                            </div>
+                            <p class="section-description">
+                                Access real-time and forecasted weather conditions for any port in our database.
+                                Weather data includes temperature, wind speed, wave height, precipitation, and marine
+                                conditions to help you plan safe and efficient port operations.
+                            </p>
+
+                            <!-- Video Container -->
+                            <div class="video-container" data-video-id="wxyz12345">
+                                <div class="video-placeholder">
+                                    <div class="play-button">
+                                        <i class="bi bi-play-fill"></i>
+                                    </div>
+                                    <div class="video-title">Port Weather Tutorial</div>
+                                    <div class="video-duration">Click to watch video</div>
+                                </div>
+                            </div>
+
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-thermometer-half"></i>
+                                    </div>
+                                    <div class="feature-title">Temperature & Conditions</div>
+                                    <div class="feature-description">
+                                        Real-time temperature, humidity, and general weather conditions updated hourly
+                                        for accurate planning.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-wind"></i>
+                                    </div>
+                                    <div class="feature-title">Wind Data</div>
+                                    <div class="feature-description">
+                                        Detailed wind speed and direction information critical for safe berthing and
+                                        cargo operations.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-water"></i>
+                                    </div>
+                                    <div class="feature-title">Wave Conditions</div>
+                                    <div class="feature-description">
+                                        Wave height, period, and direction data from marine weather stations for
+                                        operational safety.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-calendar-week"></i>
+                                    </div>
+                                    <div class="feature-title">48-Hour Forecast</div>
+                                    <div class="feature-description">
+                                        Extended forecast showing predicted conditions at 6-hour intervals for planning
+                                        ahead.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <div class="feature-title">Safety Alerts</div>
+                                    <div class="feature-description">
+                                        Automated safety assessments based on weather thresholds with color-coded
+                                        warnings for quick decision-making.
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </div>
+                                    <div class="feature-title">Auto-Refresh</div>
+                                    <div class="feature-description">
+                                        Weather data automatically updates every 6 hours with manual refresh option for
+                                        the latest information.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="steps-section">
+                                <div class="steps-title">
+                                    <i class="bi bi-list-check"></i>
+                                    Using Port Weather
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">1</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Select a Port</div>
+                                            <div class="step-description">Navigate to the Port Weather page and select
+                                                any port from the dropdown menu to view its weather conditions.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">2</div>
+                                        <div class="step-text">
+                                            <div class="step-title">View Current Conditions</div>
+                                            <div class="step-description">The current weather card displays real-time
+                                                conditions including temperature, wind, waves, and overall assessment.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">3</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Check Marine Conditions</div>
+                                            <div class="step-description">Review wave height, period, and direction data
+                                                critical for safe vessel operations and cargo handling.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">4</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Review Safety Assessment</div>
+                                            <div class="step-description">Check the automated safety status (Safe,
+                                                Caution, Dangerous) based on predefined thresholds for your operations.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">5</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Check 48-Hour Forecast</div>
+                                            <div class="step-description">Review the hourly forecast cards showing
+                                                conditions at +6, +12, +24, and +48 hours with color-coded safety borders.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-content">
+                                        <div class="step-number">6</div>
+                                        <div class="step-text">
+                                            <div class="step-title">Understand Safety Thresholds</div>
+                                            <div class="step-description">Review the Safety Threshold Guidelines section to
+                                                understand the criteria used for safety assessments.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-shield-check"></i> Safety Features
+                                </div>
+                                <p class="mb-2">The Port Weather system includes automated safety assessments based on:</p>
+                                <ul class="mb-0">
+                                    <li><strong>Wave Height:</strong> Safe (&lt;2m), Caution (2-4m), Dangerous (&gt;4m)</li>
+                                    <li><strong>Wind Speed:</strong> Safe (&lt;40 km/h), Caution (40-60 km/h), Dangerous
+                                        (&gt;60 km/h)</li>
+                                    <li><strong>Temperature:</strong> Safe (10-35°C), Caution (outside this range)</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">
+                                    <i class="bi bi-lightbulb"></i> Pro Tip
+                                </div>
+                                <p>Weather data is automatically refreshed from Open-Meteo and Marine Weather API. Click the
+                                    "Refresh" button to get the latest updates, especially before planning departures or
+                                    arrivals.</p>
+                            </div>
+                        </div>
+
+                        <!-- FAQ Tab -->
+                        <div class="tab-pane fade" id="faq" role="tabpanel">
+                            <div class="section-title">
+                                <i class="bi bi-question-circle"></i>
+                                <span>Frequently Asked Questions</span>
+                            </div>
+                            <p class="section-description">
+                                Find answers to common questions about NauticalFlow. If you can't find what you're
+                                looking
+                                for,
+                                please contact our support team.
+                            </p>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    How accurate are the fuel consumption calculations?
+                                </div>
+                                <p class="faq-answer">
+                                    Our calculations are based on the fuel consumption curves you provide for each
+                                    vessel,
+                                    combined with real-time weather data
+                                    and port congestion information. Accuracy typically ranges from 92-98% when vessel
+                                    data
+                                    is properly calibrated.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    Can I optimize routes with multiple destination ports?
+                                </div>
+                                <p class="faq-answer">
+                                    Yes! Our multi-port optimization feature uses advanced algorithms (Genetic Algorithm
+                                    for
+                                    TSP) to find the most efficient
+                                    sequence of ports to visit, minimizing total fuel consumption and travel time.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    What weather data sources does NauticalFlow use?
+                                </div>
+                                <p class="faq-answer">
+                                    We integrate with Open-Meteo and Marine Weather API to provide real-time weather
+                                    forecasts, wave conditions,
+                                    wind patterns, and cyclone tracking for accurate route planning.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    How do I update my vessel's fuel consumption curve?
+                                </div>
+                                <p class="faq-answer">
+                                    Navigate to the Vessel Data page, find your vessel, and click the edit button. You
+                                    can
+                                    update the fuel consumption
+                                    curve data points, which will be used in all future route optimizations.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    Can I export my optimization history?
+                                </div>
+                                <p class="faq-answer">
+                                    Yes! You can export your data in multiple formats including PDF reports for
+                                    presentations and CSV files for
+                                    further analysis in spreadsheet applications.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    Is my data secure?
+                                </div>
+                                <p class="faq-answer">
+                                    Yes, we take data security seriously. All data is encrypted in transit and at rest.
+                                    We
+                                    use industry-standard
+                                    authentication protocols and regularly backup all information. Your vessel and route
+                                    data remains private and confidential.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    What happens if I delete a vessel that's used in saved optimizations?
+                                </div>
+                                <p class="faq-answer">
+                                    Historical optimization records will retain the vessel name, but you won't be able
+                                    to
+                                    use that vessel for new
+                                    optimizations. We recommend archiving vessels instead of deleting them if they have
+                                    historical data.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <i class="bi bi-patch-question"></i>
+                                    How often is port and weather data updated?
+                                </div>
+                                <p class="faq-answer">
+                                    Port data is updated manually as needed. Weather data is refreshed every 6 hours
+                                    from
+                                    our API sources,
+                                    ensuring you always have current information for route planning decisions.
+                                </p>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">
+                                    <i class="bi bi-headset"></i> Need More Help?
+                                </div>
+                                <p class="mb-2">Can't find the answer you're looking for? Our support team is here to
+                                    help!
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Email:</strong> support@nauticalflow.com<br>
+                                    <strong>Phone:</strong> +1 (555) 123-4567<br>
+                                    <strong>Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM EST
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- The JavaScript file that will handle the logic for this page -->
+    <script type="module" src="js/user-manual.js"></script>
+    <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+    <script src="https://files.bpcontent.cloud/2025/11/02/10/20251102105058-M6B4IKVL.js" defer></script>
+</body>
+
+</html>
